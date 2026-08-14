@@ -41,9 +41,15 @@ struct format {
 
 const format formats[] = {
 	{ 1, 40, floppy_image::SSSD10, floppy_image::SSSD }, // H-17-1
-	// 200K raw images are ambiguous; H17 only officially supported SSSD so this is moot.
-	{ 1, 80, floppy_image::SSQD10, floppy_image::SSQD },
+	// The page above also describes 200K and 400K double-sided images, sides
+	// interleaved a track at a time; 400K only works out at 80 tracks a side.
+	// Nothing in the file records the geometry - it is a dump of logical
+	// sectors - so these are realizations to offer rather than identifications,
+	// and the drive variant chooses between them.  SSQD ties with DSSD at 200K
+	// and follows it, leaving the documented double-sided case to win a match
+	// made on size alone.
 	{ 2, 40, floppy_image::DSSD10, floppy_image::DSSD },
+	{ 1, 80, floppy_image::SSQD10, floppy_image::SSQD },
 	{ 2, 80, floppy_image::DSQD10, floppy_image::DSQD }, // H-17-4
 	{}
 };
