@@ -1090,6 +1090,18 @@ end
 
 --------------------------------------------------
 --
+--@src/lib/formats/h8d_dsk.h,FORMATS["H8D_DSK"] = true
+--------------------------------------------------
+
+if opt_tool(FORMATS, "H8D_DSK") then
+	files {
+		MAME_DIR.. "src/lib/formats/h8d_dsk.cpp",
+		MAME_DIR.. "src/lib/formats/h8d_dsk.h",
+	}
+end
+
+--------------------------------------------------
+--
 --@src/lib/formats/h8_cas.h,FORMATS["H8_CAS"] = true
 --------------------------------------------------
 

@@ -48,6 +48,7 @@
 #include "bus/heathzenith/h89/cdr_fdc_880h.h"
 #include "bus/heathzenith/h89/h_88_3.h"
 #include "bus/heathzenith/h89/h_88_5.h"
+#include "bus/heathzenith/h89/h17_fdc.h"
 #include "bus/heathzenith/h89/mms77316_fdc.h"
 #include "bus/heathzenith/h89/sigmasoft_parallel_port.h"
 #include "bus/heathzenith/h89/sigmasoft_sound.h"
@@ -202,8 +203,9 @@ public:
 
 
 /**
- * Heathkit H89
- *  - Z-89-37 Soft-sectored Floppy Controller
+ * Heathkit H-89 / Zenith Z-90
+ *  H-89: H-88-1 Hard-sectored Floppy Controller
+ *  Z-90: Z-89-37 Soft-sectored Floppy Controller
  *
  */
 class h89_state : public h89_base_state
@@ -215,6 +217,7 @@ public:
 	}
 
 	void h89(machine_config &config);
+	void z90(machine_config &config);
 };
 
 class h89_cdr_state : public h89_base_state
@@ -419,12 +422,12 @@ static INPUT_PORTS_START( h89 )
 
 	// MTR-90 (444-84 or 444-142)
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
-	PORT_DIPSETTING(    0x00, "H-88-1 (Not yet implemented)" )
+	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
 	PORT_DIPSETTING(    0x01, "H/Z-47 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x02, "Z-67 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x03, "Undefined" )
 	PORT_DIPNAME( 0x0c, 0x00, "Disk I/O #1" )                        PORT_DIPLOCATION("SW501:3,4")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
-	PORT_DIPSETTING(    0x00, "H-89-37" )
+	PORT_DIPSETTING(    0x00, "H-89-37 (H37)" )
 	PORT_DIPSETTING(    0x04, "H/Z-47 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x08, "Z-67 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x0c, "Undefined" )
@@ -443,7 +446,7 @@ static INPUT_PORTS_START( h89 )
 
 	// MTR-89 (444-62)
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x08)
-	PORT_DIPSETTING(    0x00, "H-88-1" )
+	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
 	PORT_DIPSETTING(    0x01, "H/Z-47" )
 	PORT_DIPSETTING(    0x02, "Undefined" )
 	PORT_DIPSETTING(    0x03, "Undefined" )
@@ -467,12 +470,12 @@ static INPUT_PORTS_START( h89 )
 
 	// MMS 444-84B (and possibly 444-84A)
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
-	PORT_DIPSETTING(    0x00, "H-88-1" )
+	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
 	PORT_DIPSETTING(    0x01, "H/Z-47 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x02, "MMS 77320 SASI or Z-67 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x03, "MMS 77422 Network Controller" )
 	PORT_DIPNAME( 0x0c, 0x00, "Disk I/O #1" )                        PORT_DIPLOCATION("SW501:3,4")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
-	PORT_DIPSETTING(    0x00, "H-89-37" )
+	PORT_DIPSETTING(    0x00, "H-89-37 (H37)" )
 	PORT_DIPSETTING(    0x04, "H/Z-47 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x08, "MMS 77320 SASI or Z-67 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x0c, "MMS 77422 Network Controller" )
@@ -573,12 +576,12 @@ static INPUT_PORTS_START( h89 )
 
 	// SigmaSoft's SigmaROM
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x1c)
-	PORT_DIPSETTING(    0x00, "H-88-1" )
+	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
 	PORT_DIPSETTING(    0x01, "H/Z-47" )
 	PORT_DIPSETTING(    0x02, "WD1002 Hard Disk" )
 	PORT_DIPSETTING(    0x03, "WD1002 Floppy Disk" )
 	PORT_DIPNAME( 0x0c, 0x00, "Disk I/O #1" )                        PORT_DIPLOCATION("SW501:3,4")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x1c)
-	PORT_DIPSETTING(    0x00, "H-89-37" )
+	PORT_DIPSETTING(    0x00, "H-89-37 (H37)" )
 	PORT_DIPSETTING(    0x04, "H/Z-47" )
 	PORT_DIPSETTING(    0x08, "WD1002 Hard Disk" )
 	PORT_DIPSETTING(    0x0c, "WD1002 Floppy Disk" )
@@ -597,7 +600,7 @@ static INPUT_PORTS_START( h89 )
 
 	// CDR8390 ROM
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x20)
-	PORT_DIPSETTING(    0x00, "H-88-1" )
+	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
 	PORT_DIPSETTING(    0x01, "undefined" )
 	PORT_DIPSETTING(    0x02, "undefined" )
 	PORT_DIPSETTING(    0x03, "undefined" )
@@ -973,6 +976,7 @@ void h89_base_state::h89_right_cards_mms(device_slot_interface &device)
 
 void h89_base_state::h89_right_p506_cards(device_slot_interface &device)
 {
+	device.option_add("h17fdc",    H89BUS_H_17_FDC);
 	device.option_add("h_88_3",    H89BUS_H_88_3);
 	device.option_add("ha_88_3",   H89BUS_HA_88_3);
 	device.option_add("ss_snd",    H89BUS_SIGMASOFT_SND);
@@ -1051,6 +1055,19 @@ void h88_state::h88(machine_config &config)
 }
 
 void h89_state::h89(machine_config &config)
+{
+	h89_base(config);
+
+	m_intr_socket->set_default_option("original");
+	m_intr_socket->set_fixed(true);
+
+	H89BUS_RIGHT_SLOT(config.replace(), "p506", "h89bus", [this](device_slot_interface &device) { h89_right_p506_cards(device); }, "h17fdc").set_p506_signalling(true);
+
+	LOGSETUP("%s: about to call set_io_prom_tag\n", FUNCNAME);
+	H89BUS_IO_DECODER_SOCKET(config, "h89bus:io_decoder", io_decoder_options, "444_43");
+}
+
+void h89_state::z90(machine_config &config)
 {
 	h89_base(config);
 
@@ -1262,4 +1279,4 @@ COMP( 1979, h88,           h89,   0,     h88,           h88,  h88_state,        
 COMP( 1979, h89,           0,     0,     h89,           h89,  h89_state,           empty_init, "Heath Company",       "H-89",                    MACHINE_SUPPORTS_SAVE)
 COMP( 1981, h89_cdr,       h89,   0,     h89_cdr,       h89,  h89_cdr_state,       empty_init, "Heath Company",       "H-89 with CDR Equipment", MACHINE_SUPPORTS_SAVE)
 COMP( 1981, h89_mms,       h89,   0,     h89_mms,       h89,  h89_mms_state,       empty_init, "Heath Company",       "H-89 with MMS Equipment", MACHINE_SUPPORTS_SAVE)
-COMP( 1981, z90,           h89,   0,     h89,           h89,  h89_state,           empty_init, "Zenith Data Systems", "Z-90",                    MACHINE_SUPPORTS_SAVE)
+COMP( 1981, z90,           h89,   0,     z90,           h89,  h89_state,           empty_init, "Zenith Data Systems", "Z-90",                    MACHINE_SUPPORTS_SAVE)

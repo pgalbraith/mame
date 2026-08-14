@@ -8,9 +8,9 @@
   Model number: H-88-1
 
   TODO
-   - Mame core must support hard-sectored disk images.
-   - used floppy clock bits to clock USRT received clock.
-   - Add support for a heath hard-sectored disk support (h17disk).
+   - Use the floppy clock bits to clock the USRT receive clock.  The receive
+     path currently synthesises that clock from a fixed-rate timer; see the
+     TODO block in h17_fdc.cpp for what that costs.
 
 ****************************************************************************/
 
