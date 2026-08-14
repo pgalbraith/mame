@@ -23,6 +23,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <vector>
 
 
@@ -85,16 +86,41 @@ inline bool is_hdos(std::vector<uint8_t> const &img, uint8_t &lab_ser)
 	}
 
 	uint8_t const *const label = &img[0x0900]; // track 0, sector 9
-	uint8_t const lab_vlt = label[0x08];
-	uint8_t const lab_ver = label[0x09];
 
 	// LAB.VLT: 0 = data, 1 = system, 2 = no directory.
-	if (lab_vlt > 2)
+	if (label[0x08] > 2)
 	{
 		return false;
 	}
 
-	if (!((lab_ver == 0x16) || (lab_ver == 0x17) || (lab_ver == 0x20) || ((lab_ver >= 0x30) && (lab_ver <= 0x39))))
+	// Two things identify an HDOS disk, and either will do.  Failing to
+	// recognise one is worse than the alternative: the volume number would
+	// default to zero, and HDOS rejects sectors whose volume does not match the
+	// one in its label, so the disk simply will not read.
+	//
+	// The first is a copyright notice INIT writes past the end of the
+	// user-supplied label text, at a fixed offset.  Every disk seen carries it,
+	// including data volumes and third party software, though the wording
+	// changed for 3.x - "SYSTEM COPYRIGHT HEATH CO., 10/1977" became "System
+	// Copyright (c) Heath Co., 19xx" - so only the common part is compared, and
+	// case is ignored.
+	static char const marker[] = "SYSTEM COPYRIGHT";
+
+	bool found = (label[0x54] == '\r') && (label[0x55] == '\n');
+
+	for (int i = 0; found && (i < int(sizeof(marker) - 1)); i++)
+	{
+		uint8_t const c = label[0x56 + i];
+
+		found = (((c >= 'a') && (c <= 'z')) ? uint8_t(c - 0x20) : c) == marker[i];
+	}
+
+	// The second is the version byte.  It cannot stand alone, since a 1.0 disk
+	// records zero there and that cannot be told from a sector which was never
+	// written, but it covers any disk whose copyright notice is missing.
+	uint8_t const lab_ver = label[0x09];
+
+	if (!found && (lab_ver != 0x15) && (lab_ver != 0x16) && (lab_ver != 0x20) && ((lab_ver < 0x30) || (lab_ver > 0x39)))
 	{
 		return false;
 	}
