@@ -167,7 +167,9 @@ void s2350_device::device_start()
 	save_item(NAME(m_receiver_sync_reg));
 	save_item(NAME(m_receiver_shift_reg));
 	save_item(NAME(m_serial_rx_state));
+	save_item(NAME(m_serial_rx_line));
 
+	save_item(NAME(m_sync_search_active));
 	save_item(NAME(m_in_sync));
 }
 
@@ -193,6 +195,7 @@ void s2350_device::device_reset()
 	m_in_sync = false;
 
 	m_serial_rx_state = 0;
+	m_serial_rx_line = 0;
 
 	// receiver registers
 	m_receiver_output_reg = 0x00;
