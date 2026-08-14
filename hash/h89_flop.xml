@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!DOCTYPE softwarelist SYSTEM "softwarelist.dtd">
+<!--
+license:CC0-1.0
+-->
+<softwarelist name="h89_flop" description="Heath H-88-1 hard-sectored floppy disks">
+
+	<software name="hdos_50_03_00">
+		<description>HDOS 1.0 (Issue 50.03.00)</description>
+		<year>1979</year>
+		<publisher>Heath Company</publisher>
+		<notes>First HDOS release to support the H-89 and H-88, adding the 8250 console used on those machines.</notes>
+		<info name="alt_title" value="Heath Disk Operating System"/>
+		<info name="version" value="50.03.00"/>
+		<info name="partno" value="890-1-3"/>
+
+		<part name="flop1" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="hdos_1-0_issue_50-03-00_890-1-3.h8d" size="102400" crc="4914c70e" sha1="4413dd53044294719a6be7ca21f7d82284d100ae"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="hdos_50_04_00">
+		<description>HDOS 1.5 (Issue 50.04.00)</description>
+		<year>1979</year>
+		<publisher>Heath Company</publisher>
+		<info name="alt_title" value="Heath Disk Operating System"/>
+		<info name="version" value="50.04.00"/>
+		<info name="partno" value="890-1-4"/>
+
+		<part name="flop1" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="hdos_1-5_issue_50-04-00_890-1-4.h8d" size="102400" crc="a07cebf1" sha1="67e71c16f5f877e345ffb8b04817ffe64554ff30"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="hdos_50_05_00">
+		<description>HDOS 1.6 (Issue 50.05.00)</description>
+		<year>1980</year>
+		<publisher>Heath Company</publisher>
+		<info name="alt_title" value="Heath Disk Operating System"/>
+		<info name="version" value="50.05.00"/>
+		<info name="partno" value="890-1-5"/>
+
+		<part name="flop1" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="hdos_1-6_issue_50-05-00_890-1-5.h8d" size="102400" crc="d3b33426" sha1="a11176d25924ee4134ded21127243e1eb41eda98"/>
+			</dataarea>
+		</part>
+	</software>
+
+</softwarelist>

@@ -45,6 +45,8 @@
 #include "formats/h8d_dsk.h"
 #include "formats/mfi_dsk.h"
 
+#include "softlist_dev.h"
+
 
 #define LOG_REG   (1U << 1) // Register setup
 #define LOG_LINES (1U << 2) // Control lines
@@ -578,6 +580,10 @@ void heath_h17_fdc_device::device_add_mconfig(machine_config &config)
 	}
 
 	TIMER(config, m_tx_timer).configure_generic(FUNC(heath_h17_fdc_device::tx_timer_cb));
+
+	// the list belongs to the controller rather than to any one machine: the
+	// H-88-1 came standard on the H-89 and was an option for the H-88
+	SOFTWARE_LIST(config, "flop_list").set_original("h89_flop");
 }
 
 void heath_h17_fdc_device::sync_character_received(int state)
