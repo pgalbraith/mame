@@ -29,54 +29,15 @@ using heath_h17::SECTORS_PER_TRACK;
 using heath_h17::SECTOR_DATA_SIZE;
 using heath_h17::TRACK_SIZE;
 using heath_h17::fm_byte_from_bitstream;
+using heath_h17::format;
+using heath_h17::format_size;
+using heath_h17::formats;
 using heath_h17::h17_checksum;
+using heath_h17::is_compatible;
 using heath_h17::is_hdos;
 
-struct format {
-	int      head_count;
-	int      track_count;
-	uint32_t variant;
-	uint32_t drive_variant;
-};
-
-const format formats[] = {
-	{ 1, 40, floppy_image::SSSD10, floppy_image::SSSD }, // H-17-1
-	// The page above also describes 200K and 400K double-sided images, sides
-	// interleaved a track at a time; 400K only works out at 80 tracks a side.
-	// Nothing in the file records the geometry - it is a dump of logical
-	// sectors - so these are realizations to offer rather than identifications,
-	// and the drive variant chooses between them.  SSQD ties with DSSD at 200K
-	// and follows it, leaving the documented double-sided case to win a match
-	// made on size alone.
-	{ 2, 40, floppy_image::DSSD10, floppy_image::DSSD },
-	{ 1, 80, floppy_image::SSQD10, floppy_image::SSQD },
-	{ 2, 80, floppy_image::DSQD10, floppy_image::DSQD }, // H-17-4
-	{}
-};
-
-uint64_t format_size(format const &fmt)
-{
-	return uint64_t(fmt.head_count) * fmt.track_count * SECTORS_PER_TRACK * SECTOR_DATA_SIZE;
-}
-
-bool is_compatible(format const &fmt, std::vector<uint32_t> const &variants)
-{
-	if (variants.empty())
-	{
-		return true;
-	}
-
-	for (uint32_t variant : variants)
-	{
-		if ((variant == fmt.variant) || (variant == fmt.drive_variant))
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
+// The 200K and 400K sizes are the double-sided images the page above describes,
+// sides interleaved a track at a time; 400K only works out at 80 tracks a side.
 format find_format(uint64_t size, std::vector<uint32_t> const &variants)
 {
 	format first_size_match = {};

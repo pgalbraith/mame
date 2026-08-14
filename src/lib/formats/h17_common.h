@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "flopimg.h"
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -48,6 +50,53 @@ constexpr int BITCELL_SIZE = 4000;
 
 // Sync byte preceding both the header and the data of every sector.
 constexpr uint8_t H17_SYNC_BYTE = 0xfd;
+
+
+// The physical layouts a disk can be realized as.  Neither container records
+// which one it holds - both store logical sectors in order, and a given volume
+// reads back the same whichever surface its tracks were spread over - so the
+// layout is taken from the size, or from what the file states, and the drive
+// settles any tie.  SSQD ties with DSSD at 200K and follows it, leaving the
+// documented double-sided case to win a match made on size alone.
+struct format {
+	int      head_count;
+	int      track_count;
+	uint32_t variant;
+	uint32_t drive_variant;
+};
+
+inline constexpr format formats[] = {
+	{ 1, 40, floppy_image::SSSD10, floppy_image::SSSD }, // H-17-1
+	{ 2, 40, floppy_image::DSSD10, floppy_image::DSSD },
+	{ 1, 80, floppy_image::SSQD10, floppy_image::SSQD },
+	{ 2, 80, floppy_image::DSQD10, floppy_image::DSQD }, // H-17-4
+	{}
+};
+
+inline uint64_t format_size(format const &fmt)
+{
+	return uint64_t(fmt.head_count) * fmt.track_count * SECTORS_PER_TRACK * SECTOR_DATA_SIZE;
+}
+
+// A layout is only offered to a drive reporting one of its variants.  An empty
+// list, which is what floptool passes, takes anything.
+inline bool is_compatible(format const &fmt, std::vector<uint32_t> const &variants)
+{
+	if (variants.empty())
+	{
+		return true;
+	}
+
+	for (uint32_t variant : variants)
+	{
+		if ((variant == fmt.variant) || (variant == fmt.drive_variant))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
 
 
 // H17 checksum: D = RLCA(byte XOR D) per byte, matching the ROM's RDB/WNB

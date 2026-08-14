@@ -31,25 +31,15 @@ using heath_h17::SECTORS_PER_TRACK;
 using heath_h17::SECTOR_DATA_SIZE;
 using heath_h17::TRACK_SIZE;
 using heath_h17::fm_byte_from_bitstream;
+using heath_h17::format;
+using heath_h17::format_size;
+using heath_h17::formats;
 using heath_h17::h17_checksum;
+using heath_h17::is_compatible;
 using heath_h17::is_hdos;
 using heath_h17::reverse_byte;
 
 constexpr int SECTOR_METADATA_SIZE = 16;
-
-struct format {
-	int      head_count;
-	int      track_count;
-	uint32_t variant;
-};
-
-const format formats[] = {
-	{ 1, 40, floppy_image::SSSD10 }, // H-17-1
-	{ 2, 40, floppy_image::DSSD10 },
-	{ 1, 80, floppy_image::SSQD10 },
-	{ 2, 80, floppy_image::DSQD10 }, // H-17-4
-	{}
-};
 
 struct block_info {
 	std::uint64_t pos = 0;
@@ -227,7 +217,7 @@ bool parse_blocks(util::random_read &io, h17disk_info &info)
 	return (pos == file_size) && (info.dskf.pos != 0) && (info.h8db.pos != 0);
 }
 
-format find_format(util::random_read &io, h17disk_info const &info)
+format find_format(util::random_read &io, h17disk_info const &info, std::vector<uint32_t> const &variants)
 {
 	if ((info.dskf.length < 2) || (info.dskf.length > 3))
 	{
@@ -260,6 +250,16 @@ format find_format(util::random_read &io, h17disk_info const &info)
 	{
 		if ((formats[i].head_count == head_count) && (formats[i].track_count == track_count))
 		{
+			// unlike an h8d the geometry is stated rather than guessed, so
+			// there is nothing to disambiguate here - the variants only say
+			// whether the drive can take the disk at all
+			if (!is_compatible(formats[i], variants))
+			{
+				LOG_FORMATS("drive does not accept a %d head %d track disk\n", head_count, track_count);
+
+				return {};
+			}
+
 			LOG_FORMATS("find_format format found: %d - variant: 0x%x\n", i, formats[i].variant);
 
 			return formats[i];
@@ -268,11 +268,6 @@ format find_format(util::random_read &io, h17disk_info const &info)
 
 	LOG_FORMATS("Invalid disk format - heads: %d, tracks: %d\n", head_count, track_count);
 	return {};
-}
-
-uint64_t format_size(format const &fmt)
-{
-	return uint64_t(fmt.head_count) * fmt.track_count * SECTORS_PER_TRACK * SECTOR_DATA_SIZE;
 }
 
 void generate_sector_metadata(uint8_t *metadata, format const &fmt, std::vector<uint8_t> const &img, int head, int track, int sector)
@@ -430,7 +425,7 @@ bool unpack_v1_sectors(std::vector<uint8_t> const &block, format const &fmt,
 // the block as mandatory to process, and a four byte length.  Only the data
 // block has to be present; the disk format block may be omitted, in which case
 // its defaults apply.
-bool load_v1(util::random_read &io, format &fmt, std::vector<uint8_t> &img, std::vector<uint8_t> &secm)
+bool load_v1(util::random_read &io, format &fmt, std::vector<uint8_t> &img, std::vector<uint8_t> &secm, std::vector<uint32_t> const &variants)
 {
 	uint64_t file_size;
 
@@ -544,6 +539,13 @@ bool load_v1(util::random_read &io, format &fmt, std::vector<uint8_t> &img, std:
 	{
 		if ((formats[i].head_count == head_count) && (formats[i].track_count == track_count))
 		{
+			if (!is_compatible(formats[i], variants))
+			{
+				LOG_FORMATS("drive does not accept a %d head %d track disk\n", head_count, track_count);
+
+				return false;
+			}
+
 			fmt = formats[i];
 
 			return unpack_v1_sectors(data_block, fmt, img, secm);
@@ -628,7 +630,7 @@ bool heath_h17d_format::load(util::random_read &io, uint32_t form_factor, const 
 
 	if (version == h17_version::v1)
 	{
-		if (!load_v1(io, fmt, img, secm))
+		if (!load_v1(io, fmt, img, secm, variants))
 		{
 			return false;
 		}
@@ -644,7 +646,7 @@ bool heath_h17d_format::load(util::random_read &io, uint32_t form_factor, const 
 			return false;
 		}
 
-		fmt = find_format(io, info);
+		fmt = find_format(io, info, variants);
 
 		if (!fmt.head_count)
 		{
