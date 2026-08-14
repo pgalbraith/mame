@@ -34,6 +34,23 @@ protected:
 	void fm_reverse_byte_w(std::vector<uint32_t> &buffer, uint8_t val) const;
 };
 
+
+// Version 1 images load but are never written back. Only version 2 is written,
+// so saving one would silently change the version of the file, and version 1
+// keeps things that cannot be reconstructed from what is loaded: a dump of each
+// physical sector including the slack the imager caught either side of it, the
+// error status the imager recorded, and any blocks the loader passed over.
+class heath_h17d_v1_format : public heath_h17d_format
+{
+public:
+	int identify(util::random_read &io, uint32_t form_factor, const std::vector<uint32_t> &variants) const override;
+
+	const char *name() const noexcept override { return "h17disk1"; }
+	const char *description() const noexcept override { return "Heath H17D disk image (version 1, read only)"; }
+	bool supports_save() const noexcept override { return false; }
+};
+
 extern const heath_h17d_format FLOPPY_H17D_FORMAT;
+extern const heath_h17d_v1_format FLOPPY_H17D_V1_FORMAT;
 
 #endif // MAME_FORMATS_H17DISK_H

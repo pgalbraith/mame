@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -159,6 +160,148 @@ inline bool fm_byte_from_bitstream(std::vector<bool> const &bitstream, size_t po
 	val = reverse_byte(result);
 
 	return true;
+}
+
+
+// How far after a header to look for its data field. The machine rewrites the
+// data on its own, starting wherever the head is once it has read the header
+// and set the write gate, so the gap it leaves is its own rather than the one
+// the image was built with. A sector is about 312 bytes of a 3125 byte track
+// and the data field takes 258 of them, so a gap beyond this has nowhere to go.
+constexpr int MAX_HEADER_TO_DATA_BYTES = 54;
+
+
+// One sector as found on a track.
+struct sector_read
+{
+	bool    found           = false;  // a header, and a data field to go with it
+	bool    data_valid      = false;  // the data checksum matched
+	uint8_t volume          = 0;
+	uint8_t track           = 0;
+	uint8_t sector          = 0;
+	uint8_t header_checksum = 0;
+	uint8_t data_checksum   = 0;
+
+	std::array<uint8_t, SECTOR_DATA_SIZE> data{};
+};
+
+
+// Read every sector a track holds, locating each by its header rather than by
+// where it sits. A sector the machine has rewritten lands wherever the head
+// happened to be - measurably displacing the sectors after it - and it can
+// straddle the index, so the search covers the whole track and wraps around it.
+//
+// The data field is searched for a bit at a time rather than a byte, because
+// the machine lays it down as a record in its own right and it need not share
+// the bit phase of the header the image was built with.
+//
+// Both checksums are verified, so a sync byte occurring within data cannot be
+// taken for the start of a sector. A sector whose data checksum is bad is still
+// returned, since a disk may genuinely hold one and dropping it would quietly
+// replace the data with zeroes; a good copy found later wins.
+inline void decode_track(std::vector<bool> const &bitstream, std::array<sector_read, SECTORS_PER_TRACK> &sectors)
+{
+	sectors.fill(sector_read());
+
+	size_t const size = bitstream.size();
+
+	if (size < 16)
+	{
+		return;
+	}
+
+	// a wrapped copy, so a sector crossing the index reads contiguously
+	std::vector<bool> track(bitstream);
+	track.insert(track.end(), bitstream.begin(), bitstream.end());
+
+	for (size_t pos = 0; pos < size; pos++)
+	{
+		uint8_t val;
+
+		if (!fm_byte_from_bitstream(track, pos, val) || (val != H17_SYNC_BYTE))
+		{
+			continue;
+		}
+
+		// header: volume, track, sector, checksum
+		uint8_t header[4];
+		size_t next = pos + 16;
+		bool complete = true;
+
+		for (uint8_t &b : header)
+		{
+			if (!fm_byte_from_bitstream(track, next, b))
+			{
+				complete = false;
+				break;
+			}
+
+			next += 16;
+		}
+
+		int const sector = header[2];
+
+		if (!complete || (sector >= SECTORS_PER_TRACK) || (h17_checksum(header, 3) != header[3]) || sectors[sector].data_valid)
+		{
+			continue;
+		}
+
+		size_t const search_end = next + (size_t(MAX_HEADER_TO_DATA_BYTES) * 16);
+
+		for (size_t sync_pos = next; sync_pos < search_end; sync_pos++)
+		{
+			if (!fm_byte_from_bitstream(track, sync_pos, val))
+			{
+				break;
+			}
+
+			if (val != H17_SYNC_BYTE)
+			{
+				continue;
+			}
+
+			size_t data_pos = sync_pos + 16;
+
+			std::array<uint8_t, SECTOR_DATA_SIZE> data;
+			complete = true;
+
+			for (uint8_t &b : data)
+			{
+				if (!fm_byte_from_bitstream(track, data_pos, b))
+				{
+					complete = false;
+					break;
+				}
+
+				data_pos += 16;
+			}
+
+			uint8_t checksum;
+
+			if (!complete || !fm_byte_from_bitstream(track, data_pos, checksum))
+			{
+				break;
+			}
+
+			bool const valid = h17_checksum(data.data(), data.size()) == checksum;
+
+			if (!sectors[sector].found || valid)
+			{
+				sector_read &out = sectors[sector];
+
+				out.found           = true;
+				out.data_valid      = valid;
+				out.volume          = header[0];
+				out.track           = header[1];
+				out.sector          = header[2];
+				out.header_checksum = header[3];
+				out.data_checksum   = checksum;
+				out.data            = data;
+			}
+
+			break;
+		}
+	}
 }
 
 } // namespace heath_h17

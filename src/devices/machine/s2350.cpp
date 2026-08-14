@@ -414,7 +414,9 @@ void s2350_device::tcp_w()
 		}
 		else
 		{
-			set_transmit_buffer_empty(false);
+			// the holding register has been taken, so it is free for the next
+			// character - the H17 boot ROM waits on this before loading one
+			set_transmit_buffer_empty(true);
 			set_fill_char_transmitted(false);
 			m_transmitter_shift_reg = m_transmitter_holding_reg;
 		}

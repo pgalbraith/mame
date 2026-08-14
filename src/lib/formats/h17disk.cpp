@@ -555,71 +555,6 @@ bool load_v1(util::random_read &io, format &fmt, std::vector<uint8_t> &img, std:
 	return false;
 }
 
-bool decode_sector(std::vector<bool> const &bitstream, int sector, std::array<uint8_t, SECTOR_METADATA_SIZE> &metadata, std::array<uint8_t, SECTOR_DATA_SIZE> &sector_data)
-{
-	size_t const sector_start = size_t(sector) * TRACK_SIZE / SECTORS_PER_TRACK;
-	size_t const sector_end = size_t(sector + 1) * TRACK_SIZE / SECTORS_PER_TRACK;
-
-	if (sector_end > bitstream.size())
-	{
-		return false;
-	}
-
-	for (size_t bit_offset = sector_start; bit_offset < (sector_start + 16); bit_offset++)
-	{
-		std::vector<uint8_t> bytes;
-
-		for (size_t pos = bit_offset; (pos + 16) <= sector_end; pos += 16)
-		{
-			uint8_t val;
-			if (!fm_byte_from_bitstream(bitstream, pos, val))
-			{
-				break;
-			}
-
-			bytes.push_back(val);
-		}
-
-		size_t header_sync = 0;
-		while ((header_sync < bytes.size()) && (bytes[header_sync] != H17_SYNC_BYTE))
-		{
-			header_sync++;
-		}
-
-		if ((header_sync + 5) > bytes.size())
-		{
-			continue;
-		}
-
-		size_t data_sync = header_sync + 5;
-		while ((data_sync < bytes.size()) && (bytes[data_sync] != H17_SYNC_BYTE))
-		{
-			data_sync++;
-		}
-
-		if ((data_sync + 1 + SECTOR_DATA_SIZE + 1) > bytes.size())
-		{
-			continue;
-		}
-
-		std::fill(metadata.begin(), metadata.end(), 0);
-		metadata[4] = 0;
-		metadata[5] = bytes[header_sync + 0];
-		metadata[6] = bytes[header_sync + 1];
-		metadata[7] = bytes[header_sync + 2];
-		metadata[8] = bytes[header_sync + 3];
-		metadata[9] = bytes[header_sync + 4];
-		metadata[10] = bytes[data_sync];
-		metadata[11] = bytes[data_sync + 1 + SECTOR_DATA_SIZE];
-		metadata[12] = 1;
-		metadata[13] = 0;
-		std::copy_n(&bytes[data_sync + 1], SECTOR_DATA_SIZE, sector_data.begin());
-		return true;
-	}
-
-	return false;
-}
-
 bool write_exact(util::random_read_write &io, uint64_t offset, void const *data, size_t length)
 {
 	auto const [err, actual] = write_at(io, offset, data, length);
@@ -660,7 +595,17 @@ int heath_h17d_format::identify(util::random_read &io, uint32_t form_factor, con
 {
 	h17_version version;
 
-	return validate_header(io, version) ? FIFID_SIGN : 0;
+	// Version 1 is handled by heath_h17d_v1_format, which does not save. Only
+	// version 2 is written, so claiming a version 1 image here would quietly
+	// rewrite it in the other version the first time the machine touched it.
+	return (validate_header(io, version) && (version == h17_version::v2)) ? FIFID_SIGN : 0;
+}
+
+int heath_h17d_v1_format::identify(util::random_read &io, uint32_t form_factor, const std::vector<uint32_t> &variants) const
+{
+	h17_version version;
+
+	return (validate_header(io, version) && (version == h17_version::v1)) ? FIFID_SIGN : 0;
 }
 
 bool heath_h17d_format::load(util::random_read &io, uint32_t form_factor, const std::vector<uint32_t> &variants, floppy_image &image) const
@@ -878,29 +823,54 @@ bool heath_h17d_format::save(util::random_read_write &io, const std::vector<uint
 	std::vector<uint8_t> h8db(sector_count * SECTOR_DATA_SIZE);
 	std::vector<uint8_t> secm(sector_count * SECTOR_METADATA_SIZE);
 
+	std::array<heath_h17::sector_read, SECTORS_PER_TRACK> sectors;
+
 	for (int head = 0; head < fmt.head_count; head++)
 	{
 		for (int track = 0; track < fmt.track_count; track++)
 		{
 			std::vector<bool> const bitstream = generate_bitstream_from_track(track, head, BITCELL_SIZE, image);
 
+			heath_h17::decode_track(bitstream, sectors);
+
 			for (int sector = 0; sector < SECTORS_PER_TRACK; sector++)
 			{
 				size_t const sector_index = sector + (track * fmt.head_count + head) * SECTORS_PER_TRACK;
+				heath_h17::sector_read const &found = sectors[sector];
 				std::array<uint8_t, SECTOR_METADATA_SIZE> metadata;
-				std::array<uint8_t, SECTOR_DATA_SIZE> sector_data;
 
-				if (!decode_sector(bitstream, sector, metadata, sector_data))
-				{
-					LOG_FORMATS("unable to decode H17D sector %d/%d/%d\n", head, track, sector);
-
-					return false;
-				}
+				metadata.fill(0);
 
 				uint32_t const data_offset = 256 + uint32_t(sector_index * SECTOR_DATA_SIZE);
 				put_be32(metadata.data(), data_offset);
 
-				std::copy(sector_data.begin(), sector_data.end(), h8db.begin() + (sector_index * SECTOR_DATA_SIZE));
+				// A sector that will not decode must not cost the whole image:
+				// the file this is replacing has already been truncated by the
+				// time save() is called, so returning here would leave nothing
+				// at all. Record it as empty and carry on.
+				if (!found.found)
+				{
+					LOG_FORMATS("unable to decode H17D sector %d/%d/%d\n", head, track, sector);
+				}
+				else
+				{
+					if (!found.data_valid)
+					{
+						LOG_FORMATS("bad data checksum on H17D sector %d/%d/%d\n", head, track, sector);
+					}
+
+					metadata[5]  = H17_SYNC_BYTE;
+					metadata[6]  = found.volume;
+					metadata[7]  = found.track;
+					metadata[8]  = found.sector;
+					metadata[9]  = found.header_checksum;
+					metadata[10] = H17_SYNC_BYTE;
+					metadata[11] = found.data_checksum;
+					metadata[12] = 1;
+
+					std::copy(found.data.begin(), found.data.end(), h8db.begin() + (sector_index * SECTOR_DATA_SIZE));
+				}
+
 				std::copy(metadata.begin(), metadata.end(), secm.begin() + (sector_index * SECTOR_METADATA_SIZE));
 			}
 		}
@@ -942,3 +912,4 @@ void heath_h17d_format::fm_reverse_byte_w(std::vector<uint32_t> &buffer, uint8_t
 }
 
 const heath_h17d_format FLOPPY_H17D_FORMAT;
+const heath_h17d_v1_format FLOPPY_H17D_V1_FORMAT;

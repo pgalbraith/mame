@@ -272,8 +272,11 @@ u8 heath_h17_fdc_base_device::floppy_status_r()
 		// stepping while bit 1 is clear.
 		val |= m_floppy->trk00_r() ? 0x00 : 0x02;
 
-		// disk is write-protected
-		val |= m_floppy->wpt_r() ? 0x00 : 0x04;
+		// Write protect, like TK00 above, is active low from the drive and
+		// inverted on the board, so bit 2 reads 1 for a protected disk.
+		// wpt_r() is already in that sense - it is set when the image is read
+		// only or its format cannot be saved - so it passes straight through.
+		val |= m_floppy->wpt_r() ? 0x04 : 0x00;
 	}
 	else
 	{
@@ -461,6 +464,7 @@ TIMER_CALLBACK_MEMBER(heath_h17_fdc_base_device::rx_timer_cb)
 void heath_h17_fdc_base_device::floppy_formats(format_registration &fr)
 {
 	fr.add(FLOPPY_H17D_FORMAT);
+	fr.add(FLOPPY_H17D_V1_FORMAT);
 	fr.add(FLOPPY_H8D_FORMAT);
 	fr.add(FLOPPY_MFI_FORMAT);
 }

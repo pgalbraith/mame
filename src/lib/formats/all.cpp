@@ -1557,6 +1557,7 @@ void mame_formats_full_list(mame_formats_enumerator &en)
 	en.category("Heath");
 #ifdef HAS_FORMATS_H17D_DSK
 	en.add(FLOPPY_H17D_FORMAT); // h17disk.h
+	en.add(FLOPPY_H17D_V1_FORMAT); // h17disk.h
 #endif
 #ifdef HAS_FORMATS_H8D_DSK
 	en.add(FLOPPY_H8D_FORMAT); // h8d_dsk.h

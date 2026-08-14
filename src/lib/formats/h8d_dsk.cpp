@@ -94,61 +94,6 @@ format find_format(uint64_t size, std::vector<uint32_t> const &variants)
 	return variants.empty() ? first_size_match : format{};
 }
 
-bool decode_sector_data(std::vector<bool> const &bitstream, int sector, std::array<uint8_t, SECTOR_DATA_SIZE> &sector_data)
-{
-	size_t const sector_start = size_t(sector) * TRACK_SIZE / SECTORS_PER_TRACK;
-	size_t const sector_end = size_t(sector + 1) * TRACK_SIZE / SECTORS_PER_TRACK;
-
-	if (sector_end > bitstream.size())
-	{
-		return false;
-	}
-
-	for (size_t bit_offset = sector_start; bit_offset < (sector_start + 16); bit_offset++)
-	{
-		std::vector<uint8_t> bytes;
-
-		for (size_t pos = bit_offset; (pos + 16) <= sector_end; pos += 16)
-		{
-			uint8_t val;
-			if (!fm_byte_from_bitstream(bitstream, pos, val))
-			{
-				break;
-			}
-
-			bytes.push_back(val);
-		}
-
-		// find header sync
-		size_t header_sync = 0;
-		while ((header_sync < bytes.size()) && (bytes[header_sync] != H17_SYNC_BYTE))
-		{
-			header_sync++;
-		}
-
-		if ((header_sync + 5) > bytes.size())
-		{
-			continue;
-		}
-
-		// find data sync after the 4-byte header (sync + volume + track + sector + checksum)
-		size_t data_sync = header_sync + 5;
-		while ((data_sync < bytes.size()) && (bytes[data_sync] != H17_SYNC_BYTE))
-		{
-			data_sync++;
-		}
-
-		if ((data_sync + 1 + SECTOR_DATA_SIZE) > bytes.size())
-		{
-			continue;
-		}
-
-		std::copy_n(&bytes[data_sync + 1], SECTOR_DATA_SIZE, sector_data.begin());
-		return true;
-	}
-
-	return false;
-}
 
 } // anonymous namespace
 
@@ -296,7 +241,7 @@ bool heath_h8d_format::save(util::random_read_write &io, const std::vector<uint3
 
 	std::vector<uint8_t> img(format_size(fmt), 0);
 
-	std::array<uint8_t, SECTOR_DATA_SIZE> sector_data;
+	std::array<heath_h17::sector_read, SECTORS_PER_TRACK> sectors;
 
 	for (int head = 0; head < fmt.head_count; head++)
 	{
@@ -304,16 +249,24 @@ bool heath_h8d_format::save(util::random_read_write &io, const std::vector<uint3
 		{
 			std::vector<bool> bitstream = generate_bitstream_from_track(track, head, BITCELL_SIZE, image);
 
+			heath_h17::decode_track(bitstream, sectors);
+
 			for (int sector = 0; sector < SECTORS_PER_TRACK; sector++)
 			{
 				int const data_offset = ((track * fmt.head_count + head) * SECTORS_PER_TRACK + sector) * SECTOR_DATA_SIZE;
 
-				if (decode_sector_data(bitstream, sector, sector_data))
+				if (sectors[sector].found)
 				{
-					std::copy(sector_data.begin(), sector_data.end(), &img[data_offset]);
+					std::copy(sectors[sector].data.begin(), sectors[sector].data.end(), &img[data_offset]);
+
+					if (!sectors[sector].data_valid)
+					{
+						LOG_FORMATS("H8D save: bad data checksum on track %d head %d sector %d\n", track, head, sector);
+					}
 				}
 				else
 				{
+					// nothing to write but the zeroes already there
 					LOG_FORMATS("H8D save: failed to decode track %d head %d sector %d\n", track, head, sector);
 				}
 			}
