@@ -76,6 +76,32 @@ enum {
 	Comm  = 0x6d6d6f43, //!< "Comm", Comment
 };
 
+// Version 1 uses a single byte block identifier rather than a four character
+// name.  These follow the identifiers HeathImager writes.
+enum {
+	V1_DISK_FORMAT = 0x00,
+	V1_PARAMETERS  = 0x01,
+	V1_LABEL       = 0x02,
+	V1_COMMENT     = 0x03,
+	V1_DATE        = 0x04,
+	V1_IMAGER      = 0x05,
+	V1_PROGRAM     = 0x06,
+	V1_DATA        = 0x10,
+	V1_RAW_DATA    = 0x30,
+};
+
+constexpr uint8_t V1_TRACK_SUB_BLOCK  = 0x11;
+constexpr uint8_t V1_SECTOR_SUB_BLOCK = 0x12;
+constexpr uint8_t V1_MANDATORY        = 0x80;
+
+// Header sizes: block identifier, flags and a four byte length for version 1
+// blocks; identifier, head, track and a two byte length for its track
+// sub-blocks; identifier, sector, error status and a two byte length for its
+// sector sub-blocks.
+constexpr int V1_BLOCK_HEADER_SIZE  = 6;
+constexpr int V1_TRACK_HEADER_SIZE  = 5;
+constexpr int V1_SECTOR_HEADER_SIZE = 5;
+
 uint32_t get_be32(uint8_t const *data)
 {
 	return (uint32_t(data[0]) << 24) | (uint32_t(data[1]) << 16) | (uint32_t(data[2]) << 8) | data[3];
@@ -103,7 +129,14 @@ void put_block_name(uint8_t *data, uint32_t val)
 }
 
 
-bool validate_header(util::random_read &io)
+enum class h17_version { v1, v2 };
+
+// Both versions start with the "H17D" tag followed by a three byte version
+// number, but they differ from there.  Version 1 records the version as binary
+// values and begins its blocks at offset 7, while version 2 records it as
+// ASCII digits, adds a 0xff byte to check the file has survived an 8-bit clean
+// path, and begins its blocks at offset 8.
+bool validate_header(util::random_read &io, h17_version &version)
 {
 	uint8_t h[8];
 	auto const [err, actual] = read_at(io, 0, h, sizeof(h));
@@ -113,9 +146,26 @@ bool validate_header(util::random_read &io)
 		return false;
 	}
 
-	return (h[0] == 'H') && (h[1] == '1') && (h[2] == '7') && (h[3] == 'D') &&
-		(h[4] == '2') && (h[5] >= '0') && (h[5] <= '9') && (h[6] >= '0') && (h[6] <= '9') &&
-		(h[7] == 0xff);
+	if ((h[0] != 'H') || (h[1] != '1') || (h[2] != '7') || (h[3] != 'D'))
+	{
+		return false;
+	}
+
+	if ((h[4] == '2') && (h[5] >= '0') && (h[5] <= '9') && (h[6] >= '0') && (h[6] <= '9') && (h[7] == 0xff))
+	{
+		version = h17_version::v2;
+
+		return true;
+	}
+
+	if (h[4] == 1)
+	{
+		version = h17_version::v1;
+
+		return true;
+	}
+
+	return false;
 }
 
 bool parse_blocks(util::random_read &io, h17disk_info &info)
@@ -247,6 +297,264 @@ void generate_sector_metadata(uint8_t *metadata, format const &fmt, std::vector<
 	metadata[15] = 0;
 }
 
+// Walk a version 1 data block.  Unlike version 2, which stores a bare image of
+// the user data, version 1 stores a dump of each physical sector, so the sector
+// headers can be taken from the disk rather than being manufactured.  Unpack
+// those dumps into the raw sector image and a metadata array laid out like a
+// version 2 SecM block, which is what the loader works from.  Offsets recorded
+// in the metadata are relative to img.
+//
+// The dumps are longer than a sector's share of a track - the imager captures
+// some slack either side - so they cannot be written to the track verbatim.
+bool unpack_v1_sectors(std::vector<uint8_t> const &block, format const &fmt,
+		std::vector<uint8_t> &img, std::vector<uint8_t> &secm)
+{
+	int const sector_count = fmt.head_count * fmt.track_count * SECTORS_PER_TRACK;
+
+	img.assign(size_t(sector_count) * SECTOR_DATA_SIZE, 0);
+	secm.assign(size_t(sector_count) * SECTOR_METADATA_SIZE, 0);
+
+	size_t pos = 0;
+
+	while ((pos + V1_TRACK_HEADER_SIZE) <= block.size())
+	{
+		if (block[pos] != V1_TRACK_SUB_BLOCK)
+		{
+			LOG_FORMATS("H17D v1: expected track sub-block at %d\n", int(pos));
+
+			return false;
+		}
+
+		int const head = block[pos + 1];
+		int const track = block[pos + 2];
+		size_t const track_length = (size_t(block[pos + 3]) << 8) | block[pos + 4];
+		size_t sect_pos = pos + V1_TRACK_HEADER_SIZE;
+		size_t const track_end = sect_pos + track_length;
+
+		if ((head >= fmt.head_count) || (track >= fmt.track_count) || (track_end > block.size()))
+		{
+			LOG_FORMATS("H17D v1: bad track sub-block %d/%d at %d\n", head, track, int(pos));
+
+			return false;
+		}
+
+		while ((sect_pos + V1_SECTOR_HEADER_SIZE) <= track_end)
+		{
+			if (block[sect_pos] != V1_SECTOR_SUB_BLOCK)
+			{
+				LOG_FORMATS("H17D v1: expected sector sub-block at %d\n", int(sect_pos));
+
+				return false;
+			}
+
+			uint8_t const status = block[sect_pos + 2];
+			size_t const sect_length = (size_t(block[sect_pos + 3]) << 8) | block[sect_pos + 4];
+			size_t const data_pos = sect_pos + V1_SECTOR_HEADER_SIZE;
+
+			if ((data_pos + sect_length) > track_end)
+			{
+				LOG_FORMATS("H17D v1: sector sub-block overruns track at %d\n", int(sect_pos));
+
+				return false;
+			}
+
+			// The dump holds the sector as it appears on the disk: a run of
+			// zeros, the header sync byte, the volume, track and sector
+			// numbers and their checksum, more zeros, the data sync byte, the
+			// data and its checksum.
+			size_t hdr = data_pos;
+			while ((hdr < (data_pos + sect_length)) && (block[hdr] != H17_SYNC_BYTE))
+			{
+				hdr++;
+			}
+
+			if ((hdr + 5) > (data_pos + sect_length))
+			{
+				LOG_FORMATS("H17D v1: no header sync in sector at %d\n", int(sect_pos));
+
+				return false;
+			}
+
+			int const sector = block[hdr + 3];
+
+			if (sector >= SECTORS_PER_TRACK)
+			{
+				LOG_FORMATS("H17D v1: header sector %d out of range at %d\n", sector, int(sect_pos));
+
+				return false;
+			}
+
+			size_t data = hdr + 5;
+			while ((data < (data_pos + sect_length)) && (block[data] != H17_SYNC_BYTE))
+			{
+				data++;
+			}
+
+			if ((data + 1 + SECTOR_DATA_SIZE) > (data_pos + sect_length))
+			{
+				LOG_FORMATS("H17D v1: no data sync in sector at %d\n", int(sect_pos));
+
+				return false;
+			}
+
+			int const sector_index = ((track * fmt.head_count) + head) * SECTORS_PER_TRACK + sector;
+			uint32_t const img_offset = uint32_t(sector_index) * SECTOR_DATA_SIZE;
+			uint8_t *const metadata = &secm[size_t(sector_index) * SECTOR_METADATA_SIZE];
+
+			std::memcpy(&img[img_offset], &block[data + 1], SECTOR_DATA_SIZE);
+
+			put_be32(metadata, img_offset);
+			metadata[4]  = status;
+			metadata[5]  = H17_SYNC_BYTE;
+			metadata[6]  = block[hdr + 1];  // volume
+			metadata[7]  = block[hdr + 2];  // track
+			metadata[8]  = block[hdr + 3];  // sector
+			metadata[9]  = block[hdr + 4];  // header checksum
+			metadata[10] = H17_SYNC_BYTE;
+			metadata[11] = block[data + 1 + SECTOR_DATA_SIZE];  // data checksum
+			metadata[12] = 1;               // 0x0100 valid bytes
+			metadata[13] = 0;
+			metadata[14] = 0;
+			metadata[15] = 0;
+
+			sect_pos = data_pos + sect_length;
+		}
+
+		pos = track_end;
+	}
+
+	return pos == block.size();
+}
+
+// Version 1 blocks have a one byte identifier, a flags byte whose top bit marks
+// the block as mandatory to process, and a four byte length.  Only the data
+// block has to be present; the disk format block may be omitted, in which case
+// its defaults apply.
+bool load_v1(util::random_read &io, format &fmt, std::vector<uint8_t> &img, std::vector<uint8_t> &secm)
+{
+	uint64_t file_size;
+
+	if (io.length(file_size) || (file_size < 7))
+	{
+		return false;
+	}
+
+	int head_count = 1;
+	int track_count = 40;
+	std::vector<uint8_t> data_block;
+	bool have_data = false;
+	uint64_t pos = 7;
+
+	while ((pos + V1_BLOCK_HEADER_SIZE) <= file_size)
+	{
+		uint8_t header[V1_BLOCK_HEADER_SIZE];
+		auto const [err, actual] = read_at(io, pos, header, sizeof(header));
+
+		if (err || (actual != sizeof(header)))
+		{
+			return false;
+		}
+
+		uint8_t const id = header[0];
+		uint8_t const flags = header[1];
+		uint32_t const length = get_be32(&header[2]);
+		uint64_t const data_pos = pos + V1_BLOCK_HEADER_SIZE;
+		uint64_t const next_pos = data_pos + length;
+
+		if (next_pos > file_size)
+		{
+			LOG_FORMATS("H17D v1 block 0x%02x overruns file\n", id);
+
+			return false;
+		}
+
+		switch (id)
+		{
+		case V1_DISK_FORMAT:
+			{
+				if (length < 2)
+				{
+					LOG_FORMATS("H17D v1 disk format block too short %d\n", length);
+
+					return false;
+				}
+
+				uint8_t buf[2];
+				auto const [derr, dactual] = read_at(io, data_pos, buf, sizeof(buf));
+
+				if (derr || (dactual != sizeof(buf)))
+				{
+					return false;
+				}
+
+				head_count = buf[0];
+				track_count = buf[1];
+			}
+			break;
+
+		case V1_DATA:
+			{
+				data_block.resize(length);
+				auto const [derr, dactual] = read_at(io, data_pos, data_block.data(), data_block.size());
+
+				if (derr || (dactual != data_block.size()))
+				{
+					LOG_FORMATS("unable to read H17D v1 data block\n");
+
+					return false;
+				}
+
+				have_data = true;
+			}
+			break;
+
+		case V1_PARAMETERS:
+		case V1_LABEL:
+		case V1_COMMENT:
+		case V1_DATE:
+		case V1_IMAGER:
+		case V1_PROGRAM:
+		case V1_RAW_DATA:
+			// nothing here needs them to rebuild the disk
+			break;
+
+		default:
+			// an unknown block only matters if the writer marked it as
+			// something a reader has to understand
+			if (flags & V1_MANDATORY)
+			{
+				LOG_FORMATS("unknown mandatory H17D v1 block 0x%02x\n", id);
+
+				return false;
+			}
+			break;
+		}
+
+		pos = next_pos;
+	}
+
+	if ((pos != file_size) || !have_data)
+	{
+		LOG_FORMATS("invalid H17D v1 block structure\n");
+
+		return false;
+	}
+
+	for (int i = 0; formats[i].head_count; i++)
+	{
+		if ((formats[i].head_count == head_count) && (formats[i].track_count == track_count))
+		{
+			fmt = formats[i];
+
+			return unpack_v1_sectors(data_block, fmt, img, secm);
+		}
+	}
+
+	LOG_FORMATS("invalid H17D v1 geometry - heads: %d, tracks: %d\n", head_count, track_count);
+
+	return false;
+}
+
 bool decode_sector(std::vector<bool> const &bitstream, int sector, std::array<uint8_t, SECTOR_METADATA_SIZE> &metadata, std::array<uint8_t, SECTOR_DATA_SIZE> &sector_data)
 {
 	size_t const sector_start = size_t(sector) * TRACK_SIZE / SECTORS_PER_TRACK;
@@ -350,63 +658,123 @@ heath_h17d_format::heath_h17d_format() : floppy_image_format_t()
 
 int heath_h17d_format::identify(util::random_read &io, uint32_t form_factor, const std::vector<uint32_t> &variants) const
 {
-	return validate_header(io) ? FIFID_SIGN : 0;
+	h17_version version;
+
+	return validate_header(io, version) ? FIFID_SIGN : 0;
 }
 
 bool heath_h17d_format::load(util::random_read &io, uint32_t form_factor, const std::vector<uint32_t> &variants, floppy_image &image) const
 {
-	h17disk_info info;
+	h17_version version;
 
-	if (!validate_header(io) || !parse_blocks(io, info))
+	if (!validate_header(io, version))
 	{
-		LOG_FORMATS("invalid H17D header or block structure\n");
+		LOG_FORMATS("invalid H17D header\n");
 
 		return false;
 	}
 
-	const format fmt = find_format(io, info);
+	format fmt{};
+	std::vector<uint8_t> img;
 
-	if (!fmt.head_count)
+	// per-sector metadata laid out as a version 2 SecM block, left empty when
+	// the file does not carry any and it has to be manufactured instead
+	std::vector<uint8_t> secm;
+
+	if (version == h17_version::v1)
 	{
-		LOG_FORMATS("invalid format\n");
-
-		return false;
+		if (!load_v1(io, fmt, img, secm))
+		{
+			return false;
+		}
 	}
-
-	if (info.h8db.length != format_size(fmt))
+	else
 	{
-		LOG_FORMATS("invalid H8DB length %d\n", info.h8db.length);
+		h17disk_info info;
 
-		return false;
-	}
+		if (!parse_blocks(io, info))
+		{
+			LOG_FORMATS("invalid H17D block structure\n");
 
-	if (info.h8db.pos != 256)
-	{
-		LOG_FORMATS("H8DB data does not start at offset 256\n");
+			return false;
+		}
 
-		return false;
-	}
+		fmt = find_format(io, info);
 
-	if (info.secm.pos && (info.secm.length < (fmt.head_count * fmt.track_count * SECTORS_PER_TRACK * SECTOR_METADATA_SIZE)))
-	{
-		LOG_FORMATS("SecM block too small %d\n", info.secm.length);
+		if (!fmt.head_count)
+		{
+			LOG_FORMATS("invalid format\n");
 
-		return false;
+			return false;
+		}
+
+		if (info.h8db.length != format_size(fmt))
+		{
+			LOG_FORMATS("invalid H8DB length %d\n", info.h8db.length);
+
+			return false;
+		}
+
+		if (info.h8db.pos != 256)
+		{
+			LOG_FORMATS("H8DB data does not start at offset 256\n");
+
+			return false;
+		}
+
+		int const sector_count = fmt.head_count * fmt.track_count * SECTORS_PER_TRACK;
+
+		if (info.secm.pos && (info.secm.length < (sector_count * SECTOR_METADATA_SIZE)))
+		{
+			LOG_FORMATS("SecM block too small %d\n", info.secm.length);
+
+			return false;
+		}
+
+		img.resize(info.h8db.length);
+		auto const [img_err, img_actual] = read_at(io, info.h8db.pos, img.data(), img.size());
+
+		if (img_err || (img_actual != img.size()))
+		{
+			LOG_FORMATS("unable to read H8DB data\n");
+
+			return false;
+		}
+
+		if (info.secm.pos)
+		{
+			secm.resize(size_t(sector_count) * SECTOR_METADATA_SIZE);
+			auto const [err, actual] = read_at(io, info.secm.pos, secm.data(), secm.size());
+
+			if (err || (actual != secm.size()))
+			{
+				LOG_FORMATS("unable to read sector metadata\n");
+
+				return false;
+			}
+
+			// rebase the recorded file offsets onto img so both versions look
+			// the same to the loop below
+			for (int i = 0; i < sector_count; i++)
+			{
+				uint8_t *const metadata = &secm[size_t(i) * SECTOR_METADATA_SIZE];
+				uint32_t const sector_data_pos = get_be32(metadata);
+
+				if (sector_data_pos < info.h8db.pos)
+				{
+					LOG_FORMATS("sect data offset points before H8DB %d: %d\n", i, sector_data_pos);
+
+					return false;
+				}
+
+				put_be32(metadata, uint32_t(sector_data_pos - info.h8db.pos));
+			}
+		}
 	}
 
 	image.set_variant(fmt.variant);
 
 	std::vector<uint32_t> buf;
-
-	std::vector<uint8_t> img(info.h8db.length);
-	auto const [img_err, img_actual] = read_at(io, info.h8db.pos, img.data(), img.size());
-
-	if (img_err || (img_actual != img.size()))
-	{
-		LOG_FORMATS("unable to read H8DB data\n");
-
-		return false;
-	}
 
 	uint8_t sector_meta_data[SECTOR_METADATA_SIZE];
 	uint8_t sector_data[SECTOR_DATA_SIZE];
@@ -418,41 +786,21 @@ bool heath_h17d_format::load(util::random_read &io, uint32_t form_factor, const 
 			for (int sector = 0; sector < SECTORS_PER_TRACK; sector++)
 			{
 				int const sector_index = sector + (track * fmt.head_count + head) * SECTORS_PER_TRACK;
-				int data_offset;
 
-				if (info.secm.pos)
+				if (!secm.empty())
 				{
-					uint64_t const sect_meta_pos = uint64_t(sector_index) * SECTOR_METADATA_SIZE + info.secm.pos;
-
-					auto const [err, actual] = read_at(io, sect_meta_pos, sector_meta_data, SECTOR_METADATA_SIZE);
-
-					if (err || (actual != SECTOR_METADATA_SIZE))
-					{
-						LOG_FORMATS("unable to read sect meta data %d/%d/%d\n", head, track, sector);
-
-						return false;
-					}
-
-					uint32_t const sector_data_pos = get_be32(sector_meta_data);
-
-					if (sector_data_pos < info.h8db.pos)
-					{
-						LOG_FORMATS("sect data offset points before H8DB %d/%d/%d: %d\n", head, track, sector, sector_data_pos);
-
-						return false;
-					}
-
-					data_offset = sector_data_pos - info.h8db.pos;
+					std::memcpy(sector_meta_data, &secm[size_t(sector_index) * SECTOR_METADATA_SIZE], SECTOR_METADATA_SIZE);
 				}
 				else
 				{
 					generate_sector_metadata(sector_meta_data, fmt, img, head, track, sector);
-					data_offset = get_be32(sector_meta_data);
 				}
 
-				if ((data_offset < 0) || ((data_offset + SECTOR_DATA_SIZE) > img.size()))
+				uint64_t const data_offset = get_be32(sector_meta_data);
+
+				if ((data_offset + SECTOR_DATA_SIZE) > img.size())
 				{
-					LOG_FORMATS("invalid sect data offset %d/%d/%d: %d\n", head, track, sector, data_offset);
+					LOG_FORMATS("invalid sect data offset %d/%d/%d: %d\n", head, track, sector, int(data_offset));
 
 					return false;
 				}
