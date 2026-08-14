@@ -50,6 +50,7 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_reset() override ATTR_COLD;
 	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
+	virtual ioport_constructor device_input_ports() const override ATTR_COLD;
 	virtual void map_io(address_space_installer & space) override ATTR_COLD;
 
 	void uart_rts(u8 data);
@@ -61,12 +62,15 @@ protected:
 
 	required_device<i8251_device>          m_uart;
 	required_device<i8251_device>          m_console;
+	required_device<clock_device>          m_console_clock;
 	required_device<cassette_image_device> m_cass_player;
 	required_device<cassette_image_device> m_cass_recorder;
+	required_ioport                        m_jumpers;
 
 	u8   m_cass_data[4];
 	bool m_cassbit;
 	bool m_cassold;
+	u8   m_console_intr_level;
 };
 
 h_8_5_device::h_8_5_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
@@ -74,8 +78,10 @@ h_8_5_device::h_8_5_device(const machine_config &mconfig, const char *tag, devic
 	, device_h8bus_card_interface(mconfig, *this)
 	, m_uart(*this, "uart")
 	, m_console(*this, "console")
+	, m_console_clock(*this, "console_clock")
 	, m_cass_player(*this, "cassette_player")
 	, m_cass_recorder(*this, "cassette_recorder")
+	, m_jumpers(*this, "JUMPERS")
 {
 }
 
@@ -132,7 +138,17 @@ void h_8_5_device::irq_callback(int state)
 {
 	LOGFUNC("%s: state: %d\n", FUNCNAME, state);
 
-	set_slot_int3(state);
+	switch (m_console_intr_level)
+	{
+		case 3: set_slot_int3(state); break;
+		case 4: set_slot_int4(state); break;
+		case 5: set_slot_int5(state); break;
+		case 6: set_slot_int6(state); break;
+		case 7: set_slot_int7(state); break;
+
+		// no wire fitted to the interrupt level holes
+		default: break;
+	}
 }
 
 void h_8_5_device::device_start()
@@ -140,6 +156,7 @@ void h_8_5_device::device_start()
 	save_item(NAME(m_cass_data));
 	save_item(NAME(m_cassbit));
 	save_item(NAME(m_cassold));
+	save_item(NAME(m_console_intr_level));
 }
 
 void h_8_5_device::device_reset()
@@ -157,6 +174,65 @@ void h_8_5_device::device_reset()
 	m_uart->write_cts(0);
 	m_uart->write_dsr(0);
 	m_uart->write_rxd(0);
+
+	// The serial I/O speed is wired, not programmed: a 4 MHz crystal is
+	// divided down (IC113 by 13, IC114 by 16, IC115 by 11, IC116 by 2 and 8)
+	// and a jumper carries one of the taps to the console USART, which runs at
+	// 16X the baud rate. The board brings all eight out to lettered holes, and
+	// has separate ones for "SERIAL I/O Rx SPEED" and "SERIAL I/O Tx SPEED";
+	// only the pair set the same is useful, so one selection drives both here.
+	static constexpr u32 BAUD_RATES[] = { 110, 150, 300, 600, 1200, 2400, 4800, 9600 };
+
+	ioport_value const jumpers(m_jumpers->read());
+
+	m_console_clock->set_unscaled_clock(BAUD_RATES[jumpers & 0x07] * 16);
+
+	// Which condition raises an interrupt, and on which bus level, are wires
+	// too: an INT ON/INT OFF pair gates IC129, whose four inputs are the
+	// USART's TxE, SYN, TxRDY and RxRDY, and the output goes to lettered holes
+	// for INT3 through INT7. Only RxRDY is modelled as a source here.
+	m_console_intr_level = (jumpers >> 3) & 0x07;
+}
+
+static INPUT_PORTS_START( h_8_5_jumpers )
+
+	PORT_START("JUMPERS")
+	// 9600 to match what a terminal on this port comes up at - the H-19's own
+	// SW401, and the generic rs232 options alike. The 600 baud that used to be
+	// fixed here looks to have suited the generic "terminal" this port once
+	// defaulted to, which does take RS232_ input defaults; the H-19 option
+	// keeps its rate on SW401 instead, which those defaults do not reach.
+	// Which tap Heath had you wire is not recorded here; the assembly manual
+	// would settle it.
+	PORT_CONFNAME(0x07, 0x07, "Serial I/O speed")
+	PORT_CONFSETTING(   0x00, "110")
+	PORT_CONFSETTING(   0x01, "150")
+	PORT_CONFSETTING(   0x02, "300")
+	PORT_CONFSETTING(   0x03, "600")
+	PORT_CONFSETTING(   0x04, "1200")
+	PORT_CONFSETTING(   0x05, "2400")
+	PORT_CONFSETTING(   0x06, "4800")
+	PORT_CONFSETTING(   0x07, "9600")
+
+	// Off by default: HDOS polls the console, and with a level wired the first
+	// character received asserts RxRDY, nothing clears it, and the machine
+	// livelocks taking the interrupt. A fixed level 3 was here before, which
+	// little would have exercised - booting a disk OS on an H8 only became
+	// possible with the H-8-17. Which way Heath had this wired is not recorded
+	// here either.
+	PORT_CONFNAME(0x38, 0x00, "Console interrupt")
+	PORT_CONFSETTING(   0x00, DEF_STR( Off ))
+	PORT_CONFSETTING(   0x18, "Level 3")
+	PORT_CONFSETTING(   0x20, "Level 4")
+	PORT_CONFSETTING(   0x28, "Level 5")
+	PORT_CONFSETTING(   0x30, "Level 6")
+	PORT_CONFSETTING(   0x38, "Level 7")
+
+INPUT_PORTS_END
+
+ioport_constructor h_8_5_device::device_input_ports() const
+{
+	return INPUT_PORTS_NAME(h_8_5_jumpers);
 }
 
 void h_8_5_device::map_io(address_space_installer & space)
@@ -171,18 +247,6 @@ void h_8_5_device::map_io(address_space_installer & space)
 		write8sm_delegate(m_console, FUNC(i8251_device::write))
 	);
 }
-
-
-// The usual baud rate is 600. The H8 supported baud rates from 110 to
-// 9600. You can change the baud rate if it is changed here and in the
-// other places that specify 600 baud.
-static DEVICE_INPUT_DEFAULTS_START(h19)
-	DEVICE_INPUT_DEFAULTS("RS232_RXBAUD",   0xff, RS232_BAUD_600)
-	DEVICE_INPUT_DEFAULTS("RS232_TXBAUD",   0xff, RS232_BAUD_600)
-	DEVICE_INPUT_DEFAULTS("RS232_DATABITS", 0xff, RS232_DATABITS_8)
-	DEVICE_INPUT_DEFAULTS("RS232_PARITY",   0xff, RS232_PARITY_NONE)
-	DEVICE_INPUT_DEFAULTS("RS232_STOPBITS", 0xff, RS232_STOPBITS_1)
-DEVICE_INPUT_DEFAULTS_END
 
 
 void h_8_5_device::device_add_mconfig(machine_config &config)
@@ -201,19 +265,18 @@ void h_8_5_device::device_add_mconfig(machine_config &config)
 	m_console->txd_handler().set("rs232", FUNC(rs232_port_device::write_txd));
 	m_console->rts_handler().set("rs232", FUNC(rs232_port_device::write_rts));
 	m_console->dtr_handler().set("rs232", FUNC(rs232_port_device::write_dtr));
-	// The RxRdy pin on the 8251 USART is normally jumpered to generate a level 3 i/o interrupt.
+	// RxRdy only reaches the bus if a level is jumpered; see device_reset.
 	m_console->rxrdy_handler().set(FUNC(h_8_5_device::irq_callback));
 
-	// Console UART clock is 16X the baud rate.
-	clock_device &console_clock(CLOCK(config, "console_clock", 600*16));
-	console_clock.signal_handler().set(m_console, FUNC(i8251_device::write_txc));
-	console_clock.signal_handler().append(m_console, FUNC(i8251_device::write_rxc));
+	// Rate comes from the JUMPERS port in device_reset; see the note there.
+	CLOCK(config, m_console_clock, 0);
+	m_console_clock->signal_handler().set(m_console, FUNC(i8251_device::write_txc));
+	m_console_clock->signal_handler().append(m_console, FUNC(i8251_device::write_rxc));
 
 	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "h19"));
 	rs232.rxd_handler().set(m_console, FUNC(i8251_device::write_rxd));
 	rs232.cts_handler().set(m_console, FUNC(i8251_device::write_cts));
 	rs232.dsr_handler().set(m_console, FUNC(i8251_device::write_dsr));
-	rs232.set_option_device_input_defaults("h19", DEVICE_INPUT_DEFAULTS_NAME(h19));
 
 	SPEAKER(config, "mono").front_center();
 
