@@ -5,20 +5,20 @@
   Heathkit H-17 Floppy Disk Controller
 
 
-  Model number: H-88-1
+  Model number: H-8-17
 
-  The controller itself is shared with the H8's H-8-17 card, see
+  The controller itself is shared with the H89's H-88-1 card, see
   bus/heathzenith/h17/h17_fdc_base.h for the TODOs against it.
 
 ****************************************************************************/
 
-#ifndef MAME_BUS_HEATHZENITH_H89_H17_FDC_H
-#define MAME_BUS_HEATHZENITH_H89_H17_FDC_H
+#ifndef MAME_BUS_HEATHZENITH_H8_H_8_17_H
+#define MAME_BUS_HEATHZENITH_H8_H_8_17_H
 
 #pragma once
 
-#include "h89bus.h"
+#include "h8bus.h"
 
-DECLARE_DEVICE_TYPE(H89BUS_H_17_FDC, device_h89bus_right_card_interface)
+DECLARE_DEVICE_TYPE(H8BUS_H_8_17, device_h8bus_card_interface)
 
-#endif // MAME_BUS_HEATHZENITH_H89_H17_FDC_H
+#endif // MAME_BUS_HEATHZENITH_H8_H_8_17_H
