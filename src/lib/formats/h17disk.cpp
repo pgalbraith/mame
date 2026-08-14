@@ -717,6 +717,20 @@ bool heath_h17d_format::load(util::random_read &io, uint32_t form_factor, const 
 		}
 	}
 
+	// The drive fixes how big the image is, and get_buffer() only asserts its
+	// bounds in a debug build, so a disk carrying more heads or tracks than the
+	// drive holds would otherwise be generated straight past the end of the
+	// track array.
+	int max_tracks, max_heads;
+	image.get_maximal_geometry(max_tracks, max_heads);
+
+	if ((fmt.head_count > max_heads) || (fmt.track_count > max_tracks))
+	{
+		LOG_FORMATS("%d head %d track image does not fit a %d head %d track drive\n", fmt.head_count, fmt.track_count, max_heads, max_tracks);
+
+		return false;
+	}
+
 	image.set_variant(fmt.variant);
 
 	std::vector<uint32_t> buf;
