@@ -1085,6 +1085,7 @@ if opt_tool(FORMATS, "H17D_DSK") then
 	files {
 		MAME_DIR.. "src/lib/formats/h17disk.cpp",
 		MAME_DIR.. "src/lib/formats/h17disk.h",
+		MAME_DIR.. "src/lib/formats/h17_common.h",
 	}
 end
 
@@ -1097,6 +1098,7 @@ if opt_tool(FORMATS, "H8D_DSK") then
 	files {
 		MAME_DIR.. "src/lib/formats/h8d_dsk.cpp",
 		MAME_DIR.. "src/lib/formats/h8d_dsk.h",
+		MAME_DIR.. "src/lib/formats/h17_common.h",
 	}
 end
 

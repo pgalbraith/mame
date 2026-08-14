@@ -12,6 +12,7 @@ See https://sebhc.github.io/sebhc/h8d.html for the raw sector layout.
 
 #include "h8d_dsk.h"
 
+#include "h17_common.h"
 #include "imageutl.h"
 
 #include "ioprocs.h"
@@ -22,24 +23,14 @@ See https://sebhc.github.io/sebhc/h8d.html for the raw sector layout.
 
 namespace {
 
-// Cell timings.  fm_w() emits two half-cells of BITCELL_SIZE ns per data bit,
-// so TRACK_SIZE half-cells make up the 200ms revolution of a 300 RPM drive.
-//
-// UNRESOLVED: this works out to a 125 kbps data rate and 3125 bytes/track,
-// whereas the H17 controller's USRT clock (12.288MHz / 6 / 16 = 128 kHz)
-// implies 128 kbps, a 3906.25ns half-cell and ~3200 bytes/track -- which is
-// also the figure the drive's published capacity suggests.  Both give the
-// correct 200ms revolution, and the controller's read PLL absorbs the 2.4%
-// difference (sectors decode byte-exact), so nothing is visibly broken.  But
-// one of the two figures is wrong, and h17disk.cpp carries the same constants.
-// Settling it would remove the standing mismatch between the media written
-// here and the rate heath_h17_fdc_device::fm_cell_time() reads at.
-constexpr int TRACK_SIZE        = 50'000;
-constexpr int BITCELL_SIZE      = 4000;
-
-constexpr int SECTOR_DATA_SIZE  = 256;
-constexpr int SECTORS_PER_TRACK = 10;
-constexpr uint8_t H17_SYNC_BYTE = 0xfd;
+using heath_h17::BITCELL_SIZE;
+using heath_h17::H17_SYNC_BYTE;
+using heath_h17::SECTORS_PER_TRACK;
+using heath_h17::SECTOR_DATA_SIZE;
+using heath_h17::TRACK_SIZE;
+using heath_h17::fm_byte_from_bitstream;
+using heath_h17::h17_checksum;
+using heath_h17::is_hdos;
 
 struct format {
 	int      head_count;
@@ -101,97 +92,6 @@ format find_format(uint64_t size, std::vector<uint32_t> const &variants)
 	}
 
 	return variants.empty() ? first_size_match : format{};
-}
-
-// H17 checksum: D = RLCA(byte XOR D) per byte, matching the ROM's RDB/WNB routines.
-// The sync byte resets D to 0 before header or data bytes are accumulated.
-uint8_t h17_checksum(uint8_t const *data, size_t length)
-{
-	uint8_t d = 0;
-
-	for (size_t i = 0; i < length; i++)
-	{
-		uint8_t const x = d ^ data[i];
-		d = uint8_t((x << 1) | (x >> 7));  // RLCA
-	}
-
-	return d;
-}
-
-bool is_hdos(std::vector<uint8_t> const &img, uint8_t &lab_ser)
-{
-	if (img.size() < 0x0a00)
-	{
-		return false;
-	}
-
-	uint8_t const *const label = &img[0x0900]; // track 0, sector 9
-	uint8_t const lab_vlt = label[0x08];
-	uint8_t const lab_ver = label[0x09];
-
-	// LAB.VLT: 0=data, 1=system, 2=no directory.
-	if (lab_vlt > 2)
-	{
-		return false;
-	}
-
-	if (!((lab_ver == 0x16) || (lab_ver == 0x17) || (lab_ver == 0x20) || ((lab_ver >= 0x30) && (lab_ver <= 0x39))))
-	{
-		return false;
-	}
-
-	int printable = 0;
-	for (int i = 0; i < 60; i++)
-	{
-		uint8_t const c = label[0x11 + i];
-
-		if (c == 0)
-		{
-			break;
-		}
-
-		if ((c == '\r') || (c == '\n') || (c == '\t') || ((c >= 0x20) && (c <= 0x7e)))
-		{
-			printable++;
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-	if (printable < 3)
-	{
-		return false;
-	}
-
-	lab_ser = label[0x00];
-	return true;
-}
-
-uint8_t reverse_byte(uint8_t val)
-{
-	constexpr unsigned char lookup[16] = { 0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe, 0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf };
-
-	return lookup[val & 0x0f] << 4 | lookup[val >> 4];
-}
-
-bool fm_byte_from_bitstream(std::vector<bool> const &bitstream, size_t pos, uint8_t &val)
-{
-	if ((pos + 16) > bitstream.size())
-	{
-		return false;
-	}
-
-	uint8_t result = 0;
-
-	for (int i = 0; i < 8; i++)
-	{
-		result = (result << 1) | (bitstream[pos + (i * 2) + 1] ? 1 : 0);
-	}
-
-	val = reverse_byte(result);
-	return true;
 }
 
 bool decode_sector_data(std::vector<bool> const &bitstream, int sector, std::array<uint8_t, SECTOR_DATA_SIZE> &sector_data)
@@ -426,9 +326,7 @@ bool heath_h8d_format::save(util::random_read_write &io, const std::vector<uint3
 
 void heath_h8d_format::fm_reverse_byte_w(std::vector<uint32_t> &buffer, uint8_t val) const
 {
-	constexpr unsigned char lookup[16] = { 0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe, 0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf };
-
-	fm_w(buffer, 8, lookup[val & 0x0f] << 4 | lookup[val >> 4], BITCELL_SIZE);
+	fm_w(buffer, 8, heath_h17::reverse_byte(val), BITCELL_SIZE);
 }
 
 const heath_h8d_format FLOPPY_H8D_FORMAT;

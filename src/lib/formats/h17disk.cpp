@@ -12,6 +12,7 @@ Heath H17D disk image format (version 2.0.0)
 
 #include "h17disk.h"
 
+#include "h17_common.h"
 #include "imageutl.h"
 
 #include "ioprocs.h"
@@ -24,17 +25,17 @@ Heath H17D disk image format (version 2.0.0)
 
 namespace {
 
-// See the note on these constants in h8d_dsk.cpp: the resulting 125 kbps data
-// rate does not agree with the 128 kbps implied by the H17 controller's USRT
-// clock.  Kept identical in both formats so they stay in step.
-constexpr int TRACK_SIZE           = 50'000;
-constexpr int BITCELL_SIZE         = 4000;
+using heath_h17::BITCELL_SIZE;
+using heath_h17::H17_SYNC_BYTE;
+using heath_h17::SECTORS_PER_TRACK;
+using heath_h17::SECTOR_DATA_SIZE;
+using heath_h17::TRACK_SIZE;
+using heath_h17::fm_byte_from_bitstream;
+using heath_h17::h17_checksum;
+using heath_h17::is_hdos;
+using heath_h17::reverse_byte;
 
 constexpr int SECTOR_METADATA_SIZE = 16;
-
-constexpr int SECTOR_DATA_SIZE     = 256;
-constexpr int SECTORS_PER_TRACK    = 10;
-constexpr uint8_t H17_SYNC_BYTE    = 0xfd;
 
 struct format {
 	int      head_count;
@@ -101,29 +102,6 @@ void put_block_name(uint8_t *data, uint32_t val)
 	data[3] = val >> 24;
 }
 
-uint8_t reverse_byte(uint8_t val)
-{
-	constexpr unsigned char lookup[16] = { 0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe, 0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf };
-
-	return lookup[val & 0x0f] << 4 | lookup[val >> 4];
-}
-
-uint8_t checksum(uint8_t const *data, size_t length)
-{
-	uint8_t sum = 0;
-
-	for (size_t i = 0; i < length; i++)
-	{
-		sum += data[i];
-	}
-
-	return -sum;
-}
-
-uint8_t checksum(uint8_t val0, uint8_t val1, uint8_t val2, uint8_t val3)
-{
-	return -(val0 + val1 + val2 + val3);
-}
 
 bool validate_header(util::random_read &io)
 {
@@ -247,31 +225,6 @@ uint64_t format_size(format const &fmt)
 	return uint64_t(fmt.head_count) * fmt.track_count * SECTORS_PER_TRACK * SECTOR_DATA_SIZE;
 }
 
-bool is_hdos(std::vector<uint8_t> const &img, uint8_t &lab_ser)
-{
-	if (img.size() < 0x0a00)
-	{
-		return false;
-	}
-
-	uint8_t const *const label = &img[0x0900]; // track 0, sector 9
-	uint8_t const lab_vlt = label[0x08];
-	uint8_t const lab_ver = label[0x09];
-
-	if (lab_vlt > 2)
-	{
-		return false;
-	}
-
-	if (!((lab_ver == 0x16) || (lab_ver == 0x17) || (lab_ver == 0x20) || ((lab_ver >= 0x30) && (lab_ver <= 0x39))))
-	{
-		return false;
-	}
-
-	lab_ser = label[0x00];
-	return true;
-}
-
 void generate_sector_metadata(uint8_t *metadata, format const &fmt, std::vector<uint8_t> const &img, int head, int track, int sector)
 {
 	uint8_t lab_ser = 0;
@@ -285,31 +238,13 @@ void generate_sector_metadata(uint8_t *metadata, format const &fmt, std::vector<
 	metadata[6] = volume;
 	metadata[7] = uint8_t(logical_track);
 	metadata[8] = uint8_t(sector);
-	metadata[9] = checksum(H17_SYNC_BYTE, volume, uint8_t(logical_track), uint8_t(sector));
+	metadata[9] = h17_checksum(volume, uint8_t(logical_track), uint8_t(sector));
 	metadata[10] = H17_SYNC_BYTE;
-	metadata[11] = checksum(&img[get_be32(metadata)], SECTOR_DATA_SIZE);
+	metadata[11] = h17_checksum(&img[get_be32(metadata)], SECTOR_DATA_SIZE);
 	metadata[12] = 1;
 	metadata[13] = 0;
 	metadata[14] = 0;
 	metadata[15] = 0;
-}
-
-bool fm_byte_from_bitstream(std::vector<bool> const &bitstream, size_t pos, uint8_t &val)
-{
-	if ((pos + 16) > bitstream.size())
-	{
-		return false;
-	}
-
-	uint8_t result = 0;
-
-	for (int i = 0; i < 8; i++)
-	{
-		result = (result << 1) | (bitstream[pos + (i * 2) + 1] ? 1 : 0);
-	}
-
-	val = reverse_byte(result);
-	return true;
 }
 
 bool decode_sector(std::vector<bool> const &bitstream, int sector, std::array<uint8_t, SECTOR_METADATA_SIZE> &metadata, std::array<uint8_t, SECTOR_DATA_SIZE> &sector_data)
