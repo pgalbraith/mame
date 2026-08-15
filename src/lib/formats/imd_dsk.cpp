@@ -6,6 +6,9 @@
 
     IMD disk images
 
+    IMD.TXT, the ImageDisk manual quoted below, is in
+    http://dunfield.classiccmp.org/img42841/imd120.zip
+
 *********************************************************************/
 
 #include "imd_dsk.h"
@@ -16,7 +19,9 @@
 
 #include "osdcore.h" // osd_printf_*
 
+#include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <ctime>
 
@@ -693,15 +698,37 @@ bool imd_format::load(util::random_read &io, uint32_t form_factor, const std::ve
     Save side: flux-level floppy_image -> IMD container.
 
     Approach:
-      1. For each (cyl, head), probe four (encoding, cell_size)
-         combinations covering 250/500 kbps MFM/FM.  The combination
-         that yields the most cleanly-decoded sectors wins.
+      1. For each (cyl, head), probe ten (encoding, cell_size)
+         combinations covering 250/300/500 kbps MFM/FM at 300 and 360
+         RPM.  The combination that yields the most cleanly-decoded
+         sectors wins.
       2. Walk the resulting per-track sector list (in physical order)
          and emit IMD's per-track record: 5-byte header, sector
          numbering map, optional cyl/head maps, then per-sector type
          byte + data (compressed when the sector is all-fill).
       3. A fresh "Created by MAME flopconvert" header with localtime is
          emitted at the start of every saved IMD.
+
+    Within step 1, where several combinations decode equally well:
+
+    One of them still has to be chosen, and choosing the wrong one
+    quietly ruins a disk that was fine.  Whichever wins becomes the IMD
+    mode byte, and that byte is what load() rebuilds the track from.
+    Name the wrong rate and the disk comes back unreadable - not
+    damaged, not missing anything, just too fast or too slow for any
+    drive to make sense of.  Every sector is still there, byte for byte,
+    and it still will not boot.  Nothing reports an error at any point,
+    so the damage surfaces much later, in someone wondering why their
+    disk stopped working.
+
+    That is not merely hypothetical, it is what happened.  A CP/M
+    distribution disk went through this and came back dead, with all
+    four hundred sectors perfectly intact.  The score could not tell the
+    rates apart: the PLL locks over roughly a 2:1 range, so four of the
+    probes read all ten sectors and scored alike, and the tie fell to
+    whichever came first in the table.  The flux itself knows the rate
+    even when the score does not, which is what measure_cell_size() is
+    for.
 
 *********************************************************************/
 
@@ -914,6 +941,83 @@ void imd_format::extract_track_rich(const std::vector<bool> &bs, bool is_mfm,
 	out = std::move(dedup);
 }
 
+// Measure the cell timing of a track from its flux, to break a tie between
+// probes that decode it equally well.
+//
+// This is not a refinement that can be skipped.  Without it the tie goes to
+// whichever probe happens to be listed first, and that probe's rate is written
+// into the file as the truth about the disk.  That is how a working CP/M disk
+// came back from a round trip unreadable, with every sector still intact.
+//
+// Two probes can read the same track, for one of two reasons, and only the
+// first is this function's business:
+//
+//   Same encoding, wrong speed.  The PLL puts up with a cell size well off the
+//   real one, roughly double or half, so on a 3333 ns FM track the 2400, 3333,
+//   4000 and 4800 ns FM probes all read every sector and score the same.  The
+//   track really is 3333 ns, and only one probe sits there, so measuring it
+//   settles the tie.
+//
+//   Different encoding, same measurement.  FM 500 kbps uses 2000 ns cells and
+//   MFM 500 kbps uses 1000, but MFM never puts two transitions side by side, so
+//   its shortest gap is two cells wide - and both disks come back as 2000.
+//   Measuring cannot tell those two apart, and does not need to: only the right
+//   encoding reads any sectors at all, so the score has already done it.
+//
+// So this says how fast a track was recorded, never whether it is FM or MFM.
+//
+// The shortest interval between transitions is one cell, so the low end of the
+// gaps gives the cell size.  A percentile rather than the outright minimum
+// keeps a write splice or a weak bit from deciding it alone.  The one cell for
+// FM against two for MFM was measured, not assumed - images written in each of
+// the six modes came back:
+//
+//   mode 0  FM  500   cell 2000   measured 2000      mode 3  MFM 500   cell 1000   measured 2000
+//   mode 1  FM  300   cell 3333   measured 3333      mode 4  MFM 300   cell 1666   measured 3333
+//   mode 2  FM  250   cell 4000   measured 4000      mode 5  MFM 250   cell 2000   measured 4000
+//
+// so a caller comparing this against a probe's cell size must double that size
+// for MFM first.
+//
+// Returns 0, rather than a figure taken from noise, when a track carries too
+// few transitions to measure.  The caller should read that as no opinion, and
+// is then back to settling ties by table order.
+//
+// This costs almost nothing, because it runs on save and nowhere else:
+// save() is the only path that reaches detect_track(), so loading an image
+// never comes near this and neither does emulating from one.  That leaves
+// floptool conversions and a machine committing changes back to a mounted
+// image, both already doing far more work.  For scale, the whole of
+// detect_track() is about 6 ms a track on a 40 track disk, most of that its ten
+// PLL passes rather than the single pass over the flux taken here.
+static int measure_cell_size(const floppy_image &image, int cyl, int head)
+{
+	const std::vector<uint32_t> &buf = image.get_buffer(cyl, head);
+
+	if (buf.size() < 64)
+		return 0;
+
+	std::vector<uint32_t> gaps;
+	gaps.reserve(buf.size());
+
+	for (size_t i = 1; i < buf.size(); i++) {
+		uint32_t const prev = buf[i - 1] & floppy_image::TIME_MASK;
+		uint32_t const here = buf[i] & floppy_image::TIME_MASK;
+
+		if (here > prev)
+			gaps.push_back(here - prev);
+	}
+
+	if (gaps.size() < 64)
+		return 0;
+
+	// only the one value is wanted, so there is no reason to sort the rest
+	auto const nth = gaps.begin() + gaps.size() / 20;
+	std::nth_element(gaps.begin(), nth, gaps.end());
+
+	return int(*nth);
+}
+
 bool imd_format::detect_track(const floppy_image &image, int cyl, int head,
 							  track_info &out) const
 {
@@ -933,19 +1037,54 @@ bool imd_format::detect_track(const floppy_image &image, int cyl, int head,
 	// records because the PLL's ~25% lock tolerance is overrun by the 20%
 	// cell-size mismatch (1200 vs 1000) -- the 5.25" probe scores zero sectors
 	// and detect_track returns "mode 3 with no sectors".
+	//
+	// IMD.TXT 6.1 [see file header] gives the mode byte: 0-2 are FM at
+	// 500/300/250 kbps and 3-5 the same for MFM, where "kbps indicates transfer
+	// rate, not the data rate, which is 1/2 for FM encoding" -- hence the
+	// (fm ? 1 : 2) in load().
+	//
+	// The two 300 kbps modes are the exception to the pairing above: they are
+	// probed at 300 RPM only, so their entries stand alone.
+	//   300 RPM, MFM 300 kbps: 200M / 120000 = 1666 ns/cell
+	//   300 RPM, FM  300 kbps: 200M /  60000 = 3333 ns/cell
+	// 300 kbps is what a 5.25" HD drive gets reading DD or QD media, because it
+	// spins at 360 RPM rather than 300.  IMD.TXT 3.3 is explicit that this
+	// "results in the same bit density as 250kbps on the slower (300 RPM)
+	// drives", so a 300 kbps track at 360 RPM and a 250 kbps one at 300 RPM are
+	// the same disk as far as the flux is concerned.  Their 360 RPM forms would
+	// work out at exactly 2000 and 4000 ns - the same cells as the MFM 250 and
+	// FM 250 entries already listed - so probing them could only make the mode
+	// a coin toss rather than a decision.
+	//
+	// These entries overlap heavily - see measure_cell_size() for how - so
+	// adding a row, or moving a number on one, shifts both which entries tie
+	// on score and which is nearest the timing that function measures.  A mode
+	// that saved correctly before can quietly start saving as the one next to
+	// it.  None of this was worked out on paper, so do not work out a change
+	// on paper - write one small IMD per mode, a few tracks of ordinary sectors
+	// with the mode byte the only difference, and round-trip each through
+	// "floptool flopconvert imd mfi" and back.  Every mode must come back as
+	// itself.
+	// Before ties were settled on the measured timing, modes 1 and 4 came back
+	// as 0 and 5.
 	struct probe { bool is_mfm; int cell_size; uint8_t mode; };
 	static const probe probes[] = {
 		{ true,  1000, 3 },   // MFM 500 kbps @ 300 RPM (5.25" HD, 3.5" HD)
 		{ true,  1200, 3 },   // MFM 500 kbps @ 360 RPM (8" DSDD/SSDD)
+		{ true,  1666, 4 },   // MFM 300 kbps @ 300 RPM
 		{ true,  2000, 5 },   // MFM 250 kbps @ 300 RPM (5.25" DD, 3.5" DD)
 		{ true,  2400, 5 },   // MFM 250 kbps @ 360 RPM (8")
 		{ false, 2000, 0 },   // FM  500 kbps @ 300 RPM
 		{ false, 2400, 0 },   // FM  500 kbps @ 360 RPM (8" SSSD)
+		{ false, 3333, 1 },   // FM  300 kbps @ 300 RPM
 		{ false, 4000, 2 },   // FM  250 kbps @ 300 RPM (5.25" SD; T-200/250 boot)
 		{ false, 4800, 2 },   // FM  250 kbps @ 360 RPM (8")
 	};
+	// once per track, not once per probe
+	int const measured = measure_cell_size(image, cyl, head);
 
 	int best_score = -1;
+	int best_delta = 0;
 	track_info best;
 
 	for (const auto &p : probes) {
@@ -964,8 +1103,20 @@ bool imd_format::detect_track(const floppy_image &image, int cyl, int head,
 		for (const auto &s : secs)
 			if (s.addr_crc_ok) score++;
 
-		if (score > best_score) {
+		// Settle a tie on the measured timing rather than on table order,
+		// which used to pick rates the disk was never recorded at.
+		//
+		// A strictly better score still wins outright, so the score decides
+		// the encoding, only the right one decoding sectors at all, and the
+		// measurement separates only the rates it cannot.  Double the cell
+		// size for MFM before comparing - see measure_cell_size().
+		int const shortest = p.is_mfm ? 2 * p.cell_size : p.cell_size;
+		int const delta = measured ? std::abs(shortest - measured) : 0;
+
+		if ((score > best_score)
+				|| ((score == best_score) && measured && (delta < best_delta))) {
 			best_score      = score;
+			best_delta      = delta;
 			best.is_mfm     = p.is_mfm;
 			best.cell_size  = p.cell_size;
 			best.mode_byte  = p.mode;
