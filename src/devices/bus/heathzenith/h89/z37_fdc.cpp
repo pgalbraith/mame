@@ -12,6 +12,7 @@
 
 #include "imagedev/floppy.h"
 #include "machine/wd_fdc.h"
+#include "softlist_dev.h"
 
 #include "z37_fdc.h"
 
@@ -249,6 +250,10 @@ void h89bus_z37_device::device_add_mconfig(machine_config &config)
 	m_floppies[2]->enable_sound(true);
 	FLOPPY_CONNECTOR(config, m_floppies[3], z37_floppies, nullptr, floppy_image_device::default_mfm_floppy_formats);
 	m_floppies[3]->enable_sound(true);
+
+	// the list belongs to the controller rather than to any one machine: the
+	// Z-37 came standard on the Z-90 and was an option for the H-89
+	SOFTWARE_LIST(config, "flop_list").set_original("h37_flop");
 }
 
 void h89bus_z37_device::set_irq(int state)

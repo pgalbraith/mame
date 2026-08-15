@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!DOCTYPE softwarelist SYSTEM "softwarelist.dtd">
+<!--
+license:CC0-1.0
+-->
+<softwarelist name="h37_flop" description="Heath H-37 soft-sectored floppy disks">
+
+	<software name="cpm2203">
+		<description>CP/M 2.2.03</description>
+		<year>1981</year>
+		<publisher>Heath Company</publisher>
+		<notes>Single density, the format the H-37 boots from unaided. The disks name themselves "for H-37 Controller SSSD"; the sectors are 256 bytes, ten to a track over 40 tracks of one side, laid down with a 3:1 interleave.</notes>
+		<info name="alt_title" value="Digital Research Inc. CP/M"/>
+		<info name="version" value="2.2.03"/>
+		<info name="partno" value="ZOS-8937-2"/>
+
+		<part name="flop1" interface="floppy_5_25">
+			<dataarea name="flop" size="84428">
+				<rom name="cpm_2_2_03_disk_1.imd" size="84428" crc="56dfdf43" sha1="613ca4980fb50436488a72665047d3dc8f4d4774"/>
+			</dataarea>
+		</part>
+
+		<part name="flop2" interface="floppy_5_25">
+			<dataarea name="flop" size="50493">
+				<rom name="cpm_2_2_03_disk_2.imd" size="50493" crc="b690af5d" sha1="1062164b9d928bc89b79097528b6089c90b5a6ee"/>
+			</dataarea>
+		</part>
+
+		<part name="flop3" interface="floppy_5_25">
+			<dataarea name="flop" size="61481">
+				<rom name="cpm_2_2_03_disk_3.imd" size="61481" crc="4508816f" sha1="97507100f6a1002d8358bb3bdfb463c64e742e5b"/>
+			</dataarea>
+		</part>
+	</software>
+
+</softwarelist>
