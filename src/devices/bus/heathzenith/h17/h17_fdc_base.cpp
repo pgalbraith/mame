@@ -25,11 +25,9 @@
   output forms RCP as against the data window is not traced, the scan not being
   good enough to follow those two nets through the latches with any confidence.
 
-  TODO
-    - The media data rate is not settled; see the note on BITCELL_SIZE in
-      formats/h17_common.h.  It matters more now than it did under the old
-      adaptive PLL, which quietly absorbed the difference; the fixed windows
-      here rely on re-anchoring every cell instead.
+  The images are generated at the same 7812.5ns cell this reads at; see the
+  note on BITCELL_SIZE in formats/h17_common.h for why that is the media's real
+  rate rather than the nominal 250 kbps of single density.
 
 ****************************************************************************/
 
@@ -413,18 +411,22 @@ void heath_h17_fdc_base_device::tx_w(int state)
 // fdc_pll_t used before - a PLL that retunes its period is the wrong shape for
 // this circuit, however well it decodes.
 //
-// So: a pulse landing in a narrow window around the middle of the cell is a
-// data 1, and any other pulse is an FM clock, which ends the cell in progress
-// and anchors the next one to itself - the counter being cleared.  A cell that
-// runs out with no clock pulse to end it rolls on to the next, which is how the
-// separator free-runs through a gap.
+// So a cell is assembled like this.  Until it has a clock it is hunting, and
+// the first pulse to arrive is taken for that clock and anchors the cell,
+// standing in for the pulse clearing the counter.  Once anchored, a pulse in a
+// narrow window around the middle of the cell is a data 1, a pulse past that
+// window is the next cell's clock and ends this one, and a pulse before it is
+// noise in a cell whose counter has already been cleared, so it is dropped.  A
+// cell that runs out with no clock to end it rolls on to the next, which is how
+// the separator free-runs through a gap.
 //
-// The data window has to be narrow rather than simply the back half of the
-// cell.  Anchored to a crystal the cell is 7812.5ns, while the images are
-// written at 8000 (see the BITCELL_SIZE note), so a badly phased clock pulse
-// walks out of a half-cell window at only 187.5ns per cell and stays misread as
-// data for a dozen or more bits.  Confining data to the middle quarters throws
-// such a pulse back into the clock case and the phase recovers next cell.
+// The hunting case has to be tested before the data window, not after, and the
+// reason is worth keeping.  If a pulse in the window were taken for data even
+// when the cell had no clock, then a phase sitting half a cell out would eat
+// each real clock as data, time the cell out, and re-anchor on a free-running
+// boundary - self-sustaining, because the cell rate here is exactly the rate
+// the images are written at and nothing pulls the phase back.  Anchoring while
+// hunting is that restoring force, and recovers the phase in one cell.
 
 void heath_h17_fdc_base_device::schedule_rx_cell()
 {
@@ -486,23 +488,33 @@ TIMER_CALLBACK_MEMBER(heath_h17_fdc_base_device::rx_timer_cb)
 			m_rx_scan = edge;
 
 			attotime const in_cell = edge - m_rx_cell_start;
-
-			if (in_cell >= win_open && in_cell < win_close)
+			if (!m_rx_have_clock)
+			{
+				// The cell has no clock yet, so whatever arrives first is it and
+				// anchors the cell, as the pulse clears the counter.  This has to
+				// come before the data window: a pulse there is only data once
+				// the phase is established, and taking it for data while hunting
+				// is what would leave the phase half a cell out with nothing to
+				// pull it back.
+				m_rx_cell_start = edge;
+				m_rx_have_clock = true;
+			}
+			else if (in_cell >= win_open && in_cell < win_close)
 			{
 				m_rx_data = true;
 			}
-			else
+			else if (in_cell >= win_close)
 			{
-				// A clock pulse.  If this cell already had one, the pulse
-				// belongs to the next cell, so close this one out first.
-				if (m_rx_have_clock)
-				{
-					rx_emit_cell();
-				}
+				// The next cell's clock, arriving before this one timed out.
+				// It ends the cell in progress and anchors the next.
+				rx_emit_cell();
 
 				m_rx_cell_start = edge;
 				m_rx_have_clock = true;
 			}
+			// Anything else is a pulse too early to be this cell's data in a
+			// cell that already has its clock.  The counter is not cleared
+			// again, so it must not move the phase - drop it.
 		}
 		else if (cell_end <= now)
 		{

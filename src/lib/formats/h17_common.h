@@ -33,20 +33,32 @@
 namespace heath_h17 {
 
 // Fixed parameters for all Heath hard-sectored disks: 10 sectors per track,
-// 256 data bytes per sector, 300 RPM, FM encoding, 250 kbps.
+// 256 data bytes per sector, 300 RPM, FM encoding.
 constexpr int SECTORS_PER_TRACK = 10;
 constexpr int SECTOR_DATA_SIZE  = 256;
 
 // Cell timings.  fm_w() emits two half-cells of BITCELL_SIZE ns per data bit,
 // so TRACK_SIZE half-cells make up the 200ms revolution of a 300 RPM drive.
-// 4000ns per half-cell is the 250 kbps the format specification gives.
 //
-// Note this does not match heath_h17_fdc_device::fm_cell_time(), which is
-// derived from the controller's 128 kHz USRT clock.  That is expected: on real
-// hardware the USRT receive clock is recovered from the data coming off the
-// disk, not driven by the transmit clock.  See the TODO in h17_fdc.cpp.
-constexpr int TRACK_SIZE   = 50'000;
-constexpr int BITCELL_SIZE = 4000;
+// These follow the controller rather than the nominal 250 kbps of single
+// density.  The card's USRT is clocked at 2.048MHz / 16 = 128kHz - the divider
+// is U810 on the H-88-1 schematic, a 4-bit counter with its control pins
+// strapped to +5V so that it free-runs - and one bit leaves per clock, so a
+// bit cell is 7812.5ns and a revolution holds 25600 of them: 3200 bytes a
+// track, 320 a sector.  Everything about the format agrees with 320 and not
+// with the 312.5 that 250 kbps would give: the layout below spends 290 bytes
+// on a sector's preamble, header, data and checksums, and the ~30 bytes of
+// trailing zeroes the generators pad with is exactly the remainder.
+//
+// Only TRACK_SIZE sets the rate the media is generated at: generate_track_from
+// _levels() normalizes the buffer it is handed onto a 200ms revolution, so the
+// half-cell comes out at 200ms / 51200 = 3906.25ns exactly however the buffer
+// was measured.  BITCELL_SIZE is the unit that buffer is built in, and is used
+// for real on the way back out, as the cell generate_bitstream_from_track()
+// samples the flux at.  3906 is 0.006% under the 3906.25 it wants there, which
+// is far inside what the drive itself varies by.
+constexpr int TRACK_SIZE   = 51'200;
+constexpr int BITCELL_SIZE = 3906;
 
 // Sync byte preceding both the header and the data of every sector.
 constexpr uint8_t H17_SYNC_BYTE = 0xfd;
@@ -215,8 +227,8 @@ inline bool fm_byte_from_bitstream(std::vector<bool> const &bitstream, size_t po
 // How far after a header to look for its data field. The machine rewrites the
 // data on its own, starting wherever the head is once it has read the header
 // and set the write gate, so the gap it leaves is its own rather than the one
-// the image was built with. A sector is about 312 bytes of a 3125 byte track
-// and the data field takes 258 of them, so a gap beyond this has nowhere to go.
+// the image was built with. A sector is 320 bytes of a 3200 byte track and the
+// data field takes 258 of them, so a gap beyond this has nowhere to go.
 constexpr int MAX_HEADER_TO_DATA_BYTES = 54;
 
 
