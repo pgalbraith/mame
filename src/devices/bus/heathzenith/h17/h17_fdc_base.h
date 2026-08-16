@@ -13,10 +13,9 @@
   present the same registers. Only the way the card hangs off the host
   differs, so everything except the bus attachment lives here.
 
-  TODO
-   - Use the floppy clock bits to clock the USRT receive clock.  The receive
-     path currently recovers the FM clock/data phase by guesswork; see the TODO
-     block in h17_fdc_base.cpp for what that is measured to cost.
+  The receive path recovers the USRT's clock from the incoming flux, modelling
+  the board's fixed-rate counter and its re-anchoring; see the block comment at
+  the top of h17_fdc_base.cpp.
 
 ****************************************************************************/
 
@@ -61,9 +60,9 @@ protected:
 	void step_w(int state);
 	void dir_w(int state);
 	void set_motor(bool motor_on);
-	void reset_rx_pll();
+	void reset_rx_separator();
 	void schedule_rx_cell();
-	void rx_cell(int bit);
+	void rx_emit_cell();
 	void set_write_gate(bool write_gate);
 	void start_tx_write();
 	void stop_tx_write();
@@ -79,14 +78,18 @@ protected:
 	required_device_array<floppy_connector, MAX_FLOPPY_DRIVES> m_floppies;
 	required_device<timer_device> m_tx_timer;
 	emu_timer *m_rx_timer;
-	fdc_pll_t m_rx_pll;
 	fdc_pll_t m_tx_pll;
+
+	// Receive data separator; see the block comment on it in h17_fdc_base.cpp.
+	attotime m_rx_cell_start;   // when the bit cell being assembled began
+	attotime m_rx_scan;         // how far the flux stream has been consumed
+	bool     m_rx_have_clock;   // a clock pulse has already anchored this cell
+	bool     m_rx_data;         // a pulse landed in this cell's data window
 
 	bool m_motor_on;
 	bool m_write_gate;
 	bool m_tx_write_active;
 	bool m_sync_char_received;
-	bool m_rx_clock_cell;
 	u8   m_step_direction;
 	u8   m_side;
 
@@ -105,7 +108,9 @@ protected:
 	// USRT clock
 	static constexpr XTAL USRT_BASE_CLOCK = XTAL(12'288'000) / 6 / 16;
 	static constexpr u32  USRT_TX_CLOCK   = USRT_BASE_CLOCK.value();
+	// A bit cell holds an FM clock half-cell followed by a data half-cell.
 	static attotime fm_cell_time() { return attotime::from_hz(USRT_TX_CLOCK * 2); }
+	static attotime fm_bit_time()  { return attotime::from_hz(USRT_TX_CLOCK); }
 };
 
 #endif // MAME_BUS_HEATHZENITH_H17_H17_FDC_BASE_H

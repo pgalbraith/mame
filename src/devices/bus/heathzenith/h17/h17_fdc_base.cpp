@@ -6,40 +6,30 @@
 
     This was an option for both the Heathkit H8 and H89 computer systems.
 
+  The receive data separator follows the H-88-1 schematic (595-2195-01):
+
+    READ DATA L is buffered and fires U808 (443-22), a retriggerable one-shot
+    with an internal timing resistor and C811 = 22 pF, so every flux transition
+    becomes a short pulse.  That pulse drives the ENP and ENT count enables of
+    U805 (443-757), a 4-bit synchronous counter whose LOAD is tied high and
+    whose CLR comes from the cross-coupled NAND latch U811 (443-798).  U805 is
+    clocked from a reference divider - U810, a second 443-757 with all its
+    control pins strapped to +5V, feeding decoder U813 (443-807) and gates U812
+    (443-728).  U805's QC and QD, recombined through U811 and the second latch
+    U809 (443-728), produce the S2350's RCP (U802 pin 37) and RSI (pin 23).
+
+  What matters for the model is the shape: the reference is free-running and
+  crystal-derived, so the cell rate is fixed, and the incoming transitions move
+  only the phase.  reset_rx_separator() and rx_timer_cb() implement that
+  directly.  It is a behavioural model, not a gate-level one - which counter
+  output forms RCP as against the data window is not traced, the scan not being
+  good enough to follow those two nets through the latches with any confidence.
+
   TODO
-    - The USRT receive clock is synthesised rather than recovered from the
-      drive.  rx_timer_cb() runs an analogue fdc_pll_t and splits FM clock and
-      data half-cells with the m_rx_clock_cell flag.  The board does it
-      digitally instead; from the H-88-1 schematic (595-2195-01):
-
-        READ DATA L is buffered and fires U808 (443-22), a retriggerable
-        one-shot with an internal timing resistor and C811 = 22 pF, so every
-        flux transition becomes a short pulse.  That pulse drives the ENP and
-        ENT count enables of U805 (443-757), a 4-bit synchronous counter whose
-        LOAD is tied high and whose CLR comes from the cross-coupled NAND latch
-        U811 (443-798).  U805 is clocked from a reference divider - U810, a
-        second 443-757 with all its control pins strapped to +5V, feeding
-        decoder U813 (443-807) and gates U812 (443-728).  U805's QC and QD,
-        recombined through U811 and the second latch U809 (443-728), produce
-        the S2350's RCP (U802 pin 37) and RSI (pin 23).
-
-      So the real separator is a window generator re-anchored by the incoming
-      transitions, not a free-running sampler and not a PLL: the phase question
-      the m_rx_clock_cell flag answers by guesswork is answered in hardware by
-      which count a pulse lands on.  What is not yet traced is exactly which
-      counter output forms RCP versus the data window, which is what a faithful
-      reimplementation would need.
-
-      The guess is cheap to live with in the meantime.  Over a full HDOS 1.6
-      boot and CAT (5,000,000 half-cells) the phase moved 587 times and every
-      one of those was while the receiver was hunting for sync, none after a
-      sync character had been matched.  So it re-locks in the gaps and holds
-      phase across every header and data field the ROM actually consumes -
-      behaviourally what the circuit above does.  Replacing it is a fidelity
-      improvement, not a fix for anything observable.
-
     - The media data rate is not settled; see the note on BITCELL_SIZE in
-      formats/h17_common.h.
+      formats/h17_common.h.  It matters more now than it did under the old
+      adaptive PLL, which quietly absorbed the difference; the fixed windows
+      here rely on re-anchoring every cell instead.
 
 ****************************************************************************/
 
@@ -124,7 +114,7 @@ void heath_h17_fdc_base_device::set_floppy(floppy_image_device *floppy)
 		m_floppy->ss_w(m_side);
 	}
 
-	reset_rx_pll();
+	reset_rx_separator();
 	start_tx_write();
 }
 
@@ -136,7 +126,7 @@ void heath_h17_fdc_base_device::side_select_w(int state)
 	{
 		stop_tx_write();
 		m_floppy->ss_w(m_side);
-		reset_rx_pll();
+		reset_rx_separator();
 		start_tx_write();
 	}
 }
@@ -161,7 +151,7 @@ void heath_h17_fdc_base_device::step_w(int state)
 
 		stop_tx_write();
 		m_floppy->stp_w(state);
-		reset_rx_pll();
+		reset_rx_separator();
 		start_tx_write();
 	}
 }
@@ -191,7 +181,7 @@ void heath_h17_fdc_base_device::set_motor(bool motor_on)
 		}
 	}
 
-	reset_rx_pll();
+	reset_rx_separator();
 	start_tx_write();
 }
 
@@ -308,7 +298,10 @@ void heath_h17_fdc_base_device::device_start()
 	save_item(NAME(m_write_gate));
 	save_item(NAME(m_tx_write_active));
 	save_item(NAME(m_sync_char_received));
-	save_item(NAME(m_rx_clock_cell));
+	save_item(NAME(m_rx_cell_start));
+	save_item(NAME(m_rx_scan));
+	save_item(NAME(m_rx_have_clock));
+	save_item(NAME(m_rx_data));
 	save_item(NAME(m_step_direction));
 	save_item(NAME(m_side));
 }
@@ -319,12 +312,11 @@ void heath_h17_fdc_base_device::device_reset()
 	m_write_gate         = false;
 	m_tx_write_active    = false;
 	m_sync_char_received = false;
-	m_rx_clock_cell      = true;
 	m_step_direction     = 0;
 	m_side               = 0;
 
 	m_tx_timer->adjust(attotime::from_hz(USRT_TX_CLOCK), 0, attotime::from_hz(USRT_TX_CLOCK));
-	reset_rx_pll();
+	reset_rx_separator();
 	m_tx_pll.set_clock(fm_cell_time());
 	m_tx_pll.reset(machine().time());
 }
@@ -411,10 +403,29 @@ void heath_h17_fdc_base_device::tx_w(int state)
 	write_tx_cell(BIT(state, 0));
 }
 
-// Wake when the PLL says the next half-cell ends.  feed_read_data() computes
-// that boundary as ctime + period + phase_adjust and will not cross it, so any
-// other choice either burns a callback that cannot make progress or, if it
-// lands early, caps how far the PLL is allowed to stretch.
+// Receive data separator.
+//
+// The board has no PLL and cannot track the media's rate at all: U810 has every
+// control pin strapped to +5V, so it free-runs off the crystal-derived
+// reference, and U805 counts that same reference.  The cell rate is therefore
+// fixed and only the phase moves, re-anchored by the pulse U808 makes from each
+// flux transition.  That is what is modelled here, rather than the adaptive
+// fdc_pll_t used before - a PLL that retunes its period is the wrong shape for
+// this circuit, however well it decodes.
+//
+// So: a pulse landing in a narrow window around the middle of the cell is a
+// data 1, and any other pulse is an FM clock, which ends the cell in progress
+// and anchors the next one to itself - the counter being cleared.  A cell that
+// runs out with no clock pulse to end it rolls on to the next, which is how the
+// separator free-runs through a gap.
+//
+// The data window has to be narrow rather than simply the back half of the
+// cell.  Anchored to a crystal the cell is 7812.5ns, while the images are
+// written at 8000 (see the BITCELL_SIZE note), so a badly phased clock pulse
+// walks out of a half-cell window at only 187.5ns per cell and stays misread as
+// data for a dozen or more bits.  Confining data to the middle quarters throws
+// such a pulse back into the clock case and the phase recovers next cell.
+
 void heath_h17_fdc_base_device::schedule_rx_cell()
 {
 	if (!m_motor_on || !m_floppy)
@@ -423,43 +434,33 @@ void heath_h17_fdc_base_device::schedule_rx_cell()
 		return;
 	}
 
-	attotime const next = m_rx_pll.ctime + m_rx_pll.period + m_rx_pll.phase_adjust;
-	attotime const now  = machine().time();
+	// Wake for whichever comes first, the next flux transition or the end of
+	// the cell being assembled.
+	attotime const cell_end = m_rx_cell_start + fm_bit_time();
+	attotime const edge     = m_floppy->get_next_transition(m_rx_scan);
+	attotime const next     = (!edge.is_never() && edge < cell_end) ? edge : cell_end;
+	attotime const now      = machine().time();
 
 	m_rx_timer->adjust(next > now ? next - now : attotime::zero);
 }
 
-void heath_h17_fdc_base_device::reset_rx_pll()
+void heath_h17_fdc_base_device::reset_rx_separator()
 {
-	m_rx_pll.set_clock(fm_cell_time());
-	m_rx_pll.read_reset(machine().time());
-	m_rx_clock_cell = true;
+	m_rx_cell_start = machine().time();
+	m_rx_scan       = m_rx_cell_start;
+	m_rx_have_clock = false;
+	m_rx_data       = false;
+
 	schedule_rx_cell();
 }
 
-void heath_h17_fdc_base_device::rx_cell(int bit)
+void heath_h17_fdc_base_device::rx_emit_cell()
 {
-	if (m_rx_clock_cell)
-	{
-		if (bit == 0)
-		{
-			// FM clock cells are always 1. Getting 0 here means phase is
-			// inverted — we're in a data-0 half-cell, not a clock half-cell.
-			// Send it as data and stay expecting a clock on the next call.
-			m_s2350->rx_w(0);
-			m_s2350->rcp_w();
-		}
-		else
-		{
-			m_rx_clock_cell = false;
-		}
-	}
-	else
-	{
-		m_s2350->rx_w(bit);
-		m_s2350->rcp_w();
-		m_rx_clock_cell = true;
-	}
+	m_s2350->rx_w(m_rx_data ? 1 : 0);
+	m_s2350->rcp_w();
+
+	m_rx_have_clock = false;
+	m_rx_data       = false;
 }
 
 TIMER_CALLBACK_MEMBER(heath_h17_fdc_base_device::rx_timer_cb)
@@ -470,18 +471,49 @@ TIMER_CALLBACK_MEMBER(heath_h17_fdc_base_device::rx_timer_cb)
 		return;
 	}
 
-	// Take every half-cell that has ended.  Stopping at the current time rather
-	// than a fixed cell ahead lets the PLL settle on whatever period the media
-	// actually has; the old fixed limit made it return -1 whenever it wanted to
-	// stretch, and it only got anywhere because the free-running timer let
-	// machine time drift past ctime on a later call.  Normally this takes
-	// exactly one cell, since the timer was armed at that cell's boundary.
-	attotime tm;
-	int bit;
+	attotime const now       = machine().time();
+	attotime const half      = fm_cell_time();
+	attotime const win_open  = (half * 3) / 4;
+	attotime const win_close = (half * 5) / 4;
 
-	while ((bit = m_rx_pll.get_next_bit(tm, m_floppy, machine().time())) >= 0)
+	for (;;)
 	{
-		rx_cell(bit);
+		attotime const cell_end = m_rx_cell_start + fm_bit_time();
+		attotime const edge     = m_floppy->get_next_transition(m_rx_scan);
+
+		if (!edge.is_never() && edge < cell_end && edge <= now)
+		{
+			m_rx_scan = edge;
+
+			attotime const in_cell = edge - m_rx_cell_start;
+
+			if (in_cell >= win_open && in_cell < win_close)
+			{
+				m_rx_data = true;
+			}
+			else
+			{
+				// A clock pulse.  If this cell already had one, the pulse
+				// belongs to the next cell, so close this one out first.
+				if (m_rx_have_clock)
+				{
+					rx_emit_cell();
+				}
+
+				m_rx_cell_start = edge;
+				m_rx_have_clock = true;
+			}
+		}
+		else if (cell_end <= now)
+		{
+			// Nothing came along to end the cell; roll on to the next.
+			rx_emit_cell();
+			m_rx_cell_start = cell_end;
+		}
+		else
+		{
+			break;
+		}
 	}
 
 	schedule_rx_cell();
