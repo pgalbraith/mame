@@ -5,6 +5,7 @@ license:CC0-1.0
 -->
 <softwarelist name="h37_flop" description="Heath H-37 soft-sectored floppy disks">
 
+	<!-- https://heathkit.garlanger.com/software/library/Heath/CPM/CPM_2_2_03/CPM_2_2_03.zip -->
 	<software name="cpm2203">
 		<description>CP/M 2.2.03</description>
 		<year>1981</year>

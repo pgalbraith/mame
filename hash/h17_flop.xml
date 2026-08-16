@@ -27,6 +27,34 @@ license:CC0-1.0
 		</part>
 	</software>
 
+	<!-- https://sebhc.github.io/sebhc/software/CPM/CPM_2_2_03_Distribution.zip -->
+	<software name="cpm2203">
+		<description>CP/M 2.2.03</description>
+		<year>1981</year>
+		<publisher>Heath Company</publisher>
+		<notes>The H-17 build of 2.2.03, which signs on "FOR H17 DISKS" and reports H/Z17 drives; the soft-sectored H-37 build of the same version is on the h37_flop list. Disk 2 holds the MOVCPM relocators and the printer utilities, disk 3 the BIOS source and MAKEBIOS.</notes>
+		<info name="alt_title" value="Digital Research Inc. CP/M"/>
+		<info name="version" value="2.2.03"/>
+
+		<part name="flop1" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="cpm_2_2_03_disk_1.h8d" size="102400" crc="45908702" sha1="42173572f243cf674f676a26d484e04a08f0fa5e"/>
+			</dataarea>
+		</part>
+
+		<part name="flop2" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="cpm_2_2_03_disk_2.h8d" size="102400" crc="073faff8" sha1="0f35ccdc2e9baf38d0740524be76a58723f9e53c"/>
+			</dataarea>
+		</part>
+
+		<part name="flop3" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="cpm_2_2_03_disk_3.h8d" size="102400" crc="84262c01" sha1="b0e7d41db608cb3833665d3c7688a14b14225458"/>
+			</dataarea>
+		</part>
+	</software>
+
 	<software name="hdos_50_03_00">
 		<description>HDOS 1.0 (Issue 50.03.00)</description>
 		<year>1979</year>
