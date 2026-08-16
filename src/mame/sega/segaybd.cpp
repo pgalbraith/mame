@@ -214,6 +214,7 @@ EPR-12028 - 27C256 EPROM
 #include "sound/ymopm.h"
 
 #include "screen.h"
+#include "sound.h"
 #include "speaker.h"
 
 #include "pdrift.lh"
@@ -1011,7 +1012,7 @@ void segaybd_state::sound_map(address_map &map)
 {
 	map.unmap_value_high();
 	map(0x0000, 0xefff).rom();
-	map(0xf000, 0xf0ff).mirror(0x0700).rw("pcm", FUNC(segapcm_device::read), FUNC(segapcm_device::write));
+	map(0xf000, 0xf0ff).mirror(0x0700).m("pcm", FUNC(sega_315_5218_device::map));
 	map(0xf800, 0xffff).ram();
 }
 
@@ -1688,7 +1689,7 @@ void segaybd_state::yboard(machine_config &config)
 	SEGA_315_5249_DIVIDER(config, "divider_suby");
 
 	// video hardware
-	SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+	SCREEN(config, m_screen);
 	m_screen->set_refresh_hz(60);
 	m_screen->set_size(342,262);   // to be verified
 	m_screen->set_visarea(0*8, 40*8-1, 0*8, 28*8-1);
@@ -1713,8 +1714,8 @@ void segaybd_state::yboard(machine_config &config)
 	ymsnd.add_route(0, "speaker", 0.30, 0);
 	ymsnd.add_route(1, "speaker", 0.30, 1);
 
-	segapcm_device &pcm(SEGAPCM(config, "pcm", SOUND_CLOCK/8));
-	pcm.set_bank(segapcm_device::BANK_12M | segapcm_device::BANK_MASKF8);
+	sega_315_5218_device &pcm(SEGA_315_5218(config, "pcm", SOUND_CLOCK/8));
+	pcm.set_bank(sega_315_5218_device::BANK_12M | sega_315_5218_device::BANK_MASKF8);
 	pcm.add_route(0, "speaker", 0.70, 0);
 	pcm.add_route(1, "speaker", 0.70, 1);
 }

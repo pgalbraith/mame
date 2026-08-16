@@ -43,6 +43,7 @@
 
 DEFINE_DEVICE_TYPE(UPD765A,        upd765a_device,        "upd765a",        "NEC uPD765A FDC")
 DEFINE_DEVICE_TYPE(UPD765B,        upd765b_device,        "upd765b",        "NEC uPD765B FDC")
+DEFINE_DEVICE_TYPE(UPD7265,        upd7265_device,        "upd7265",        "NEC uPD7265 FDC")
 DEFINE_DEVICE_TYPE(I8272A,         i8272a_device,         "i8272a",         "Intel 8272A FDC")
 DEFINE_DEVICE_TYPE(UPD72065,       upd72065_device,       "upd72065",       "NEC uPD72065 FDC")
 DEFINE_DEVICE_TYPE(UPD72066,       upd72066_device,       "upd72066",       "NEC uPD72066 FDC")
@@ -73,6 +74,12 @@ void upd765b_device::map(address_map &map)
 {
 	map(0x0, 0x0).r(FUNC(upd765b_device::msr_r));
 	map(0x1, 0x1).rw(FUNC(upd765b_device::fifo_r), FUNC(upd765b_device::fifo_w));
+}
+
+void upd7265_device::map(address_map &map)
+{
+	map(0x0, 0x0).r(FUNC(upd7265_device::msr_r));
+	map(0x1, 0x1).rw(FUNC(upd7265_device::fifo_r), FUNC(upd7265_device::fifo_w));
 }
 
 void i8272a_device::map(address_map &map)
@@ -776,10 +783,9 @@ void upd765_family_device::fifo_push(uint8_t data, bool internal)
 	int thr = (fifocfg & FIF_THR)+1;
 	if(!fifo_write && (!fifo_expected || fifo_pos >= thr || (fifocfg & FIF_DIS)))
 		enable_transfer();
-	if(fifo_write && (fifo_pos == 16 || !fifo_expected))
+	if(fifo_write && (fifo_pos == 16 || !fifo_expected || (fifocfg & FIF_DIS)))
 		disable_transfer();
 }
-
 
 uint8_t upd765_family_device::fifo_pop(bool internal)
 {
@@ -1275,8 +1281,7 @@ void upd765_family_device::live_run(attotime limit)
 		case WRITE_TRACK_SECTOR:
 			if(!cur_live.byte_counter) {
 				command[3]--;
-				if(command[3])
-					fifo_expect(4, true);
+				fifo_expect(4, true);
 			}
 			if(mfm) {
 				if(cur_live.byte_counter < 12)
@@ -1500,6 +1505,11 @@ void upd765_family_device::start_command(int cmd)
 	result_pos = 0;
 	main_phase = PHASE_EXEC;
 	tc_done = false;
+	fifo_pos = 0;
+	if(internal_drq) {
+		internal_drq = false;
+		check_irq();
+	}
 
 	execute_command(cmd);
 }
@@ -1704,7 +1714,7 @@ void upd765_family_device::recalibrate_start(floppy_info &fi)
 	fi.dir = 1;
 	fi.counter = recalibrate_steps;
 	fi.ready = get_ready(command[1] & 3);
-	fi.st0 = command[1] & 7;
+	fi.st0 = command[1] & 3;
 	if(fi.ready) {
 		seek_continue(fi);
 	} else {
@@ -1720,7 +1730,7 @@ void upd765_family_device::seek_start(floppy_info &fi)
 	fi.sub_state = SEEK_WAIT_STEP_TIME_DONE;
 	fi.dir = fi.pcn > command[2] ? 1 : 0;
 	fi.ready = get_ready(command[1] & 3);
-	fi.st0 = command[1] & 7;
+	fi.st0 = command[1] & 3;
 	if(fi.ready) {
 		seek_continue(fi);
 	} else {
@@ -2871,6 +2881,11 @@ upd765a_device::upd765a_device(const machine_config &mconfig, const char *tag, d
 }
 
 upd765b_device::upd765b_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) : upd765_family_device(mconfig, UPD765B, tag, owner, clock)
+{
+	has_dor = false;
+}
+
+upd7265_device::upd7265_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) : upd765_family_device(mconfig, UPD7265, tag, owner, clock)
 {
 	has_dor = false;
 }

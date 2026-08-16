@@ -35,7 +35,7 @@
       D2  47   4  A2
       D1  48   3  A1
       D0  49   2  A0
-    -12V  50   1  /IOSEL
+    +12V  50   1  /IOSEL
 
      (front of computer)
 
@@ -65,6 +65,7 @@
            peripherals must be regenerated from this signal using additional logic.
  /DEVSEL - asserted on an access to C0nX, where n = the slot number plus 8.
    D0-D7 - 8-bit data bus
+    +12V - 12 volts DC power
      +5V - 5 volts DC power
  DMA OUT - see DMA IN
  INT OUT - see INT IN
@@ -167,6 +168,7 @@ a2bus_device::a2bus_device(const machine_config &mconfig, device_type type, cons
 	, m_out_nmi_cb(*this)
 	, m_out_inh_cb(*this)
 	, m_out_dma_cb(*this)
+	, m_in_open_bus_cb(*this, 0xff)
 	, m_slot_irq_mask(0), m_slot_nmi_mask(0)
 {
 }
@@ -344,4 +346,50 @@ void device_a2bus_card_interface::interface_pre_start()
 
 		m_a2bus->add_a2bus_card(m_slot, this);
 	}
+}
+
+
+uint8_t device_a2bus_card_interface::read_c0nx(uint8_t offset)
+{
+	if (!device().machine().side_effects_disabled())
+		device().logerror("a2bus: unhandled read at C0n%x\n", offset);
+	return get_open_bus();
+}
+
+void device_a2bus_card_interface::write_c0nx(uint8_t offset, uint8_t data)
+{
+	device().logerror("a2bus: unhandled write %02x to C0n%x\n", data, offset);
+}
+
+uint8_t device_a2bus_card_interface::read_cnxx(uint8_t offset)
+{
+	return get_open_bus();
+}
+
+void device_a2bus_card_interface::write_cnxx(uint8_t offset, uint8_t data)
+{
+	device().logerror("a2bus: unhandled write %02x to Cn%02x\n", data, offset);
+}
+
+uint8_t device_a2bus_card_interface::read_c800(uint16_t offset)
+{
+	if (!device().machine().side_effects_disabled())
+		device().logerror("a2bus: unhandled read at %04x\n", offset + 0xc800);
+	return get_open_bus();
+}
+
+void device_a2bus_card_interface::write_c800(uint16_t offset, uint8_t data)
+{
+	device().logerror("a2bus: unhandled write %02x to %04x\n", data, offset + 0xc800);
+}
+
+uint8_t device_a2bus_card_interface::read_inh_rom(uint16_t offset)
+{
+	if (!device().machine().side_effects_disabled())
+		device().logerror("a2bus: unhandled read at C0n%x\n", offset);
+	return get_open_bus();
+}
+
+void device_a2bus_card_interface::write_inh_rom(uint16_t offset, uint8_t data)
+{
 }

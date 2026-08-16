@@ -79,6 +79,8 @@ namespace {
 #define A2_UPPERBANK_TAG "inhbank"
 #define A2_VIDEO_TAG "a2video"
 
+static constexpr int CNXX_UNCLAIMED = -1;
+
 class apple2_state : public driver_device
 {
 public:
@@ -323,7 +325,7 @@ void apple2_state::machine_start()
 void apple2_state::machine_reset()
 {
 	// m_inh_slot is not reset here since bootable cards may want to override the monitor
-	m_cnxx_slot = -1;
+	m_cnxx_slot = CNXX_UNCLAIMED;
 	m_strobe = 0;
 	m_kbd->ack_w(0);
 }
@@ -417,10 +419,10 @@ u8 apple2_state::flags_r(offs_t offset)
 		return (m_cassette->input() > 0.0 ? 0 : 0x80) | uFloatingBus7;
 
 	case 1:  // button 0
-		return (m_gameio->sw0_r() ? 0x80 : 0) | uFloatingBus7;
+		return ((!m_gameio->has_sw0() || m_gameio->sw0_r()) ? 0x80 : 0) | uFloatingBus7; // reversed compared to IIe
 
 	case 2:  // button 1
-		return (m_gameio->sw1_r() ? 0x80 : 0) | uFloatingBus7;
+		return ((!m_gameio->has_sw1() || m_gameio->sw1_r()) ? 0x80 : 0) | uFloatingBus7; // reversed compared to IIe
 
 	case 3:  // button 2 (or SHIFT key, with SHIFT key mod)
 		return (((m_sysconfig->read() & 0x04) ? m_kbd->shift_r() : m_gameio->sw2_r()) ? 0x80 : 0) | uFloatingBus7;
@@ -479,17 +481,14 @@ void apple2_state::controller_strobe_w(u8 data)
 
 u8 apple2_state::c080_r(offs_t offset)
 {
-	if(!machine().side_effects_disabled())
+	int slot;
+
+	offset &= 0x7F;
+	slot = offset / 0x10;
+
+	if (m_slotdevice[slot] != nullptr)
 	{
-		int slot;
-
-		offset &= 0x7F;
-		slot = offset / 0x10;
-
-		if (m_slotdevice[slot] != nullptr)
-		{
-			return m_slotdevice[slot]->read_c0nx(offset % 0x10);
-		}
+		return m_slotdevice[slot]->read_c0nx(offset % 0x10);
 	}
 
 	return read_floatingbus();
@@ -510,12 +509,11 @@ void apple2_state::c080_w(offs_t offset, u8 data)
 
 u8 apple2_state::c100_r(offs_t offset)
 {
-	int slotnum;
-
-	slotnum = ((offset>>8) & 0xf) + 1;
+	const int slotnum = ((offset>>8) & 0xf) + 1;
 
 	if (m_slotdevice[slotnum] != nullptr)
 	{
+		// a bus fight here is resolved as "last-one-wins"
 		if ((m_slotdevice[slotnum]->take_c800()) && (!machine().side_effects_disabled()))
 		{
 			m_cnxx_slot = slotnum;
@@ -529,9 +527,7 @@ u8 apple2_state::c100_r(offs_t offset)
 
 void apple2_state::c100_w(offs_t offset, u8 data)
 {
-	int slotnum;
-
-	slotnum = ((offset>>8) & 0xf) + 1;
+	const int slotnum = ((offset>>8) & 0xf) + 1;
 
 	if (m_slotdevice[slotnum] != nullptr)
 	{
@@ -546,26 +542,16 @@ void apple2_state::c100_w(offs_t offset, u8 data)
 
 u8 apple2_state::c800_r(offs_t offset)
 {
-	if (offset == 0x7ff)
+	const int slot = m_cnxx_slot;
+
+	if ((offset == 0x7ff) && !machine().side_effects_disabled())
 	{
-		u8 rv = 0xff;
-
-		if ((m_cnxx_slot != -1) && (m_slotdevice[m_cnxx_slot] != nullptr))
-		{
-			rv = m_slotdevice[m_cnxx_slot]->read_c800(offset&0xfff);
-		}
-
-		if (!machine().side_effects_disabled())
-		{
-			m_cnxx_slot = -1;
-		}
-
-		return rv;
+		m_cnxx_slot = CNXX_UNCLAIMED;
 	}
 
-	if ((m_cnxx_slot != -1) && (m_slotdevice[m_cnxx_slot] != nullptr))
+	if ((slot != CNXX_UNCLAIMED) && (m_slotdevice[slot] != nullptr))
 	{
-		return m_slotdevice[m_cnxx_slot]->read_c800(offset&0xfff);
+		return m_slotdevice[slot]->read_c800(offset&0xfff);
 	}
 
 	return read_floatingbus();
@@ -573,19 +559,14 @@ u8 apple2_state::c800_r(offs_t offset)
 
 void apple2_state::c800_w(offs_t offset, u8 data)
 {
-	if ((m_cnxx_slot != -1) && (m_slotdevice[m_cnxx_slot] != nullptr))
+	if ((m_cnxx_slot != CNXX_UNCLAIMED) && (m_slotdevice[m_cnxx_slot] != nullptr))
 	{
 		m_slotdevice[m_cnxx_slot]->write_c800(offset&0xfff, data);
 	}
 
-	if (offset == 0x7ff)
+	if ((offset == 0x7ff) && !machine().side_effects_disabled())
 	{
-		if (!machine().side_effects_disabled())
-		{
-			m_cnxx_slot = -1;
-		}
-
-		return;
+		m_cnxx_slot = CNXX_UNCLAIMED;
 	}
 }
 
@@ -747,7 +728,7 @@ void apple2_state::apple2_common(machine_config &config)
 	APPLE2_VIDEO_COMPOSITE(config, m_video, XTAL(14'318'181)).set_screen(m_screen);
 	APPLE2_COMMON(config, m_a2common, XTAL(14'318'181));
 
-	SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+	SCREEN(config, m_screen);
 	m_screen->set_raw(1021800 * 14, 65 * 14, 0, 40 * 14, 262, 0, 192);
 	m_screen->set_screen_update(m_video, NAME((&a2_video_device::screen_update<a2_video_device::model::II, true, true>)));
 	m_screen->set_palette(m_video);
@@ -783,6 +764,7 @@ void apple2_state::apple2_common(machine_config &config)
 	m_a2bus->nmi_w().set(FUNC(apple2_state::a2bus_nmi_w));
 	m_a2bus->inh_w().set(FUNC(apple2_state::a2bus_inh_w));
 	m_a2bus->dma_w().set_inputline(m_maincpu, INPUT_LINE_HALT);
+	m_a2bus->open_bus_r().set(FUNC(apple2_state::read_floatingbus));
 	A2BUS_SLOT(config, "sl0", XTAL(14'318'181) / 2, m_a2bus, apple2_slot0_cards, "lang");
 	A2BUS_SLOT(config, "sl1", XTAL(14'318'181) / 2, m_a2bus, apple2_cards, nullptr);
 	A2BUS_SLOT(config, "sl2", XTAL(14'318'181) / 2, m_a2bus, apple2_cards, nullptr);
@@ -1042,7 +1024,6 @@ ROM_END
 /*
     J-Plus ROM numbers confirmed by:
     http://mirrors.apple2.org.za/Apple%20II%20Documentation%20Project/Computers/Apple%20II/Apple%20II%20j-plus/Photos/Apple%20II%20j-plus%20-%20Motherboard.jpg
-
 */
 
 ROM_START(apple2jp)
