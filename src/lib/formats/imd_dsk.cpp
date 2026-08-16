@@ -1244,13 +1244,30 @@ bool imd_format::save(util::random_read_write &io, const std::vector<uint32_t> &
 		for (int hd = 0; hd < heads; hd++) {
 			track_info ti;
 			bool ok = detect_track(image, cyl, hd, ti);
-			(void)ok;  // ok==false just means we emit an empty record
+			(void)ok;
+
+			// An unformatted cylinder gets no record at all, rather than one
+			// saying nothing is there.  Records carry their own cylinder and
+			// load() places them by it, so a gap in the numbering reads back as
+			// the unformatted cylinder it was, and the file is not made to
+			// assert something about a track it never read.
+			//
+			// It would have to assert something, and the something would be
+			// wrong.  A record needs a mode byte, and detect_track() found no
+			// sectors here to measure one from: it returns whichever probe came
+			// first in its table, 500 kbps MFM, for a cylinder that carries no
+			// data at any rate whatsoever.  Taken at face value that reads as
+			// high density, which is how a 100K single density disk came to be
+			// tagged DSHD - load() knows to ignore these records now, but a
+			// reader that does not is entitled to believe us.
+			uint8_t sec_count = uint8_t(ti.sectors.size());
+			if (!sec_count)
+				continue;
 
 			uint8_t mode      = ti.mode_byte;
-			uint8_t sec_count = uint8_t(ti.sectors.size());
 			uint8_t size_code = 0;
 
-			if (sec_count > 0) {
+			{
 				size_code = ti.sectors[0].idam_size;
 				for (size_t i = 1; i < ti.sectors.size(); i++) {
 					if (ti.sectors[i].idam_size != size_code) {
@@ -1280,9 +1297,6 @@ bool imd_format::save(util::random_read_write &io, const std::vector<uint32_t> &
 			uint8_t recbuf[5] = { mode, out_cyl, head_byte, sec_count, size_code };
 			if (auto pr = write_at(io, out_pos, recbuf, 5); pr.first || pr.second != 5) return false;
 			out_pos += 5;
-
-			if (sec_count == 0)
-				continue;
 
 			std::vector<uint8_t> snum(sec_count);
 			for (int i = 0; i < sec_count; i++) snum[i] = ti.sectors[i].idam_sector;
