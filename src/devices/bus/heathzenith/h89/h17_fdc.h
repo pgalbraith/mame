@@ -7,8 +7,8 @@
 
   Model number: H-88-1
 
-  The controller itself is shared with the H8's H-8-17 card, see
-  bus/heathzenith/h17/h17_fdc_base.h for the TODOs against it.
+  The controller itself is shared with the H8's H-8-17 card, and lives in
+  bus/heathzenith/h17/h17_fdc_base.{h,cpp}.  Only the bus attachment is here.
 
 ****************************************************************************/
 
