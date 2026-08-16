@@ -943,6 +943,7 @@ bool floppy_image_device::twosid_r()
 	case floppy_image::SSDD16:
 	case floppy_image::SSDD32:
 	case floppy_image::SSQD:
+	case floppy_image::SSQD10:
 	case floppy_image::SSQD16:
 		return true;
 	case 0:
