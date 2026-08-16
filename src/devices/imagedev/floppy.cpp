@@ -492,6 +492,19 @@ uint32_t floppy_image_device::get_sectoring_type()
 void floppy_image_device::setup_write(const floppy_image_format_t *_output_format)
 {
 	m_output_format = _output_format;
+
+	// The write target can change after the image was loaded: the ui offers
+	// read-only access to a writable file, and writing to a second image
+	// through reopen_for_write, which drops the read-only flag behind our
+	// back.  Either way the value init_floppy_load computed for the write
+	// protect line is now stale, so recompute it and tell the controller.
+	int const wpt = is_readonly() || !m_output_format;
+	if(wpt != m_wpt) {
+		m_wpt = wpt;
+		if(!m_cur_wpt_cb.isnull())
+			m_cur_wpt_cb(this, m_wpt);
+	}
+
 	if(m_image)
 		commit_image();
 }
