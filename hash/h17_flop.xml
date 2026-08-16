@@ -55,6 +55,40 @@ license:CC0-1.0
 		</part>
 	</software>
 
+	<!-- https://sebhc.github.io/sebhc/software/CPM/CPM_2_2_04_Update.zip -->
+	<software name="cpm2204">
+		<description>CP/M 2.2.04</description>
+		<year>1982</year>
+		<publisher>Heath Company</publisher>
+		<notes>The H-17 build, signing on "FOR H17 DISKS" and dated 09/15/82; the H-37 build of the same version is on the h37_flop list. Disk 2 adds BSYSGEN over 2.2.03 and carries the MOVCPM relocators, disk 3 the BIOS source. The setup disk boots on its own into the Zenith Setup 2.0 front end.</notes>
+		<info name="alt_title" value="Digital Research Inc. CP/M"/>
+		<info name="version" value="2.2.04"/>
+
+		<part name="flop1" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="cpm_2_2_04_disk_1.h8d" size="102400" crc="540c39c5" sha1="f3f76212b741eb83702d8f715969185b95f29b3d"/>
+			</dataarea>
+		</part>
+
+		<part name="flop2" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="cpm_2_2_04_disk_2.h8d" size="102400" crc="5127500d" sha1="299188f3edcb06ff158f8c456549ba3603d62daf"/>
+			</dataarea>
+		</part>
+
+		<part name="flop3" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="cpm_2_2_04_disk_3.h8d" size="102400" crc="842f3cea" sha1="9264bacc0fd544279256535bb517d68f0adbc511"/>
+			</dataarea>
+		</part>
+
+		<part name="flop4" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="cpm_2_2_04_setup.h8d" size="102400" crc="2391285c" sha1="383b694f88f9e2f9352667f6a205bdb0d0d070c5"/>
+			</dataarea>
+		</part>
+	</software>
+
 	<software name="hdos_50_03_00">
 		<description>HDOS 1.0 (Issue 50.03.00)</description>
 		<year>1979</year>
