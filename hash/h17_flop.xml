@@ -5,6 +5,28 @@ license:CC0-1.0
 -->
 <softwarelist name="h17_flop" description="Heath H-88-1 hard-sectored floppy disks">
 
+	<!-- https://sebhc.github.io/sebhc/software/CPM/CPM_2_2_02_Distribution.zip -->
+	<software name="cpm2202">
+		<description>CP/M 2.2.02</description>
+		<year>1980</year>
+		<publisher>Heath Company</publisher>
+		<notes>Hard-sectored release, so it boots from the H-88-1 rather than needing the H-37. Disk 1 boots to CONFIGUR; disk 2 carries the BIOS source and the printer utilities.</notes>
+		<info name="alt_title" value="Digital Research Inc. CP/M"/>
+		<info name="version" value="2.2.02"/>
+
+		<part name="flop1" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="cpm_2_2_02_disk_1.h8d" size="102400" crc="0e1cdec7" sha1="d5df5a09caa455949c766c9d19cf4e261f7cfd7b"/>
+			</dataarea>
+		</part>
+
+		<part name="flop2" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="cpm_2_2_02_disk_2.h8d" size="102400" crc="3ffe637b" sha1="685112ed55f62bfc31a4e6c72e2d3417af88d33f"/>
+			</dataarea>
+		</part>
+	</software>
+
 	<software name="hdos_50_03_00">
 		<description>HDOS 1.0 (Issue 50.03.00)</description>
 		<year>1979</year>
