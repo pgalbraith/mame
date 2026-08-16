@@ -242,6 +242,30 @@ void h89bus_z37_device::device_add_mconfig(machine_config &config)
 	// Z-89-37 schematics show the ready line tied high.
 	m_fdc->set_force_ready(true);
 
+	// H-17-4, the 96 tpi drive, and with it the controller's 80-track formats -
+	// 640K double-sided double-density, as CP/M 2.2.03's FORMAT lays it down.
+	// The Z-89-37 operation manual (595-2674-04) takes either that or
+	// the 48 tpi H-17-1, and its drive chart marks every Z-89-37 row "either",
+	// but it wants all the drives on one board to be the same type: write
+	// precompensation is jumpered at J3 for the whole card, so a mixture is
+	// wrong for one or the other and "can result in reduced data reliability".
+	// Change these three together.
+	//
+	// Do expect 48 tpi media to come up read-only here.  That is the driver's
+	// own doing rather than a fault: at log-in it seeks to track 2 and reads a
+	// cylinder back out of a sector header, and being told 1 - the half-pitch
+	// signature of a 48 tpi disk under a 96 tpi head - it flags the disk write
+	// protected.  (It probes for side 1 first, and gives up on the disk
+	// entirely at any other cylinder.)  Note the write would physically take:
+	// the narrow head lays a track inside the wider one and leaves the old
+	// edges unerased, so the disk still reads here, just no longer dependably
+	// in the 48 tpi drive it was written on.  Refusing is the conservative
+	// call, and the manuals do not give the reason.
+	//
+	// Everything on the software list below is 48 tpi, so it all reads but will
+	// not take a write - CONFIGUR says so plainly, and CP/M reports the refusal
+	// as "Bdos Err On x: Bad Sector".  Select ssdd on all three to run that
+	// media read/write.
 	FLOPPY_CONNECTOR(config, m_floppies[0], z37_floppies, "qd", floppy_image_device::default_mfm_floppy_formats);
 	m_floppies[0]->enable_sound(true);
 	FLOPPY_CONNECTOR(config, m_floppies[1], z37_floppies, "qd", floppy_image_device::default_mfm_floppy_formats);
