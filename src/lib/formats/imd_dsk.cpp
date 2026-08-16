@@ -472,8 +472,22 @@ bool imd_format::load(util::random_read &io, uint32_t form_factor, const std::ve
 	trackmult = 1;
 
 	// we have to walk the whole file to find out the number of tracks
+	//
+	// Two counts come out of this, and they are not always the same.  maxtrack
+	// is the highest cylinder the records are *stored* at, which is what decides
+	// how the image is laid out in the drive.  maxidtrack is the highest
+	// cylinder the sector headers *claim*, taken from the cylinder map where
+	// there is one, and that is the media's own geometry.
+	//
+	// They diverge on a 48 tpi disk that was saved while mounted in a 96 tpi
+	// drive: such a file has its records on cylinders 0, 2, 4 ... 78 with a
+	// cylinder map on each putting them back at 0..39.  Reading the extent off
+	// the records would call that an 80-cylinder disk and tag the image quad
+	// density; the cylinder map is the disk telling us it is forty.  Empty
+	// records are not evidence of anything and do not count.
 	savepos = pos;
 	uint8_t maxtrack = 0;
+	uint8_t maxidtrack = 0;
 	while(pos < size)
 	{
 		pos++;   // skip mode
@@ -491,7 +505,18 @@ bool imd_format::load(util::random_read &io, uint32_t form_factor, const std::ve
 		pos += sector_count;
 		if (head & 0x80)
 		{
+			for (int i = 0; i < sector_count; i++)
+			{
+				if (img[pos + i] > maxidtrack)
+				{
+					maxidtrack = img[pos + i];
+				}
+			}
 			pos += sector_count;
+		}
+		else if (sector_count && (track > maxidtrack))
+		{
+			maxidtrack = track;
 		}
 		if (head & 0x40)
 		{
@@ -608,7 +633,10 @@ bool imd_format::load(util::random_read &io, uint32_t form_factor, const std::ve
 		for(int i=0; i<sector_count.back(); i++) {
 			uint8_t stype        = img[pos++];
 			sects[i].track       = tnum.back().size() ? tnum.back()[i] : track.back();
-			sects[i].head        = hnum.back().size() ? hnum.back()[i] : head.back();
+			// chead, not head.back(): the raw byte carries the 0x80/0x40 flags
+			// that say a cylinder/head map follows, and those must not end up
+			// in the sector header.
+			sects[i].head        = hnum.back().size() ? hnum.back()[i] : chead;
 			sects[i].sector      = snum.back()[i];
 			sects[i].size        = ssize.back();
 			sects[i].actual_size = actual_size;
@@ -651,26 +679,35 @@ bool imd_format::load(util::random_read &io, uint32_t form_factor, const std::ve
 	// floptool's auto-detect) we infer everything from the parsed geometry;
 	// when the caller passed a real form factor we keep theirs and only deduce
 	// the variant.
+	// maxidtrack throughout, not maxtrack: what is being described here is the
+	// disk, not where its tracks happen to sit in the drive it was read on.
 	uint32_t img_form = form_factor;
 	if (img_form == floppy_image::FF_UNKNOWN) {
-		if (maxtrack >= 75 && maxtrack <= 78)
+		if (maxidtrack >= 75 && maxidtrack <= 78)
 			img_form = floppy_image::FF_8;       // 77-track 8"
-		else if (maxtrack <= 42)
+		else if (maxidtrack <= 42)
 			img_form = floppy_image::FF_525;     // 40-track 5.25"
 		else
 			img_form = floppy_image::FF_525;     // 80-track: ambiguous 5.25" vs 3.5"; prefer 525 (IMD-era PC default)
 	}
 
+	// Sectorless records describe no media and must not colour any of this.
+	// They are what a save writes for an unformatted cylinder, mode byte and
+	// all, and that byte is not a measurement of anything - detect_track()
+	// found no sectors to measure and returned the first probe in its table,
+	// which is 500 kbps MFM.  A doubled image is half such records, so counting
+	// them read the blank cylinders as high density and tagged a 100K single
+	// density disk DSHD.
 	bool any_mfm = false;
 	bool any_500kbps = false;
-	for (uint8_t m : mode) {
-		if (m >= 3) any_mfm = true;
-		if (m == 0 || m == 3) any_500kbps = true;
-	}
 	uint8_t maxhead = 0;
-	for (uint8_t h : head)
-		if ((h & 0x3f) > maxhead)
-			maxhead = h & 0x3f;
+	for (size_t i = 0; i < mode.size(); i++) {
+		if (!sector_count[i])
+			continue;
+		if (mode[i] >= 3) any_mfm = true;
+		if (mode[i] == 0 || mode[i] == 3) any_500kbps = true;
+		if ((head[i] & 0x3f) > maxhead) maxhead = head[i] & 0x3f;
+	}
 	const bool ds = (maxhead >= 1);
 
 	uint32_t img_variant;
@@ -680,9 +717,18 @@ bool imd_format::load(util::random_read &io, uint32_t form_factor, const std::ve
 	} else if (img_form == floppy_image::FF_525 || img_form == floppy_image::FF_35) {
 		if (any_500kbps && any_mfm)
 			img_variant = floppy_image::DSHD;
+		else if (maxidtrack > 42)
+			// Quad density is the 96 tpi, 80-track pitch, and that is the part
+			// save() reads back to decide whether the tracks it is holding were
+			// doubled.  Getting there on track count alone matters: keyed off
+			// ds/any_mfm as it was, a single-sided 80-track disk came out SSDD
+			// and would have been mistaken for 48 tpi media and halved.  An FM
+			// disk this long is not really a thing, and calling one quad
+			// density overstates its density, but the pitch is what is being
+			// recorded and the pitch is right.
+			img_variant = ds ? floppy_image::DSQD : floppy_image::SSQD;
 		else if (any_mfm)
-			img_variant = ds ? (maxtrack > 42 ? floppy_image::DSQD : floppy_image::DSDD)
-							 : floppy_image::SSDD;
+			img_variant = ds ? floppy_image::DSDD : floppy_image::SSDD;
 		else
 			img_variant = ds ? floppy_image::DSSD : floppy_image::SSSD;
 	} else {
@@ -1159,8 +1205,42 @@ bool imd_format::save(util::random_read_write &io, const std::vector<uint32_t> &
 		return false;
 	uint64_t out_pos = header.size();
 
+	// -- Undo the doubling load() applies to 48 tpi media in a 96 tpi drive.
+	//
+	// load() lays a 40-track image on the even cylinders of an 80-track drive,
+	// because that is where a 48 tpi disk's tracks fall under a 96 tpi head.
+	// Writing those physical cylinder numbers straight back out produces a file
+	// claiming to be an 80-cylinder disk with every other cylinder blank and a
+	// cylinder map on every record correcting the number back down.  It still
+	// reloads into a 96 tpi drive, so the damage is quiet, but the file no
+	// longer describes the media it came from and a 48 tpi drive rejects it
+	// outright - load() refuses any 5.25" image reaching past cylinder 42.
+	//
+	// Nothing has to be inferred from the tracks to spot it.  The image carries
+	// its own variant, which load() takes from the media's geometry rather than
+	// from where the tracks were put, so a disk holding more cylinders than 48
+	// tpi media has room for while still calling itself 48 tpi is one that was
+	// doubled on the way in.
+	//
+	// A variant of zero means nothing recorded one, and that is not this: the
+	// only way to reach save() without a load having run is call_create(), and
+	// a created image is blank and gets formatted at whatever pitch the machine
+	// writes.  imd is in any case the only format in the tree that doubles.
+	int trackmult = 1;
+	if ((tracks > 42) && (image.get_form_factor() == floppy_image::FF_525)) {
+		switch (image.get_variant()) {
+		case floppy_image::SSSD: case floppy_image::DSSD:
+		case floppy_image::SSDD: case floppy_image::DSDD:
+			trackmult = 2;
+			break;
+		default:
+			break;
+		}
+	}
+
 	// -- Walk tracks in IMD's canonical order: cyl outer, head inner.
-	for (int cyl = 0; cyl < tracks; cyl++) {
+	for (int cyl = 0; cyl < tracks; cyl += trackmult) {
+		uint8_t const out_cyl = uint8_t(cyl / trackmult);
 		for (int hd = 0; hd < heads; hd++) {
 			track_info ti;
 			bool ok = detect_track(image, cyl, hd, ti);
@@ -1190,14 +1270,14 @@ bool imd_format::save(util::random_read_write &io, const std::vector<uint32_t> &
 
 			bool need_cmap = false, need_hmap = false;
 			for (const auto &s : ti.sectors) {
-				if (s.idam_track != uint8_t(cyl)) need_cmap = true;
+				if (s.idam_track != out_cyl)      need_cmap = true;
 				if (s.idam_head  != uint8_t(hd))  need_hmap = true;
 			}
 			uint8_t head_byte = uint8_t(uint8_t(hd) & 0x3f)
 							  | uint8_t(need_cmap ? 0x80 : 0)
 							  | uint8_t(need_hmap ? 0x40 : 0);
 
-			uint8_t recbuf[5] = { mode, uint8_t(cyl), head_byte, sec_count, size_code };
+			uint8_t recbuf[5] = { mode, out_cyl, head_byte, sec_count, size_code };
 			if (auto pr = write_at(io, out_pos, recbuf, 5); pr.first || pr.second != 5) return false;
 			out_pos += 5;
 
