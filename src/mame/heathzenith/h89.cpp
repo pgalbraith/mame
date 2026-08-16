@@ -642,6 +642,20 @@ static INPUT_PORTS_START( h89 )
 INPUT_PORTS_END
 
 
+static INPUT_PORTS_START( z90 )
+	PORT_INCLUDE( h89 )
+
+	// The Z-90 shipped with the Z-37 as its only disk controller, and MTR-90
+	// reaches that one as Disk I/O #1. The H-89 default of booting from Disk
+	// I/O #2 would look for an H-88-1 that is not fitted.
+	PORT_MODIFY("SW501")
+	PORT_DIPNAME( 0x10, 0x10, "Primary Boot from" )                  PORT_DIPLOCATION("SW501:5")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
+	PORT_DIPSETTING(    0x00, "Disk I/O #2" )
+	PORT_DIPSETTING(    0x10, "Disk I/O #1" )
+
+INPUT_PORTS_END
+
+
 void h89_base_state::machine_start()
 {
 	save_item(NAME(m_gpp));
@@ -1279,4 +1293,4 @@ COMP( 1979, h88,           h89,   0,     h88,           h88,  h88_state,        
 COMP( 1979, h89,           0,     0,     h89,           h89,  h89_state,           empty_init, "Heath Company",       "H-89",                    MACHINE_SUPPORTS_SAVE)
 COMP( 1981, h89_cdr,       h89,   0,     h89_cdr,       h89,  h89_cdr_state,       empty_init, "Heath Company",       "H-89 with CDR Equipment", MACHINE_SUPPORTS_SAVE)
 COMP( 1981, h89_mms,       h89,   0,     h89_mms,       h89,  h89_mms_state,       empty_init, "Heath Company",       "H-89 with MMS Equipment", MACHINE_SUPPORTS_SAVE)
-COMP( 1981, z90,           h89,   0,     z90,           h89,  h89_state,           empty_init, "Zenith Data Systems", "Z-90",                    MACHINE_SUPPORTS_SAVE)
+COMP( 1981, z90,           h89,   0,     z90,           z90,  h89_state,           empty_init, "Zenith Data Systems", "Z-90",                    MACHINE_SUPPORTS_SAVE)
