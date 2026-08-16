@@ -15,12 +15,14 @@ license:CC0-1.0
 		<info name="version" value="2.2.02"/>
 
 		<part name="flop1" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 1 - System"/>
 			<dataarea name="flop" size="102400">
 				<rom name="cpm_2_2_02_disk_1.h8d" size="102400" crc="0e1cdec7" sha1="d5df5a09caa455949c766c9d19cf4e261f7cfd7b"/>
 			</dataarea>
 		</part>
 
 		<part name="flop2" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 2 - BIOS source and printer utilities"/>
 			<dataarea name="flop" size="102400">
 				<rom name="cpm_2_2_02_disk_2.h8d" size="102400" crc="3ffe637b" sha1="685112ed55f62bfc31a4e6c72e2d3417af88d33f"/>
 			</dataarea>
@@ -37,18 +39,21 @@ license:CC0-1.0
 		<info name="version" value="2.2.03"/>
 
 		<part name="flop1" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 1 - System"/>
 			<dataarea name="flop" size="102400">
 				<rom name="cpm_2_2_03_disk_1.h8d" size="102400" crc="45908702" sha1="42173572f243cf674f676a26d484e04a08f0fa5e"/>
 			</dataarea>
 		</part>
 
 		<part name="flop2" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 2 - MOVCPM and printer utilities"/>
 			<dataarea name="flop" size="102400">
 				<rom name="cpm_2_2_03_disk_2.h8d" size="102400" crc="073faff8" sha1="0f35ccdc2e9baf38d0740524be76a58723f9e53c"/>
 			</dataarea>
 		</part>
 
 		<part name="flop3" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 3 - BIOS source and MAKEBIOS"/>
 			<dataarea name="flop" size="102400">
 				<rom name="cpm_2_2_03_disk_3.h8d" size="102400" crc="84262c01" sha1="b0e7d41db608cb3833665d3c7688a14b14225458"/>
 			</dataarea>
@@ -65,24 +70,28 @@ license:CC0-1.0
 		<info name="version" value="2.2.04"/>
 
 		<part name="flop1" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 1 - System"/>
 			<dataarea name="flop" size="102400">
 				<rom name="cpm_2_2_04_disk_1.h8d" size="102400" crc="540c39c5" sha1="f3f76212b741eb83702d8f715969185b95f29b3d"/>
 			</dataarea>
 		</part>
 
 		<part name="flop2" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 2 - BSYSGEN and MOVCPM"/>
 			<dataarea name="flop" size="102400">
 				<rom name="cpm_2_2_04_disk_2.h8d" size="102400" crc="5127500d" sha1="299188f3edcb06ff158f8c456549ba3603d62daf"/>
 			</dataarea>
 		</part>
 
 		<part name="flop3" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 3 - BIOS source and MAKEBIOS"/>
 			<dataarea name="flop" size="102400">
 				<rom name="cpm_2_2_04_disk_3.h8d" size="102400" crc="842f3cea" sha1="9264bacc0fd544279256535bb517d68f0adbc511"/>
 			</dataarea>
 		</part>
 
 		<part name="flop4" interface="floppy_5_25">
+			<feature name="part_id" value="Setup disk - Zenith Setup 2.0"/>
 			<dataarea name="flop" size="102400">
 				<rom name="cpm_2_2_04_setup.h8d" size="102400" crc="2391285c" sha1="383b694f88f9e2f9352667f6a205bdb0d0d070c5"/>
 			</dataarea>
@@ -146,18 +155,21 @@ license:CC0-1.0
 		<info name="partno" value="890-64"/>
 
 		<part name="flop1" interface="floppy_5_25">
+			<feature name="part_id" value="System (890-64)"/>
 			<dataarea name="flop" size="102400">
 				<rom name="hdos_2-0_issue_50-06-00_890-64.h8d" size="102400" crc="50c472b9" sha1="7f82305117d5a565f913e37cb9cf5a8729d444bf"/>
 			</dataarea>
 		</part>
 
 		<part name="flop2" interface="floppy_5_25">
+			<feature name="part_id" value="Software Tools (890-103)"/>
 			<dataarea name="flop" size="102400">
 				<rom name="hdos_2-0_software_tools_890-103.h8d" size="102400" crc="a3126b9e" sha1="9df194c98929cdb9d0be589c51271a7770e186c8"/>
 			</dataarea>
 		</part>
 
 		<part name="flop3" interface="floppy_5_25">
+			<feature name="part_id" value="Driver Source (890-104)"/>
 			<dataarea name="flop" size="102400">
 				<rom name="hdos_2-0_driver_source_890-104.h8d" size="102400" crc="a5c7ff5b" sha1="977d9180b74351d4ed6b0c156b185927fc4058f9"/>
 			</dataarea>

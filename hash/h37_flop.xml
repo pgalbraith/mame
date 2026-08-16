@@ -16,18 +16,21 @@ license:CC0-1.0
 		<info name="partno" value="ZOS-8937-2"/>
 
 		<part name="flop1" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 1 - System"/>
 			<dataarea name="flop" size="84428">
 				<rom name="cpm_2_2_03_disk_1.imd" size="84428" crc="56dfdf43" sha1="613ca4980fb50436488a72665047d3dc8f4d4774"/>
 			</dataarea>
 		</part>
 
 		<part name="flop2" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 2 - MOVCPM and printer utilities"/>
 			<dataarea name="flop" size="50493">
 				<rom name="cpm_2_2_03_disk_2.imd" size="50493" crc="b690af5d" sha1="1062164b9d928bc89b79097528b6089c90b5a6ee"/>
 			</dataarea>
 		</part>
 
 		<part name="flop3" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 3 - BIOS source and MAKEBIOS"/>
 			<dataarea name="flop" size="61481">
 				<rom name="cpm_2_2_03_disk_3.imd" size="61481" crc="4508816f" sha1="97507100f6a1002d8358bb3bdfb463c64e742e5b"/>
 			</dataarea>
@@ -39,29 +42,33 @@ license:CC0-1.0
 		<description>CP/M 2.2.04</description>
 		<year>1982</year>
 		<publisher>Heath Company</publisher>
-		<notes>The H-37 build, signing on "FOR H37 DISKS WITH OPTION(S) IE3" and dated 09/15/82; the hard-sectored H-17 build of the same version is on the h17_flop list. Disk II adds BSYSGEN over 2.2.03 and carries the MOVCPM relocators, disk III the BIOS source. The setup disk holds SETUP.COM and its SET*.OVR overlays and is not bootable itself.</notes>
+		<notes>The H-37 build, signing on "FOR H37 DISKS WITH OPTION(S) IE3" and dated 09/15/82; the hard-sectored H-17 build of the same version is on the h17_flop list. Disk 2 adds BSYSGEN over 2.2.03 and carries the MOVCPM relocators, disk 3 the BIOS source. The setup disk holds SETUP.COM and its SET*.OVR overlays and is not bootable itself.</notes>
 		<info name="alt_title" value="Digital Research Inc. CP/M"/>
 		<info name="version" value="2.2.04"/>
 
 		<part name="flop1" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 1 - System"/>
 			<dataarea name="flop" size="87664">
 				<rom name="cpm_2_2_04_disk_1.imd" size="87664" crc="90b9d3ed" sha1="bec9b62dc538804be088cc9d74fa73bef339e932"/>
 			</dataarea>
 		</part>
 
 		<part name="flop2" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 2 - BSYSGEN and MOVCPM"/>
 			<dataarea name="flop" size="54514">
 				<rom name="cpm_2_2_04_disk_2.imd" size="54514" crc="b9109da9" sha1="592e6c882cfb902dbf02a57c1380b707fa443bb8"/>
 			</dataarea>
 		</part>
 
 		<part name="flop3" interface="floppy_5_25">
+			<feature name="part_id" value="Disk 3 - BIOS source and MAKEBIOS"/>
 			<dataarea name="flop" size="68029">
 				<rom name="cpm_2_2_04_disk_3.imd" size="68029" crc="99d1e9af" sha1="5d1cc7d36a00ce70798727916d83d3d810256a77"/>
 			</dataarea>
 		</part>
 
 		<part name="flop4" interface="floppy_5_25">
+			<feature name="part_id" value="Setup disk - SETUP.COM (not bootable)"/>
 			<dataarea name="flop" size="87109">
 				<rom name="cpm_2_2_04_setup.imd" size="87109" crc="b7f4cc01" sha1="c2b19c7e3d4e44003fd21b1e82d1329511835444"/>
 			</dataarea>
