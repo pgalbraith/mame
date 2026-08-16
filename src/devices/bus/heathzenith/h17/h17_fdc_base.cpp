@@ -8,29 +8,38 @@
 
   TODO
     - The USRT receive clock is synthesised rather than recovered from the
-      drive.  rx_timer_cb() re-arms at a fixed fm_cell_time() and steps
-      fdc_pll_t by hand, splitting FM clock and data half-cells with the
-      m_rx_clock_cell flag.  Two consequences:
+      drive.  rx_timer_cb() runs an analogue fdc_pll_t and splits FM clock and
+      data half-cells with the m_rx_clock_cell flag.  The board does it
+      digitally instead; from the H-88-1 schematic (595-2195-01):
 
-        * get_next_bit() is passed a limit of machine().time() + fm_cell_time(),
-          exactly one nominal cell ahead of the PLL's ctime, so the PLL can
-          never adopt a delay longer than nominal.  When it needs to stretch to
-          track slower media it returns -1 instead, and only makes progress
-          because the fixed timer lets machine time drift ahead of ctime on the
-          following call.  It converges and sectors decode byte-exact, but the
-          usual MAME idiom is to schedule the next event from the PLL's own
-          ctime (compare wd_fdc/upd765) instead of a free-running timer.
+        READ DATA L is buffered and fires U808 (443-22), a retriggerable
+        one-shot with an internal timing resistor and C811 = 22 pF, so every
+        flux transition becomes a short pulse.  That pulse drives the ENP and
+        ENT count enables of U805 (443-757), a 4-bit synchronous counter whose
+        LOAD is tied high and whose CLR comes from the cross-coupled NAND latch
+        U811 (443-798).  U805 is clocked from a reference divider - U810, a
+        second 443-757 with all its control pins strapped to +5V, feeding
+        decoder U813 (443-807) and gates U812 (443-728).  U805's QC and QD,
+        recombined through U811 and the second latch U809 (443-728), produce
+        the S2350's RCP (U802 pin 37) and RSI (pin 23).
 
-        * The clock/data phase is recovered heuristically: a 0 seen where a
-          clock half-cell was expected is treated as data and the phase is left
-          unchanged.  That resynchronises within a bit or two on the zero-byte
-          preambles, but it is a guess rather than a decode.
+      So the real separator is a window generator re-anchored by the incoming
+      transitions, not a free-running sampler and not a PLL: the phase question
+      the m_rx_clock_cell flag answers by guesswork is answered in hardware by
+      which count a pulse lands on.  What is not yet traced is exactly which
+      counter output forms RCP versus the data window, which is what a faithful
+      reimplementation would need.
 
-      Doing this properly means letting the incoming floppy data drive the
-      2350's receive clock, which is the long-standing TODO in h17_fdc_base.h.
+      The guess is cheap to live with in the meantime.  Over a full HDOS 1.6
+      boot and CAT (5,000,000 half-cells) the phase moved 587 times and every
+      one of those was while the receiver was hunting for sync, none after a
+      sync character had been matched.  So it re-locks in the gaps and holds
+      phase across every header and data field the ROM actually consumes -
+      behaviourally what the circuit above does.  Replacing it is a fidelity
+      improvement, not a fix for anything observable.
 
     - The media data rate is not settled; see the note on BITCELL_SIZE in
-      formats/h8d_dsk.cpp.
+      formats/h17_common.h.
 
 ****************************************************************************/
 
@@ -402,16 +411,22 @@ void heath_h17_fdc_base_device::tx_w(int state)
 	write_tx_cell(BIT(state, 0));
 }
 
-void heath_h17_fdc_base_device::start_rx_timer()
+// Wake when the PLL says the next half-cell ends.  feed_read_data() computes
+// that boundary as ctime + period + phase_adjust and will not cross it, so any
+// other choice either burns a callback that cannot make progress or, if it
+// lands early, caps how far the PLL is allowed to stretch.
+void heath_h17_fdc_base_device::schedule_rx_cell()
 {
-	if (m_motor_on && m_floppy)
-	{
-		m_rx_timer->adjust(fm_cell_time());
-	}
-	else
+	if (!m_motor_on || !m_floppy)
 	{
 		m_rx_timer->adjust(attotime::never);
+		return;
 	}
+
+	attotime const next = m_rx_pll.ctime + m_rx_pll.period + m_rx_pll.phase_adjust;
+	attotime const now  = machine().time();
+
+	m_rx_timer->adjust(next > now ? next - now : attotime::zero);
 }
 
 void heath_h17_fdc_base_device::reset_rx_pll()
@@ -419,7 +434,32 @@ void heath_h17_fdc_base_device::reset_rx_pll()
 	m_rx_pll.set_clock(fm_cell_time());
 	m_rx_pll.read_reset(machine().time());
 	m_rx_clock_cell = true;
-	start_rx_timer();
+	schedule_rx_cell();
+}
+
+void heath_h17_fdc_base_device::rx_cell(int bit)
+{
+	if (m_rx_clock_cell)
+	{
+		if (bit == 0)
+		{
+			// FM clock cells are always 1. Getting 0 here means phase is
+			// inverted — we're in a data-0 half-cell, not a clock half-cell.
+			// Send it as data and stay expecting a clock on the next call.
+			m_s2350->rx_w(0);
+			m_s2350->rcp_w();
+		}
+		else
+		{
+			m_rx_clock_cell = false;
+		}
+	}
+	else
+	{
+		m_s2350->rx_w(bit);
+		m_s2350->rcp_w();
+		m_rx_clock_cell = true;
+	}
 }
 
 TIMER_CALLBACK_MEMBER(heath_h17_fdc_base_device::rx_timer_cb)
@@ -430,35 +470,21 @@ TIMER_CALLBACK_MEMBER(heath_h17_fdc_base_device::rx_timer_cb)
 		return;
 	}
 
+	// Take every half-cell that has ended.  Stopping at the current time rather
+	// than a fixed cell ahead lets the PLL settle on whatever period the media
+	// actually has; the old fixed limit made it return -1 whenever it wanted to
+	// stretch, and it only got anywhere because the free-running timer let
+	// machine time drift past ctime on a later call.  Normally this takes
+	// exactly one cell, since the timer was armed at that cell's boundary.
 	attotime tm;
-	int const bit = m_rx_pll.get_next_bit(tm, m_floppy, machine().time() + fm_cell_time());
+	int bit;
 
-	if (bit >= 0)
+	while ((bit = m_rx_pll.get_next_bit(tm, m_floppy, machine().time())) >= 0)
 	{
-		if (m_rx_clock_cell)
-		{
-			if (bit == 0)
-			{
-				// FM clock cells are always 1. Getting 0 here means phase is
-				// inverted — we're in a data-0 half-cell, not a clock half-cell.
-				// Send it as data and stay expecting a clock on the next call.
-				m_s2350->rx_w(0);
-				m_s2350->rcp_w();
-			}
-			else
-			{
-				m_rx_clock_cell = false;
-			}
-		}
-		else
-		{
-			m_s2350->rx_w(bit);
-			m_s2350->rcp_w();
-			m_rx_clock_cell = true;
-		}
+		rx_cell(bit);
 	}
 
-	m_rx_timer->adjust(fm_cell_time());
+	schedule_rx_cell();
 }
 
 void heath_h17_fdc_base_device::floppy_formats(format_registration &fr)

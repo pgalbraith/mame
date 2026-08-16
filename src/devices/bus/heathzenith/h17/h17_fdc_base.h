@@ -15,8 +15,8 @@
 
   TODO
    - Use the floppy clock bits to clock the USRT receive clock.  The receive
-     path currently synthesises that clock from a fixed-rate timer; see the
-     TODO block in h17_fdc_base.cpp for what that costs.
+     path currently recovers the FM clock/data phase by guesswork; see the TODO
+     block in h17_fdc_base.cpp for what that is measured to cost.
 
 ****************************************************************************/
 
@@ -62,7 +62,8 @@ protected:
 	void dir_w(int state);
 	void set_motor(bool motor_on);
 	void reset_rx_pll();
-	void start_rx_timer();
+	void schedule_rx_cell();
+	void rx_cell(int bit);
 	void set_write_gate(bool write_gate);
 	void start_tx_write();
 	void stop_tx_write();
