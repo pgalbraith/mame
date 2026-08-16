@@ -401,7 +401,7 @@ void hp9816_state::hp9816(machine_config &config)
 {
 	hp98x6_base_state::hp98x6_base(config, DOT_CLOCK_9816, 10);
 
-	SCREEN(config, m_screen, SCREEN_TYPE_RASTER, rgb_t::white());
+	SCREEN(config, m_screen).set_color(rgb_t::white());
 	// Parameters for 50 Hz frame rate
 	m_screen->set_raw(DOT_CLOCK_9816, 1040, 0, 800, 384, 0, 300);
 	m_screen->set_screen_update(m_crtc, FUNC(mc6845_device::screen_update));
@@ -972,6 +972,7 @@ void hp9826_36_state::machine_start()
 void hp9826_36_state::machine_reset()
 {
 	hp98x6_base_state::machine_reset();
+	m_fdc->dden_w(0);
 	m_curr_floppy = nullptr;
 	floppy_reset();
 }
@@ -996,7 +997,6 @@ void hp9826_36_state::hp9826_36(machine_config &mconfig, unsigned dot_clock, int
 
 	FD1793(mconfig, m_fdc, HPIB_CLOCK / 5);
 	m_fdc->set_force_ready(true);
-	m_fdc->dden_w(0);
 	m_fdc->intrq_wr_callback().set(FUNC(hp9826_36_state::fdc_irq_w));
 	m_fdc->drq_wr_callback().set(FUNC(hp9826_36_state::fdc_drq_w));
 	m_fdc->hld_wr_callback().set(FUNC(hp9826_36_state::fdc_hld_w));
@@ -1335,7 +1335,7 @@ void hp9826_state::hp9826(machine_config &mconfig)
 {
 	hp9826_36(mconfig, DOT_CLOCK_9826.value(), 8);
 
-	SCREEN(mconfig, m_screen, SCREEN_TYPE_RASTER, rgb_t::white());
+	SCREEN(mconfig, m_screen).set_color(rgb_t::white());
 	m_screen->set_raw(DOT_CLOCK_9826, 520, 0, 400, 321, 0, 300);
 	m_screen->set_screen_update(m_crtc, FUNC(mc6845_device::screen_update));
 
@@ -1539,7 +1539,7 @@ void hp9836_state::hp9836(machine_config &mconfig)
 	// In the horizontal direction everything is doubled to account for half pixels
 	hp9826_36(mconfig, DOT_CLOCK_9836 * 2, 18);
 
-	SCREEN(mconfig, m_screen, SCREEN_TYPE_RASTER, rgb_t::white());
+	SCREEN(mconfig, m_screen).set_color(rgb_t::white());
 	// Parameters for 50 Hz frame rate
 	m_screen->set_raw(DOT_CLOCK_9836 * 2, 2070, 0, 1536, 498, 0, 390);
 	m_screen->set_screen_update(m_crtc, FUNC(mc6845_device::screen_update));
@@ -1872,7 +1872,7 @@ void hp9836c_state::hp9836c(machine_config &mconfig)
 	// In the horizontal direction everything is doubled to account for half pixels
 	hp9826_36(mconfig, DOT_CLOCK_9836 * 2, 18);
 
-	SCREEN(mconfig, m_screen, SCREEN_TYPE_RASTER);
+	SCREEN(mconfig, m_screen);
 	// Parameters for 50 Hz frame rate
 	m_screen->set_raw(DOT_CLOCK_9836 * 2, 2070, 0, 1536, 498, 0, 390);
 	m_screen->set_screen_update(m_crtc, FUNC(mc6845_device::screen_update));

@@ -455,11 +455,14 @@ public:
 	void filt_res_w(double cv);
 	void filt_env_amt_w(double cc);
 
+	DECLARE_INPUT_CHANGED_MEMBER(osc_trimmer_changed) { update_osc_scale_calibration(); }
 	DECLARE_INPUT_CHANGED_MEMBER(filter_trimmer_changed) { update_filter_freq_calibration(); }
 	DECLARE_INPUT_CHANGED_MEMBER(volume_trimmer_changed) { m_volume_changed_cb(0); }
 	DECLARE_INPUT_CHANGED_MEMBER(voice_balance_trimmer_changed) { voice_update_balance_calibration(); }
 
 	const char *trimmer_name_volume() const ATTR_COLD { return m_volume_name.c_str(); }
+	const char *trimmer_name_osc_a_scale() const ATTR_COLD { return m_osc_a_scale_name.c_str(); }
+	const char *trimmer_name_osc_b_scale() const ATTR_COLD { return m_osc_b_scale_name.c_str(); }
 	const char *trimmer_name_filt_scale() const ATTR_COLD { return m_filt_scale_name.c_str(); }
 	const char *trimmer_name_filt_offset() const ATTR_COLD { return m_filt_offset_name.c_str(); }
 	const char *trimmer_name_filt_env_bal() const ATTR_COLD { return m_filt_env_bal_name.c_str(); }
@@ -479,10 +482,13 @@ private:
 	static double jittered(double x, double random, double tolerance);
 
 	void update_osc_b_mix();
+	void update_osc_scale_calibration();
 	void update_filter_freq_calibration();
 	void voice_update_balance_calibration();
 
 	const std::string m_volume_name;
+	const std::string m_osc_a_scale_name;
+	const std::string m_osc_b_scale_name;
 	const std::string m_filt_scale_name;
 	const std::string m_filt_offset_name;
 	const std::string m_filt_env_bal_name;
@@ -529,6 +535,8 @@ private:
 	devcb_write8 m_volume_changed_cb;
 
 	required_ioport m_volume;  // R4529
+	required_ioport m_osc_a_scale;  // R4294
+	required_ioport m_osc_b_scale;  // R4186
 	required_ioport m_filt_scale;  // R4133
 	required_ioport m_filt_offset;  // R4501
 	required_ioport m_filt_env_bal;  // R495
@@ -549,6 +557,14 @@ INPUT_PORTS_START(prophet5_voice_trimmers)
 	PORT_START("trimmer_volume")
 	PORT_ADJUSTER(100, voice.trimmer_name_volume())
 		PORT_CHANGED_MEMBER(DEVICE_SELF, FUNC(prophet5_voice_device::volume_trimmer_changed), 0);
+
+	PORT_START("trimmer_osc_a_scale")
+	PORT_ADJUSTER(62, voice.trimmer_name_osc_a_scale())
+		PORT_CHANGED_MEMBER(DEVICE_SELF, FUNC(prophet5_voice_device::osc_trimmer_changed), 0)
+
+	PORT_START("trimmer_osc_b_scale")
+	PORT_ADJUSTER(62, voice.trimmer_name_osc_b_scale())
+		PORT_CHANGED_MEMBER(DEVICE_SELF, FUNC(prophet5_voice_device::osc_trimmer_changed), 0)
 
 	PORT_START("trimmer_filt_scale")
 	PORT_ADJUSTER(14, voice.trimmer_name_filt_scale())
@@ -593,6 +609,8 @@ prophet5_voice_device::prophet5_voice_device(
 	: device_t(mconfig, PROPHET5_VOICE, tag, owner, 0)
 	, device_sound_interface(mconfig, *this)
 	, m_volume_name(util::string_format("%s TRIMMER: VOLUME", strmakeupper(basetag())))
+	, m_osc_a_scale_name(util::string_format("%s TRIMMER: OSC A SCALE", strmakeupper(basetag())))
+	, m_osc_b_scale_name(util::string_format("%s TRIMMER: OSC B SCALE", strmakeupper(basetag())))
 	, m_filt_scale_name(util::string_format("%s TRIMMER: FILT SCALE", strmakeupper(basetag())))
 	, m_filt_offset_name(util::string_format("%s TRIMMER: FILT OFFSET", strmakeupper(basetag())))
 	, m_filt_env_bal_name(util::string_format("%s TRIMMER: FILT ENV BALANCE", strmakeupper(basetag())))
@@ -628,6 +646,8 @@ prophet5_voice_device::prophet5_voice_device(
 	, m_vca(*this, "vca")
 	, m_volume_changed_cb(*this)
 	, m_volume(*this, "trimmer_volume")
+	, m_osc_a_scale(*this, "trimmer_osc_a_scale")
+	, m_osc_b_scale(*this, "trimmer_osc_b_scale")
 	, m_filt_scale(*this, "trimmer_filt_scale")
 	, m_filt_offset(*this, "trimmer_filt_offset")
 	, m_filt_env_bal(*this, "trimmer_filt_env_balance")
@@ -704,14 +724,14 @@ void prophet5_voice_device::device_add_mconfig(machine_config &config)
 	if (m_osc_a_sum_cv)
 		m_osc_a_sum_cv->add_route(0, m_osc_a_freq, 1.0 / RES_K(100));  // R4322 (1%, matched to 0.01% with R4321)
 	VA_SCALE_OFFSET(config, m_osc_a_freq)
-		.add_route(0, m_osc_a, 1.0, cem3340_device::INPUT_FREQ);
+		.add_route(0, m_osc_a, 1.0, cem3340_device::INPUT_FREQ_CTRL);
 
 	// Osc A pulse width control. The PW A master sum CV is mixed with the
 	// polymod signal and fed to the PW CV input of the VCO.
 	if (m_pw_a_sum_cv)
 		m_pw_a_sum_cv->add_route(0, m_osc_a_pw, 1.0 / RES_K(100));  // R4163 (1%)
 	MIXER(config, m_osc_a_pw)
-		.add_route(0, m_osc_a, -RES_K(52.3), cem3340_device::INPUT_PW);  // R4162 (1%)
+		.add_route(0, m_osc_a, -RES_K(52.3), cem3340_device::INPUT_PW_CTRL);  // R4162 (1%)
 
 	// Oscillator A chip. The ramp and pulse outputs are fed, via switches, to
 	// the "+" and "-" inputs of an OTA. The switches control whether each
@@ -736,12 +756,12 @@ void prophet5_voice_device::device_add_mconfig(machine_config &config)
 	if (m_osc_b_sum_cv)
 		m_osc_b_sum_cv->add_route(0, m_osc_b_freq, 1.0 / RES_K(100));  // R4205 (1%, matched to 0.01% with R4206)
 	VA_SCALE_OFFSET(config, m_osc_b_freq)
-		.add_route(0, m_osc_b, 1.0, cem3340_device::INPUT_FREQ);
+		.add_route(0, m_osc_b, 1.0, cem3340_device::INPUT_FREQ_CTRL);
 
 	// Osc B pulse width control. The PW B master sum CV is directly fed to the
 	// PW CV input of the VCO.
 	if (m_pw_b_sum_cv)
-		m_pw_b_sum_cv->add_route(0, m_osc_b, 1.0, cem3340_device::INPUT_PW);
+		m_pw_b_sum_cv->add_route(0, m_osc_b, 1.0, cem3340_device::INPUT_PW_CTRL);
 
 	// Oscillator B chip. The setup is similar to that of osc A, except that the
 	// triangle output is also used, and the outputs are also routed to the
@@ -847,6 +867,7 @@ void prophet5_voice_device::device_start()
 void prophet5_voice_device::device_reset()
 {
 	update_osc_b_mix();
+	update_osc_scale_calibration();
 	update_filter_freq_calibration();
 	voice_update_balance_calibration();
 }
@@ -1127,6 +1148,23 @@ void prophet5_voice_device::update_osc_b_mix()
 	}
 	m_osc_b_tri_center->set_scale(tri_scale);
 	m_osc_b_tri_center->set_offset(tri_offset);
+}
+
+void prophet5_voice_device::update_osc_scale_calibration()
+{
+	constexpr double R_TRIMMER = RES_K(5);  // R4294, R4186
+	constexpr double RT = RES_K(5.62);  // R4293 (1%), R4185 (1%)
+	constexpr double RZ1 = RES_K(26.7);  // R4292 (1%), R4184 (1%)
+
+	const double rz_a = normalized(m_osc_a_scale) * R_TRIMMER + RZ1;
+	m_osc_a->set_tempco_gen_res(rz_a, RT);
+	LOGMASKED(LOG_CALIBRATION | LOG_OSC, "%s: Osc scale A - optimal: %f, actual: %f\n",
+			  tag(), m_osc_a->rz_optimal(RT), rz_a);
+
+	const double rz_b = normalized(m_osc_b_scale) * R_TRIMMER + RZ1;
+	m_osc_b->set_tempco_gen_res(rz_b, RT);
+	LOGMASKED(LOG_CALIBRATION | LOG_OSC, "%s: Osc scale B - optimal: %f, actual: %f\n",
+			  tag(), m_osc_b->rz_optimal(RT), rz_b);
 }
 
 void prophet5_voice_device::update_filter_freq_calibration()
@@ -1465,10 +1503,11 @@ void prophet5_audio_device::device_add_mconfig(machine_config &config)
 	// modulation by the LFO. Many of the route gains, and the triangle scale
 	// and offset are computed in update_lfo_mix().
 	CEM3340(config, m_lfo, CAP_U(0.1), RES_M(2.21))  // U376 - C382 (mylar, 5%), R3138 (1%)
-		.set_pw_cv(VPLUS * RES_VOLTAGE_DIVIDER(RES_K(10), RES_K(2)))  // R3110, R3111, 50% PW.
+		.set_tempco_gen_res(RES_K(30.1), RES_K(5.62))  // R3107 (1%), R3108 (1%)
 		.add_route(cem3340_device::OUTPUT_TRIANGLE, m_lfo_tri_center, 1.0)
 		.add_route(cem3340_device::OUTPUT_RAMP, m_lfo_vca, 1.0)
 		.add_route(cem3340_device::OUTPUT_PULSE, m_lfo_vca, 1.0);
+	m_lfo->set_pw_ctrl(VPLUS * RES_VOLTAGE_DIVIDER(RES_K(10), RES_K(2)));  // R3110, R3111, 50% PW.
 	VA_SCALE_OFFSET(config, m_lfo_tri_center)  // U380B (TL082) and surrounding resistors.
 		.set_scale(0).set_offset(0)
 		.add_route(0, m_lfo_vca, 1.0);
@@ -1868,7 +1907,7 @@ void prophet5_audio_device::cv_w(offs_t cv_index, double cv)
 		case CV_UNISON: m_glide_eg->set_target_v(cv); break;
 
 		case CV_LFO_FREQ:
-			m_lfo->set_freq_cc(VPLUS / RES_K(487) + cv / RES_K(110));  // R3135 (1%), R3136 (1%)
+			m_lfo->set_freq_ctrl(VPLUS / RES_K(487) + cv / RES_K(110));  // R3135 (1%), R3136 (1%)
 			LOGMASKED(LOG_LFO, "LFO frequency: %f\n", m_lfo->freq());
 			break;
 		case CV_WMOD_SRC_MIX:
@@ -3262,10 +3301,14 @@ INPUT_PORTS_START(prophet5)
 	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("REL FT SW")
 
 	PORT_START("test_points")
-	// According to the schematic, TP301 and TP304 have pull-down resistors, and
-	// TP306 does not have a resistor.
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("TP301") PORT_CODE(KEYCODE_T)
+	// TP301 is connected to a pull-down resistor. Tying TP301 to +5V when the
+	// machine boots will enter the "VCO scale trim" procedure. Removing the
+	// connection will exit the procedure after the next key is pressed.
+	// See "4-16 VCO SCALE TRIM" in the technical manual.
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("TP301 - VCO SCALE TRIM") PORT_TOGGLE
+	// TP304 is connected to a pull-down resistor.
 	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("TP304")
+	// TP306 does not seem to be connected to a resistor.
 	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("TP306")
 
 	// All knob potentiometers are 10K linear, unless otherwise noted.

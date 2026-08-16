@@ -82,7 +82,11 @@
     TODO:
 
     - keyboard ROM is not dumped
-    - MPSC (DMA and interrupts)
+    - MPSC
+		- CRC
+		- PAR OVR CRC
+		- LINE OFF
+		- DMA is not implemented in z80sio.cpp
     - CRTC186 video using CRT9007
     - IOE186 card
 
@@ -165,8 +169,8 @@ private:
 	void mpsc_txdb_w(int state) { if (m_llbb) m_mpsc->rxb_w(state); else m_rs232b->write_txd(state); }
 	void mpsc_rtsa_w(int state) { if (m_llba) m_mpsc->ctsa_w(state); else m_rs232a->write_rts(state); }
 	void mpsc_rtsb_w(int state) { if (m_llbb) m_mpsc->ctsb_w(state); else m_rs232b->write_rts(state); }
-	void tmrout0_w(int state) { if (!m_cls1 && !m_cls0) { m_mpsc->rxca_w(state); m_mpsc->txca_w(state); } };
-	void tmrout1_w(int state) { if (!m_cls1 && m_cls0) { m_mpsc->rxca_w(state); m_mpsc->txca_w(state); } };
+	void tmrout0_w(int state) { if (!m_cls1) { m_mpsc->txca_w(state); if (!m_cls0) m_mpsc->rxca_w(state); } };
+	void tmrout1_w(int state) { if (!m_cls1 && m_cls0) m_mpsc->rxca_w(state); };
 	void latch_hold(int state, int bit);
 	void update_bhlda();
 	void hold1_w(int state) { latch_hold(state, 0); }
@@ -276,11 +280,6 @@ void mm2_state::machine_start()
 	rom[0x1cf9] = 0x90;
 	rom[0x1cfa] = 0x90;
 
-	// patch out CRTC186 test which fails due to missing keyboard emulation
-	rom[0x1d00] = 0x90;
-	rom[0x1d01] = 0x90;
-	rom[0x1d02] = 0x90;
-
 	// state saving
 	save_item(NAME(m_cls0));
 	save_item(NAME(m_cls1));
@@ -316,8 +315,8 @@ void mm2_state::mm2(machine_config &config)
 
 	I8274(config, m_mpsc, XTAL(16'000'000)/4);
 	m_mpsc->out_int_callback().set(m_pic, FUNC(pic8259_device::ir1_w));
-	m_mpsc->out_txdrqa_callback().set(m_maincpu, FUNC(i80186_cpu_device::drq0_w));
-	m_mpsc->out_rxdrqa_callback().set(m_maincpu, FUNC(i80186_cpu_device::drq1_w));
+	m_mpsc->out_txdrqa_callback().set(m_maincpu, FUNC(i80186_cpu_device::drq1_w));
+	m_mpsc->out_rxdrqa_callback().set(m_maincpu, FUNC(i80186_cpu_device::drq0_w));
 	m_mpsc->out_txda_callback().set(FUNC(mm2_state::mpsc_txda_w));
 	m_mpsc->out_rtsa_callback().set(FUNC(mm2_state::mpsc_rtsa_w));
 	m_mpsc->out_txdb_callback().set(FUNC(mm2_state::mpsc_txdb_w));
@@ -394,4 +393,4 @@ ROM_END
 
 } // anonymous namespace
 
-COMP( 1983, mm2m35d,  0,     0,      mm2,   mm2,   mm2_state, empty_init, "Nokia Data", "MikroMikko 2 M35D", MACHINE_IMPERFECT_GRAPHICS )
+COMP( 1983, mm2m35d,  0,     0,      mm2,   mm2,   mm2_state, empty_init, "Nokia Data", "MikroMikko 2 M35D", MACHINE_SUPPORTS_SAVE | MACHINE_IMPERFECT_GRAPHICS )

@@ -32,7 +32,8 @@ P0-055D                 90 Thunder & Lightning                  Romstar / Visco
 Promat PCB              94 Wiggie Waggie(5)                     --
 Promat PCB              94 Super Bar(5)                         --
 P0-058A                 90 Jockey Club                          Visco
-P0-058C                 98 International Toote (6)              Coinmaster (bootleg)
+P0-058C                 98 International Toote (6)              Coinmaster (hack)
+P0-058C                 98 Sport of Kings (6)                   Coinmaster (hack)
 P0-063A                 91 Rezon                                Allumer
 P0-068B  (M6100723A)    92 Block Carnival                       Visco
 P0-072-2 (prototype)    92 Blandia (prototype)                  Allumer
@@ -65,14 +66,14 @@ P0-122A  (SZR-001)      95 Zombie Raid                          American Sammy
 ?                       96 Crazy Fight                          Subsino
 -------------------------------------------------------------------------------
 (3) Same board as "Ultraman Club" despite the different PCB number
-(4) this is a bootleg of Oishii Puzzle, in english, is there an official
+(4) this is a bootleg of Oishii Puzzle, in English, is there an official
     version?  the sound system has been replaced with an OKI M6295
     hardware is definitely bootleg. standard simple layout board with no
-    custom chips and no manufacturer on the pcb.
+    custom chips and no manufacturer on the PCB.
 (5) The game code is based on Thunder and Lightning but the PCB is custom
     there are a few gfx emulation bugs (flipping of some border tiles and
     sprites not leaving the screen correctly) its possible the custom hw
-    doesn't behave *exactly* the same as the original seta hw
+    doesn't behave *exactly* the same as the original Seta hw
 (6) To enter test mode press O (open door), then F2 (turn function key), then E (bet 3-4).
 (7) Bad tilemaps colors in demo mode are real game bug. Fade-in and fade-out "bad" colors are also right.
     Bad sprites priorities are real game bugs. The bad-looking colors in Jurane stage are right.
@@ -7475,7 +7476,7 @@ void seta_state::atehate(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -7518,7 +7519,7 @@ void seta_state::blandia(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_video_attributes(VIDEO_UPDATE_AFTER_VBLANK);
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
@@ -7557,7 +7558,7 @@ void seta_state::blandiap(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_video_attributes(VIDEO_UPDATE_AFTER_VBLANK);
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
@@ -7600,7 +7601,7 @@ void seta_state::blockcar(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -7676,7 +7677,7 @@ void seta_state::daioh(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(57.42);   // verified on PCB
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -7735,7 +7736,7 @@ void seta_state::drgnunit(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -7824,7 +7825,7 @@ void setaroul_state::setaroul(machine_config &config)
 	TICKET_DISPENSER(config, "hopper", attotime::from_msec(150));
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -7876,7 +7877,7 @@ void seta_state::eightfrc(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -7926,7 +7927,7 @@ void seta_state::extdwnhl(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -7980,7 +7981,7 @@ void seta_state::gundhara(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8050,7 +8051,7 @@ void seta_state::jjsquawk(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8086,7 +8087,7 @@ void seta_state::jjsquawb(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8133,7 +8134,7 @@ void seta_state::kamenrid(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8177,7 +8178,7 @@ void seta_state::orbs(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8215,7 +8216,7 @@ void keroppi_state::keroppi(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8261,7 +8262,7 @@ void seta_state::krzybowl(machine_config &config)
 	m_spritegen->set_bg_yoffsets(-0x3, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8304,7 +8305,7 @@ void seta_state::madshark(machine_config &config)
 	WATCHDOG_TIMER(config, m_watchdog);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8340,7 +8341,7 @@ void seta_state::madsharkbl(machine_config &config) // bootleg doesn't actually 
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8395,7 +8396,7 @@ void magspeed_state::magspeed(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8442,7 +8443,7 @@ void seta_state::msgundam(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(56.66); // between 56 and 57 to match a real PCB's game speed
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8491,7 +8492,7 @@ void seta_state::oisipuzl(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8536,7 +8537,7 @@ void seta_state::triplfun(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8582,7 +8583,7 @@ void seta_state::rezon(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(57.42); // approximation from PCB video
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8632,7 +8633,7 @@ void thunderl_state::thunderl(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8705,7 +8706,7 @@ void seta_state::wiggie(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8745,7 +8746,7 @@ void seta_state::wits(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8782,7 +8783,7 @@ void seta_state::umanclub(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8824,7 +8825,7 @@ void seta_state::utoukond(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8878,7 +8879,7 @@ void seta_state::wrofaero(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8926,7 +8927,7 @@ void seta_state::zingzip(machine_config &config)
 	WATCHDOG_TIMER(config, m_watchdog);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(57.42); // taken from other games but seems to better match PCB videos
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -8987,7 +8988,7 @@ void pairlove_state::pairlove(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -9025,7 +9026,7 @@ void crazyfgt_state::crazyfgt(machine_config &config)
 	m_spritegen->set_bg_yoffsets(0x1, -0x1);
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(59.1851);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -9107,7 +9108,7 @@ void jockeyc_state_base::jockeyc_base(machine_config &config)
 	TICKET_DISPENSER(config, "hopper2", attotime::from_msec(150));
 
 	// video hardware
-	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen_device &screen(SCREEN(config, "screen"));
 	screen.set_refresh_hz(60);
 	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
 	screen.set_size(64*8, 32*8);
@@ -10944,6 +10945,37 @@ ROM_START( inttoote )
 	ROM_LOAD( "ya_011_012.u64", 0x80000, 0x80000, CRC(a8015ce6) SHA1(bb0b589856ec82e1fd42be9af89b07ba1d17e595) )
 ROM_END
 
+ROM_START( spkings ) // Allumer P0-058C + Coinmaster PCB-HRE-000 Horse Race I/O Expansion
+	ROM_REGION( 0x200000, "maincpu", 0 )        // 68000 Code, the first 2 EPROMs had handwritten labels
+	ROM_LOAD16_BYTE( "p436.08_sport_of_kings_even.002", 0x000000, 0x10000, CRC(6de20c3c) SHA1(b736b9294ece9d33ced8171eaa9206b4ce41b51e) ) // 27/8/98 German
+	ROM_LOAD16_BYTE( "p436.08_sport_of_kings_odd.003",  0x000001, 0x10000, CRC(ebef4924) SHA1(5c1d19df2a99950bcbbde9ad5cf6b1e5510acf62) ) // ""
+	ROM_FILL(                                           0x020000, 0xe0000, 0xff )
+	ROM_LOAD16_WORD_SWAP( "ya_002_001.u18",             0x100000, 0x80000, CRC(dd108016) SHA1(1554de4cc1a9436a1e62400cd96c9752a2098f99) )
+	ROM_FILL(                                           0x180000, 0x80000, 0xff )
+
+	ROM_REGION( 0x200000, "gfx1", 0 )   // Sprites
+	ROM_LOAD16_BYTE( "ya_011_007.u27",                                      0x000000, 0x80000, CRC(2dc7a294) SHA1(97f2aa9939a45aaa94d4aeb2fcd5b7f30204b942) )
+	ROM_LOAD16_BYTE( "ya_011_006.u22",                                      0x000001, 0x80000, CRC(bfae01a5) SHA1(3be83972c3987e9bf722cd6db7770f074587301c) )
+	ROM_LOAD16_BYTE( "p436_v04_french_sport_of_kings_charachter_3_fg.u133", 0x0e0001, 0x10000, CRC(008f6024) SHA1(36a3938ff1ad20a841ece00f2a19d0b7f78af40e) )
+	ROM_LOAD16_BYTE( "p436_v04_french_sport_of_kings_charachter_4_fg.u132", 0x0e0000, 0x10000, CRC(a0a9d106) SHA1(19483554298b99ead007f8ec25da64645527d844) )
+	ROM_LOAD16_BYTE( "ya_011_005.u17",                                      0x100000, 0x80000, CRC(4a6c804b) SHA1(b596b9b0b3b453c26f9c7f976ff4d56eac4fac04) )
+	ROM_LOAD16_BYTE( "ya_011_004.u10",                                      0x100001, 0x80000, CRC(eb74d2e0) SHA1(221ff6cc03ce57a7fcbe418f1c12a293990f8a7d) )
+	ROM_LOAD16_BYTE( "p436_v04_french_sport_of_kings_charachter_2_fg.u134", 0x1e0000, 0x10000, CRC(adb131da) SHA1(f3cba89ff0e4c83eb869eb1ba05202dc63f3ca69) )
+	ROM_LOAD16_BYTE( "p436_v04_french_sport_of_kings_charachter_1_fg.u135", 0x1e0001, 0x10000, CRC(90fb20ae) SHA1(881d3c9bb1cbb0584f88ba1cda775f25875290f5) )
+
+	ROM_REGION( 0x80000, "gfx2", 0 )    // Layer 1
+	ROM_LOAD16_BYTE( "ya_011_008.u35",             0x000000, 0x40000, CRC(4b890f83) SHA1(fde6544898a0691b550f3045803f2e81cfeb5fe9) )
+	ROM_LOAD16_BYTE( "ya_011_009.u41",             0x000001, 0x40000, CRC(caa5e3c1) SHA1(63cccc5479040a02872febc8d7f2d46096e138d1) )
+
+	ROM_REGION( 0x400, "proms", 0 ) // Colours
+	ROM_LOAD16_BYTE( "ya-010.prom", 0x000, 0x200, CRC(778094b3) SHA1(270329a0d544dc7a8240d6dab08ccd54ea87ab70) )
+	ROM_LOAD16_BYTE( "ya-011.prom", 0x001, 0x200, CRC(bd4fe2f6) SHA1(83d9f9db3fbfa2d172f5227c397ea4d5a9687015) )
+
+	ROM_REGION( 0x100000, "x1snd", 0 )  // Samples
+	ROM_LOAD( "ya_011_013.u71", 0x00000, 0x80000, CRC(2bccaf47) SHA1(1658643444d575410f11b648e0d7ae6c43fcf1ea) )
+	ROM_LOAD( "ya_011_012.u64", 0x80000, 0x80000, CRC(a8015ce6) SHA1(bb0b589856ec82e1fd42be9af89b07ba1d17e595) )
+ROM_END
+
 // Gran Derby (Spanish hack of Jockey Club)
 // CODERE massive production.
 
@@ -11292,8 +11324,9 @@ GAME( 1994, wiggie,    0,        wiggie,    thunderl,  seta_state,     init_wigg
 GAME( 1994, superbar,  wiggie,   superbar,  thunderl,  seta_state,     init_wiggie,    ROT270, "Promat",                    "Super Bar", MACHINE_IMPERFECT_GRAPHICS ) // hack of Thunder & Lightning
 
 GAME( 1990, jockeyc,   0,        jockeyc,   jockeyc,   jockeyc_state,  empty_init,     ROT0,   "Seta (Visco license)",      "Jockey Club (v1.18)", 0 )
-GAME( 1993, inttoote2, jockeyc,  jockeyc,   jockeyc,   jockeyc_state,  empty_init,     ROT0,   "bootleg (Coinmaster)",      "International Toote II (v1.24, P387.V01)", 0 )
-GAME( 1998, inttoote,  jockeyc,  inttoote,  inttoote,  inttoote_state, init_inttoote,  ROT0,   "bootleg (Coinmaster)",      "International Toote (Germany, P523.V01)", MACHINE_NOT_WORKING | MACHINE_UNEMULATED_PROTECTION )
+GAME( 1993, inttoote2, jockeyc,  jockeyc,   jockeyc,   jockeyc_state,  empty_init,     ROT0,   "hack (Coinmaster)",         "International Toote II (v1.24, P387.V01)", 0 )
+GAME( 1994, spkings,   jockeyc,  jockeyc,   jockeyc,   jockeyc_state,  empty_init,     ROT0,   "hack (Coinmaster)",         "Sport of Kings (France, P436.08)", MACHINE_NOT_WORKING )
+GAME( 1998, inttoote,  jockeyc,  inttoote,  inttoote,  inttoote_state, init_inttoote,  ROT0,   "hack (Coinmaster)",         "International Toote (Germany, P523.V01)", MACHINE_NOT_WORKING | MACHINE_UNEMULATED_PROTECTION )
 GAME( 1990, gderby,    jockeyc,  jockeyc,   jockeyc,   jockeyc_state,  empty_init,     ROT0,   "hack (CODERE)",             "Gran Derby (Spanish hack of Jockey Club)", 0 )
 
 GAME( 1992, rezon,     0,        rezon,     rezon,     seta_state,     empty_init,     ROT0,   "Allumer",                   "Rezon", 0 ) // License: Jumper
