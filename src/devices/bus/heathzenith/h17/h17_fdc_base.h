@@ -1,5 +1,5 @@
 // license:BSD-3-Clause
-// copyright-holders:Mark Garlanger
+// copyright-holders:Mark Garlanger, Paul Galbraith
 /***************************************************************************
 
   Heathkit H-17 Hard-sectored Floppy Disk Controller

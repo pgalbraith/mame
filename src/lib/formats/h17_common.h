@@ -1,5 +1,5 @@
 // license:BSD-3-Clause
-// copyright-holders:Mark Garlanger
+// copyright-holders:Mark Garlanger, Paul Galbraith
 /*********************************************************************
 
     formats/h17_common.h

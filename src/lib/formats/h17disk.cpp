@@ -1,5 +1,5 @@
 // license:BSD-3-Clause
-// copyright-holders:Mark Garlanger
+// copyright-holders:Mark Garlanger, Paul Galbraith
 /*********************************************************************
 
 Heath H17D disk image format (version 2.0.0)
