@@ -89,7 +89,7 @@ void h_88_1_device::device_add_mconfig(machine_config &config)
 
 	// the list belongs to the controller rather than to any one machine: the
 	// H-88-1 came standard on the H-89 and was an option for the H-88
-	SOFTWARE_LIST(config, "flop_list").set_original("h89_flop");
+	SOFTWARE_LIST(config, "flop_list").set_original("h17_flop");
 }
 
 } // anonymous namespace

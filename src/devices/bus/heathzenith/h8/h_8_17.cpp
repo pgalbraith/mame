@@ -129,7 +129,7 @@ void h_8_17_device::device_add_mconfig(machine_config &config)
 	heath_h17_fdc_base_device::device_add_mconfig(config);
 
 	// the same hard-sectored disks the H-88-1 reads
-	SOFTWARE_LIST(config, "flop_list").set_compatible("h89_flop");
+	SOFTWARE_LIST(config, "flop_list").set_compatible("h17_flop");
 }
 
 ROM_START( h_8_17 )

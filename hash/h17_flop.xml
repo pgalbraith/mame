@@ -3,7 +3,7 @@
 <!--
 license:CC0-1.0
 -->
-<softwarelist name="h89_flop" description="Heath H-88-1 hard-sectored floppy disks">
+<softwarelist name="h17_flop" description="Heath H-88-1 hard-sectored floppy disks">
 
 	<software name="hdos_50_03_00">
 		<description>HDOS 1.0 (Issue 50.03.00)</description>
