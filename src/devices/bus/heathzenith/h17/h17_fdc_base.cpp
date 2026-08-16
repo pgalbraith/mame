@@ -36,7 +36,6 @@
 
 #include "formats/h17disk.h"
 #include "formats/h8d_dsk.h"
-#include "formats/mfi_dsk.h"
 
 
 #define LOG_REG   (1U << 1) // Register setup
@@ -536,7 +535,6 @@ void heath_h17_fdc_base_device::floppy_formats(format_registration &fr)
 	fr.add(FLOPPY_H17D_FORMAT);
 	fr.add(FLOPPY_H17D_V1_FORMAT);
 	fr.add(FLOPPY_H8D_FORMAT);
-	fr.add(FLOPPY_MFI_FORMAT);
 }
 
 void heath_h17_fdc_base_device::device_add_mconfig(machine_config &config)
