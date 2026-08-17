@@ -270,6 +270,7 @@ void menu_control_device_image::start_softlist()
 	menu::stack_push<menu_software>(
 			ui(),
 			target(),
+			m_image.device(),
 			m_image.image_interface(),
 			[this] (software_list_device *sld)
 			{

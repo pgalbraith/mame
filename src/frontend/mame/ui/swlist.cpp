@@ -400,9 +400,11 @@ bool menu_software_list::handle(event const *ev)
 menu_software::menu_software(
 		mame_ui_manager &mui,
 		render_target &target,
+		device_t &imagedev,
 		const char *interface,
 		handler_function &&handler)
 	: menu(mui, target)
+	, m_imagedev(imagedev)
 	, m_interface(interface)
 	, m_handler(std::move(handler))
 {
@@ -427,55 +429,61 @@ void menu_software::populate()
 {
 	bool have_compatible = false;
 
-	// Add original software lists for this system
-	software_list_device_enumerator iter(machine().config().root_device());
-	for (software_list_device &swlistdev : iter)
-	{
-		if (swlistdev.is_original())
-		{
-			if (!swlistdev.get_info().empty() && m_interface != nullptr)
+	// does this list carry anything the image device could actually accept?
+	auto const usable =
+			[this] (software_list_device &swlistdev)
 			{
-				bool found = false;
+				if (!m_interface || swlistdev.get_info().empty())
+					return false;
 				for (const software_info &swinfo : swlistdev.get_info())
-				{
 					for (const software_part &swpart : swinfo.parts())
-					{
 						if (swpart.matches_interface(m_interface))
-						{
-							found = true;
-							break;
-						}
-					}
-				}
-				if (found)
-					item_append(swlistdev.description(), 0, (void *)&swlistdev);
+							return true;
+				return false;
+			};
+
+	// A list instantiated inside a card rather than at the machine root belongs
+	// to that card, so where a system has more than one controller offering the
+	// same interface - a Z-90 has hard- and soft-sectored floppy cards side by
+	// side, both "floppy_5_25" - each drive should offer only the media it can
+	// read.  Walk up from the image to the nearest enclosing device that has a
+	// usable list of its own and enumerate from there.  Systems that declare
+	// their lists at the root, which is nearly all of them, walk the whole way
+	// up and get the machine-wide set exactly as before.
+	device_t *scope = &m_imagedev;
+	while (scope->owner())
+	{
+		bool scoped = false;
+		for (software_list_device &swlistdev : software_list_device_enumerator(*scope))
+		{
+			if (usable(swlistdev))
+			{
+				scoped = true;
+				break;
 			}
 		}
+		if (scoped)
+			break;
+		scope = scope->owner();
+	}
+
+	// Add original software lists for this system
+	software_list_device_enumerator iter(*scope);
+	for (software_list_device &swlistdev : iter)
+	{
+		if (swlistdev.is_original() && usable(swlistdev))
+			item_append(swlistdev.description(), 0, (void *)&swlistdev);
 	}
 
 	// add compatible software lists for this system
 	for (software_list_device &swlistdev : iter)
 	{
-		if (swlistdev.is_compatible())
+		if (swlistdev.is_compatible() && usable(swlistdev))
 		{
-			if (!swlistdev.get_info().empty() && m_interface != nullptr)
-			{
-				bool found = false;
-				for (const software_info &swinfo : swlistdev.get_info())
-					for (const software_part &swpart : swinfo.parts())
-						if (swpart.matches_interface(m_interface))
-						{
-							found = true;
-							break;
-						}
-				if (found)
-				{
-					if (!have_compatible)
-						item_append(_("[compatible lists]"), FLAG_UI_HEADING | FLAG_DISABLE, nullptr);
-					item_append(swlistdev.description(), 0, (void *)&swlistdev);
-				}
-				have_compatible = true;
-			}
+			if (!have_compatible)
+				item_append(_("[compatible lists]"), FLAG_UI_HEADING | FLAG_DISABLE, nullptr);
+			item_append(swlistdev.description(), 0, (void *)&swlistdev);
+			have_compatible = true;
 		}
 	}
 
