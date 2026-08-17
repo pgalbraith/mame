@@ -141,6 +141,12 @@ static INPUT_PORTS_START( sw1 )
 	PORT_DIPNAME( 0x40, 0x00, "Console Baud rate" )               PORT_DIPLOCATION("SW1:7")
 	PORT_DIPSETTING(    0x00, "9600" )
 	PORT_DIPSETTING(    0x40, "19200" )
+	// Only XCON8 reads this - PAM-8AT boots a disk either way.  Left on
+	// Normal, XCON8 comes up in its front panel monitor and waits there, and
+	// since it talks to the panel rather than the serial port (it decodes
+	// 0F0-0F1, 0F8-0F9 and the disk at 074-077, never the console USART) an
+	// attached terminal stays blank and the machine can look hung when it is
+	// only waiting for a command.  Set it to Auto to have it boot unattended.
 	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                       PORT_DIPLOCATION("SW1:8")
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
