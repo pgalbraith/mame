@@ -1198,7 +1198,9 @@ ROM_END
 
 ROM_START( h89 )
 	ROM_REGION( 0x2000, "maincpu", ROMREGION_ERASEFF )
-	ROM_DEFAULT_BIOS("mtr90")
+	// MTR-89 (444-62) is the ROM the H-89 shipped with; MTR-90 came later, with
+	// the Z-90, and is an upgrade here rather than original equipment.
+	ROM_DEFAULT_BIOS("mtr89")
 
 	ROM_H17
 
