@@ -392,7 +392,11 @@ static INPUT_PORTS_START( h88 )
 INPUT_PORTS_END
 
 
-static INPUT_PORTS_START( h89 )
+// Shared by every machine in the family.  SW501 means different things to
+// different monitor ROMs, so the "Switch SW501 Definitions" config below picks
+// which set of labels applies; it defaults to MTR-90 here and each machine
+// whose default ROM is something else moves it to match.
+static INPUT_PORTS_START( h89_base )
 
 	PORT_START("SW501")
 	// Generic definition
@@ -643,8 +647,31 @@ static INPUT_PORTS_START( h89 )
 INPUT_PORTS_END
 
 
+static INPUT_PORTS_START( h89 )
+	PORT_INCLUDE( h89_base )
+
+	// This machine's default ROM is MTR-89, so label SW501 for that one.  The
+	// two monitors read the same byte out of these switches at their default
+	// settings, so this is what the switches are called rather than what they
+	// do - but under the MTR-90 labels, SW501:3,4 offer a soft-sectored
+	// controller the H-89 has no ROM support for.
+	PORT_MODIFY("CONFIG")
+	PORT_CONFNAME(0x3c, 0x08, "Switch SW501 Definitions")
+	PORT_CONFSETTING(   0x00, "Generic" )
+	PORT_CONFSETTING(   0x04, "Heath MTR-90")
+	PORT_CONFSETTING(   0x08, "Heath MTR-89")
+	PORT_CONFSETTING(   0x0c, "MMS 444-84B/444-84A")
+	PORT_CONFSETTING(   0x10, "Kres KMR-100")
+	PORT_CONFSETTING(   0x14, "Ultimeth MTRHEX-4k")
+	PORT_CONFSETTING(   0x18, "Ultimeth MTRHEX-2k")
+	PORT_CONFSETTING(   0x1c, "SigmaROM")
+	PORT_CONFSETTING(   0x20, "CDR8390 ROM")
+
+INPUT_PORTS_END
+
+
 static INPUT_PORTS_START( z90 )
-	PORT_INCLUDE( h89 )
+	PORT_INCLUDE( h89_base )
 
 	// Boot from the soft-sectored controller.  MTR-90 reaches the Z-89-37 as
 	// Disk I/O #1 and the H-88-1 as Disk I/O #2, and the H-89's default of
@@ -1299,9 +1326,9 @@ ROM_END
 } // anonymous namespace
 
 
-//    year  name           parent compat machine        input class                init        company                fullname                   flags
-COMP( 1979, h88,           h89,   0,     h88,           h88,  h88_state,           empty_init, "Heath Company",       "H-88",                    MACHINE_SUPPORTS_SAVE)
-COMP( 1979, h89,           0,     0,     h89,           h89,  h89_state,           empty_init, "Heath Company",       "H-89",                    MACHINE_SUPPORTS_SAVE)
-COMP( 1981, h89_cdr,       h89,   0,     h89_cdr,       h89,  h89_cdr_state,       empty_init, "Heath Company",       "H-89 with CDR Equipment", MACHINE_SUPPORTS_SAVE)
-COMP( 1981, h89_mms,       h89,   0,     h89_mms,       h89,  h89_mms_state,       empty_init, "Heath Company",       "H-89 with MMS Equipment", MACHINE_SUPPORTS_SAVE)
-COMP( 1981, z90,           h89,   0,     z90,           z90,  h89_state,           empty_init, "Zenith Data Systems", "Z-90",                    MACHINE_SUPPORTS_SAVE)
+//    year  name           parent compat machine        input      class                init        company                fullname                   flags
+COMP( 1979, h88,           h89,   0,     h88,           h88,       h88_state,           empty_init, "Heath Company",       "H-88",                    MACHINE_SUPPORTS_SAVE)
+COMP( 1979, h89,           0,     0,     h89,           h89,       h89_state,           empty_init, "Heath Company",       "H-89",                    MACHINE_SUPPORTS_SAVE)
+COMP( 1981, h89_cdr,       h89,   0,     h89_cdr,       h89_base,  h89_cdr_state,       empty_init, "Heath Company",       "H-89 with CDR Equipment", MACHINE_SUPPORTS_SAVE)
+COMP( 1981, h89_mms,       h89,   0,     h89_mms,       h89_base,  h89_mms_state,       empty_init, "Heath Company",       "H-89 with MMS Equipment", MACHINE_SUPPORTS_SAVE)
+COMP( 1981, z90,           h89,   0,     z90,           z90,       h89_state,           empty_init, "Zenith Data Systems", "Z-90",                    MACHINE_SUPPORTS_SAVE)
