@@ -302,6 +302,11 @@ static INPUT_PORTS_START( cpu_8080_jumpers )
 	PORT_CONFNAME(0x02, 0x00, "Allow INT2 signal from BH Bus - Jumper C1-C2")
 	PORT_CONFSETTING(   0x00, DEF_STR( No ))
 	PORT_CONFSETTING(   0x02, DEF_STR( Yes ))
+	// Not factory standard.  Heath shipped X1-X2 open, so a board as it came
+	// ignores /ROM DISABLE from the bus and nothing can put RAM under the
+	// monitor ROM at 0000-0FFF - which is what anything wanting ORG-0, CP/M
+	// among them, needs.  Closed here so the HA-8-8 can do that without the
+	// setting being changed first; open it for the machine as sold.
 	PORT_CONFNAME(0x04, 0x04, "Allow /ROM_Disable from BH bus - Jumper X1-X2")
 	PORT_CONFSETTING(   0x00, DEF_STR( No ))
 	PORT_CONFSETTING(   0x04, DEF_STR( Yes ))
