@@ -1186,6 +1186,16 @@ bool imd_format::save(util::random_read_write &io, const std::vector<uint32_t> &
 		return false;
 	}
 
+	int max_tracks = 0, max_heads = 0;
+	image.get_maximal_geometry(max_tracks, max_heads);
+
+	// The drive this disk is sitting in, which is the same thing load() is told
+	// and the same thing it decides the doubling on.
+	bool const drive_96tpi = (image.get_form_factor() == floppy_image::FF_525)
+			&& (has_variant(variants, floppy_image::SSQD)
+			 || has_variant(variants, floppy_image::DSQD)
+			 || has_variant(variants, floppy_image::DSHD));
+
 	// -- ASCII header.  Always fresh; the format manager is const, so
 	//    we deliberately do not cache anything from a prior load().
 	std::string header;
@@ -1238,8 +1248,59 @@ bool imd_format::save(util::random_read_write &io, const std::vector<uint32_t> &
 		}
 	}
 
+	// -- How far out to describe the disk.
+	//
+	// As far as it is written, normally, which is what the file has always said
+	// and what a dump of the media would say.  The exception is a disk that
+	// load() would double when it should not: forty tracks on cylinders 0..39 of
+	// a 96 tpi drive, written at the drive's own pitch, which is what CP/M lays
+	// down when it has been told those drives are 48 tpi.
+	//
+	// Ask load()'s own question, on its own terms - it doubles a 5.25" image
+	// reaching no further than cylinder 39 when the drive is 96 tpi, IMD.TXT
+	// 2.1.4 - and note that trackmult == 2 above is the case where the doubling
+	// is wanted, the disk having been laid on the even cylinders on the way in.
+	// What is left is the disk that would be doubled and must not be: its tracks
+	// were written where they are, and moving them to twice the spacing leaves
+	// the boot loader single-stepping to track 1 and finding cylinder 1 empty.
+	//
+	// Saying how far the media reaches settles it, with nothing IMD cannot
+	// express: the cylinders past the data, named and empty, which is what they
+	// are.  maxtrack then lands past 39 and load() leaves the tracks alone.
+	//
+	// The test is for that disk and nothing else.  Anything short of a whole
+	// forty cylinders, contiguous from zero, is some other disk - a partly
+	// formatted one, most likely - and while it may well have the same trouble
+	// on reload, padding it out is a guess about media this code has never seen.
+	// IMD reaches nearly every floppy driver in MAME through
+	// add_fm_containers(), better than a hundred of which have 5.25" quad or
+	// high density drives, so the cost of firing where it is not wanted is paid
+	// somewhere far from here.  Leave those alone until one of them is a bug
+	// with a disk behind it.
+	bool describe_extent = drive_96tpi && (trackmult == 1)
+						&& (tracks == 40) && (max_tracks > 42);
+	for (int cyl = 0; describe_extent && (cyl < tracks); cyl++) {
+		bool any = false;
+		for (int hd = 0; hd < heads; hd++) {
+			if (image.track_is_formatted(cyl, hd)) {
+				any = true;
+				break;
+			}
+		}
+		if (!any)
+			describe_extent = false;
+	}
+	int const out_tracks = describe_extent ? max_tracks : tracks;
+
+	// The mode of the first track that decodes, to give those empty records
+	// something true to say.  detect_track() cannot supply it - with no sectors
+	// to measure it returns whichever probe stands first in its table, 500 kbps
+	// MFM, which on a single density disk is a fabrication and is how one came
+	// to be tagged DSHD.
+	uint8_t disk_mode = 0xff;
+
 	// -- Walk tracks in IMD's canonical order: cyl outer, head inner.
-	for (int cyl = 0; cyl < tracks; cyl += trackmult) {
+	for (int cyl = 0; cyl < out_tracks; cyl += trackmult) {
 		uint8_t const out_cyl = uint8_t(cyl / trackmult);
 		for (int hd = 0; hd < heads; hd++) {
 			track_info ti;
@@ -1261,13 +1322,16 @@ bool imd_format::save(util::random_read_write &io, const std::vector<uint32_t> &
 			// tagged DSHD - load() knows to ignore these records now, but a
 			// reader that does not is entitled to believe us.
 			uint8_t sec_count = uint8_t(ti.sectors.size());
-			if (!sec_count)
+			if (!sec_count && !describe_extent)
 				continue;
 
-			uint8_t mode      = ti.mode_byte;
+			uint8_t mode      = sec_count ? ti.mode_byte
+										  : (disk_mode != 0xff ? disk_mode : ti.mode_byte);
 			uint8_t size_code = 0;
 
-			{
+			if (sec_count) {
+				if (disk_mode == 0xff)
+					disk_mode = mode;
 				size_code = ti.sectors[0].idam_size;
 				for (size_t i = 1; i < ti.sectors.size(); i++) {
 					if (ti.sectors[i].idam_size != size_code) {
@@ -1297,6 +1361,11 @@ bool imd_format::save(util::random_read_write &io, const std::vector<uint32_t> &
 			uint8_t recbuf[5] = { mode, out_cyl, head_byte, sec_count, size_code };
 			if (auto pr = write_at(io, out_pos, recbuf, 5); pr.first || pr.second != 5) return false;
 			out_pos += 5;
+
+			// An empty record is the whole of what an unformatted cylinder has
+			// to say; nothing follows the header.
+			if (!sec_count)
+				continue;
 
 			std::vector<uint8_t> snum(sec_count);
 			for (int i = 0; i < sec_count; i++) snum[i] = ti.sectors[i].idam_sector;
