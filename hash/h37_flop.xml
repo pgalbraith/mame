@@ -42,7 +42,7 @@ license:CC0-1.0
 		<description>CP/M 2.2.04</description>
 		<year>1982</year>
 		<publisher>Heath Company</publisher>
-		<notes>The H-37 build, signing on "FOR H37 DISKS WITH OPTION(S) IE3" and dated 09/15/82; the hard-sectored H-17 build of the same version is on the h17_flop list. Disk 2 adds BSYSGEN over 2.2.03 and carries the MOVCPM relocators, disk 3 the BIOS source. The setup disk holds SETUP.COM and its SET*.OVR overlays and is not bootable itself.</notes>
+		<notes>The H-37 build, signing on "FOR H37 DISKS WITH OPTION(S) IE3" and dated 09/15/82; the hard-sectored H-17 build of the same version is on the h17_flop list. Disk 2 adds BSYSGEN over 2.2.03 and carries the MOVCPM relocators, disk 3 the BIOS source. The setup disk holds SETUP.COM and its SET*.OVR overlays, and boots into Setup rather than into CP/M.</notes>
 		<info name="alt_title" value="Digital Research Inc. CP/M"/>
 		<info name="version" value="2.2.04"/>
 
@@ -68,7 +68,7 @@ license:CC0-1.0
 		</part>
 
 		<part name="flop4" interface="floppy_5_25">
-			<feature name="part_id" value="Setup disk - SETUP.COM (not bootable)"/>
+			<feature name="part_id" value="Setup disk - SETUP.COM (boots into Setup, not CP/M)"/>
 			<dataarea name="flop" size="87109">
 				<rom name="cpm_2_2_04_setup.imd" size="87109" crc="b7f4cc01" sha1="c2b19c7e3d4e44003fd21b1e82d1329511835444"/>
 			</dataarea>
