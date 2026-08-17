@@ -85,23 +85,17 @@ u8 heath_intr_cntrl::get_instruction()
 		return 0x00;
 	}
 
-	// ideally this would be handled with a function like ffs()
-	u8 level = 0;
-	u8 mask  = 0x01;
+	// The levels reach a 74LS148 on both machines - IC217 on the H8 CPU board
+	// (595-2014), U557 on the H88/H89 CPU logic board - and that part gives
+	// priority to its highest numbered active input, so level 7 wins over
+	// level 1 rather than the other way about.  Both boards wire the levels
+	// to the matching inputs, which leaves the clock at level 1 the lowest
+	// priority of all and anything on the bus above it.
+	u8 level = 7;
 
-	while (mask)
+	while (!BIT(m_intr_lines, level))
 	{
-		if (m_intr_lines & mask)
-		{
-			break;
-		}
-		level++;
-		mask <<= 1;
-	}
-
-	if (level > 7)
-	{
-		logerror("bad level: %d\n", level);
+		level--;
 	}
 
 	// return RST based on level
