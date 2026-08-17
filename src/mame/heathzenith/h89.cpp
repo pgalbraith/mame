@@ -205,7 +205,8 @@ public:
 /**
  * Heathkit H-89 / Zenith Z-90
  *  H-89: H-88-1 Hard-sectored Floppy Controller
- *  Z-90: Z-89-37 Soft-sectored Floppy Controller
+ *  Z-90: Z-89-37 Soft-sectored Floppy Controller, and an H-88-1 alongside it
+ *        for the hard-sectored disks
  *
  */
 class h89_state : public h89_base_state
@@ -645,9 +646,10 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( z90 )
 	PORT_INCLUDE( h89 )
 
-	// The Z-90 shipped with the Z-37 as its only disk controller, and MTR-90
-	// reaches that one as Disk I/O #1. The H-89 default of booting from Disk
-	// I/O #2 would look for an H-88-1 that is not fitted.
+	// Boot from the soft-sectored controller.  MTR-90 reaches the Z-89-37 as
+	// Disk I/O #1 and the H-88-1 as Disk I/O #2, and the H-89's default of
+	// booting from #2 would come up on the hard-sectored card, which is the
+	// secondary one here.
 	PORT_MODIFY("SW501")
 	PORT_DIPNAME( 0x10, 0x10, "Primary Boot from" )                  PORT_DIPLOCATION("SW501:5")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
 	PORT_DIPSETTING(    0x00, "Disk I/O #2" )
@@ -1089,6 +1091,13 @@ void h89_state::z90(machine_config &config)
 	m_intr_socket->set_fixed(true);
 
 	H89BUS_RIGHT_SLOT(config.replace(), "p504", "h89bus", [this](device_slot_interface &device) { h89_right_cards(device); }, "z37fdc");
+
+	// An H-88-1 alongside the Z-89-37, which is what MTR-90's two "Disk I/O"
+	// switch settings are for - the hard-sectored card answers as Disk I/O #2.
+	// It also does the job P506 otherwise needs the we_pullup card for: the
+	// H-88-1 is what controls write protection on the floppy RAM, and the
+	// pullup exists only to hold that line enabled on machines without one.
+	H89BUS_RIGHT_SLOT(config.replace(), "p506", "h89bus", [this](device_slot_interface &device) { h89_right_p506_cards(device); }, "h17fdc").set_p506_signalling(true);
 
 	LOGSETUP("%s: about to call set_io_prom_tag\n", FUNCNAME);
 	H89BUS_IO_DECODER_SOCKET(config, "h89bus:io_decoder", io_decoder_options, "444_61");
