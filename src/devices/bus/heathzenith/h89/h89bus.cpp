@@ -173,6 +173,15 @@ h89bus::addr_ranges device_heath_io_decoder_interface::scan_io_decoder_rom(u8 se
 	bool found = false;
 	u8 first = 0, last = 0;
 
+	// A card asking for select lines its slot cannot carry is left asking for
+	// none at all, and the test below would then match every address and hand
+	// it the whole I/O space, on top of whatever else is there.  It reaches
+	// nothing, so give it nothing.
+	if (select_bits == 0)
+	{
+		return ranges;
+	}
+
 	for (int i = 0; i < 256; i++)
 	{
 		u8 val = rom[i] ^ 0xff;
@@ -363,7 +372,7 @@ h89bus::addr_ranges heath_io_decoder_socket::get_address_ranges(u8 select_bits, 
 {
 	if (m_decoder)
 	{
-		return m_decoder->get_address_ranges(select_bits);
+		return m_decoder->get_address_ranges(select_bits, p506_signals);
 	}
 
 	LOGSETUP("m_decoder not set\n");

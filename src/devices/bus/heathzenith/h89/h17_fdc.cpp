@@ -66,7 +66,12 @@ void h_88_1_device::device_reset()
 {
 	if (!m_installed)
 	{
-		h89bus::addr_ranges  addr_ranges = h89bus().get_address_ranges(h89bus::IO_FLPY);
+		// /FLPY only reaches P506, so the decoder has to be asked with this
+		// card's P506 signalling.  Left at the default of false it strips the
+		// very bit being asked for, and a request for no select lines at all
+		// matches every address in the PROM - the card then installs itself
+		// over the whole I/O space and takes any other card's ports with it.
+		h89bus::addr_ranges  addr_ranges = h89bus().get_address_ranges(h89bus::IO_FLPY, m_p506_signals);
 
 		if (addr_ranges.size() == 1)
 		{
