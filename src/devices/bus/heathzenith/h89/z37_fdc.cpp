@@ -242,42 +242,58 @@ void h89bus_z37_device::device_add_mconfig(machine_config &config)
 	// Z-89-37 schematics show the ready line tied high.
 	m_fdc->set_force_ready(true);
 
-	// H-17-1, the 48 tpi drive, which is what Zenith sold this controller with.
-	// The 1982 Heath catalog puts one drive of 160K inside the Z-90-82, and
-	// 160K is a single side at 48 tpi in the controller's double density
-	// format - sixteen 256 byte sectors over 40 tracks.  The Z-87 expansion
-	// cabinet added two more of the same, "two drives up to 320K bytes", so
-	// three of them is the machine as it was sold.
+	// H-17-4, the 96 tpi double-sided drive: 640K apiece from 80 tracks on both
+	// sides.  The Z-37 cabinet held two of them, "two drives for 1.28
+	// megabytes".  The 48 tpi H-17-1 is the other drive this controller took -
+	// the 1982 Heath catalog puts one of 160K inside the Z-90-82, a single side
+	// at 48 tpi in the controller's double density format, sixteen 256 byte
+	// sectors over 40 tracks, with the Z-87 expansion cabinet adding two more
+	// of the same.  The Z-89-37 operation manual (595-2674-04) takes either and
+	// marks every Z-89-37 row of its drive chart "either", so both are the
+	// controller's own.
 	//
-	// The 96 tpi H-17-4 is the other half of the story rather than an
-	// afterthought: the Z-37 cabinet held two of those, "two drives for 1.28
-	// megabytes", 640K apiece from 80 tracks on both sides.  The Z-89-37
-	// operation manual (595-2674-04) takes either drive and marks every
-	// Z-89-37 row of its drive chart "either", so both are the controller's
-	// own.  What it will not take is a mixture: write precompensation is
+	// Defaulting to the double-sided drive matters because nothing in this path
+	// can sense head count: the FD1797 has no such input, the control register
+	// has no side bit, and 5.25" drives have no two-sided sense line.  Heath's
+	// FORMAT therefore offers a one- or two-side choice on any drive and
+	// completes either way, so on a single-sided drive a two-sided format
+	// silently lays both sides onto the one surface.
+	//
+	// Nothing catches that afterwards either, and the part is what makes it so.
+	// Table 4 of the FD1797-02 data sheet scopes the side compare flags to the
+	// 1791/3 - C at bit 1 to enable the compare, S at bit 3 to say which side -
+	// and gives the 1795/7 different flags in those same positions: S at bit 1
+	// is the side select that updates SSO (pin 25), b at bit 3 is the sector
+	// length flag.  A 1797 has no way to be asked to check the side byte in an
+	// ID field, so the fictional second side reads back clean rather than
+	// raising Record Not Found.  Beware the data sheet's prose here, which
+	// describes the C/S compare without naming a part and mentions an
+	// "internal side compare" on the 1795/7; only Table 4 carries the
+	// "1791/3 only" and "1795/7 only" qualifiers.
+	//
+	// What this card will not take is a mixture: write precompensation is
 	// jumpered at J3 for the whole card, so one setting or the other is wrong
 	// for some of the drives and "can result in reduced data reliability".
-	// Select qd on all three together, never on some of them.
+	// Change all three together, never some of them.
 	//
-	// Do expect 48 tpi media to come up read-only in a 96 tpi drive.  That is
-	// the driver's own doing rather than a fault: at log-in it seeks to track 2
-	// and reads a cylinder back out of a sector header, and being told 1 - the
-	// half-pitch signature of a 48 tpi disk under a 96 tpi head - it flags the
-	// disk write protected.  (It probes for side 1 first, and gives up on the
-	// disk entirely at any other cylinder.)  Note the write would physically
-	// take: the narrow head lays a track inside the wider one and leaves the
-	// old edges unerased, so the disk still reads here, just no longer
-	// dependably in the 48 tpi drive it was written on.  Refusing is the
-	// conservative call, and the manuals do not give the reason.
-	//
-	// Everything on the software list below is 48 tpi, so on qd drives it all
-	// reads but none of it writes - CONFIGUR says so plainly, and CP/M reports
-	// the refusal as "Bdos Err On x: Bad Sector".
-	FLOPPY_CONNECTOR(config, m_floppies[0], z37_floppies, "ssdd", floppy_image_device::default_mfm_floppy_formats);
+	// Do expect 48 tpi media to come up read-only in these 96 tpi drives, and
+	// everything on the software list below is 48 tpi.  That is the driver's
+	// own doing rather than a fault: at log-in it seeks to track 2 and reads a
+	// cylinder back out of a sector header, and being told 1 - the half-pitch
+	// signature of a 48 tpi disk under a 96 tpi head - it flags the disk write
+	// protected.  (It probes for side 1 first, and gives up on the disk
+	// entirely at any other cylinder.)  Note the write would physically take:
+	// the narrow head lays a track inside the wider one and leaves the old
+	// edges unerased, so the disk still reads here, just no longer dependably
+	// in the 48 tpi drive it was written on.  Refusing is the conservative
+	// call, and the manuals do not give the reason.  CONFIGUR says so plainly,
+	// and CP/M reports the refusal as "Bdos Err On x: Bad Sector"; select ssdd
+	// on all three to write the shipped 48 tpi disks.
+	FLOPPY_CONNECTOR(config, m_floppies[0], z37_floppies, "qd", floppy_image_device::default_mfm_floppy_formats);
 	m_floppies[0]->enable_sound(true);
-	FLOPPY_CONNECTOR(config, m_floppies[1], z37_floppies, "ssdd", floppy_image_device::default_mfm_floppy_formats);
+	FLOPPY_CONNECTOR(config, m_floppies[1], z37_floppies, "qd", floppy_image_device::default_mfm_floppy_formats);
 	m_floppies[1]->enable_sound(true);
-	FLOPPY_CONNECTOR(config, m_floppies[2], z37_floppies, "ssdd", floppy_image_device::default_mfm_floppy_formats);
+	FLOPPY_CONNECTOR(config, m_floppies[2], z37_floppies, "qd", floppy_image_device::default_mfm_floppy_formats);
 	m_floppies[2]->enable_sound(true);
 	FLOPPY_CONNECTOR(config, m_floppies[3], z37_floppies, nullptr, floppy_image_device::default_mfm_floppy_formats);
 	m_floppies[3]->enable_sound(true);
