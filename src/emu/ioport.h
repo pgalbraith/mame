@@ -31,6 +31,7 @@
 #include <iosfwd>
 #include <initializer_list>
 #include <list>
+#include <map>
 #include <memory>
 #include <string_view>
 #include <vector>
@@ -1027,6 +1028,42 @@ private:
 	// storage for inactive configuration
 	std::unique_ptr<util::xml::file> m_deselected_card_config;
 	bool m_applied_device_defaults;
+};
+
+
+// ======================> ioport_settings
+
+// How a system is switched and jumpered, for a system that is not running.
+//
+// The frontend has to know this before it creates the machine - which software
+// list to offer for the controller the system will boot from, say - and the
+// emulator's own settings arrive far too late to answer that.
+// ioport_manager::initialize() sees only the values the driver declares, and
+// cfg/<system>.cfg is not applied until configuration_manager::load_settings(),
+// which runs after the devices have started and so after images have been
+// mounted.  This reads the same file into the port list of a plain
+// machine_config, with no running_machine and none of the live field state that
+// ioport_manager::load_config() writes through.
+//
+// Only switch and configuration values are read.  Sequences, analog settings
+// and remapping are the running machine's business.
+class ioport_settings
+{
+public:
+	// construction - seeds every switch with the value the driver declares
+	ioport_settings(ioport_list const &portlist);
+
+	// override those with whatever the user last saved for this system, if anything
+	void apply_system_cfg(game_driver const &system, emu_options const &options);
+
+	// getters
+	ioport_value port_value(std::string_view tag) const;
+	bool field_active(ioport_field const &field) const;
+
+private:
+	ioport_list const &                             m_portlist;     // ports these settings describe
+	std::map<ioport_field const *, ioport_value>    m_values;       // current value of each switch
+	mutable unsigned                                m_depth;        // guard against circular conditions
 };
 
 

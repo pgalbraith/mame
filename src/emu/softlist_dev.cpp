@@ -367,20 +367,31 @@ software_compatibility software_list_device::is_compatible(const software_part &
 //  that can automatically mount this software part
 //-------------------------------------------------
 
-device_image_interface *software_list_device::find_mountable_image(const machine_config &mconfig, const software_part &part, std::function<bool(const device_image_interface &)> filter)
+device_image_interface *software_list_device::find_mountable_image(const machine_config &mconfig, const software_part &part, std::function<bool(const device_image_interface &)> filter, device_t &scope)
 {
 	// if automount="no", don't bother
 	const char *mount = part.feature("automount");
 	if (mount != nullptr && strcmp(mount, "no") == 0)
 		return nullptr;
 
-	for (device_image_interface &image : image_interface_enumerator(mconfig.root_device()))
+	for (device_image_interface &image : image_interface_enumerator(scope))
 	{
 		const char *interface = image.image_interface();
 		if (interface != nullptr && part.matches_interface(interface) && filter(image))
 			return &image;
 	}
 	return nullptr;
+}
+
+
+//-------------------------------------------------
+//  find_mountable_image - find an image interface
+//  that can automatically mount this software part
+//-------------------------------------------------
+
+device_image_interface *software_list_device::find_mountable_image(const machine_config &mconfig, const software_part &part, std::function<bool(const device_image_interface &)> filter)
+{
+	return find_mountable_image(mconfig, part, std::move(filter), mconfig.root_device());
 }
 
 
@@ -403,6 +414,36 @@ device_image_interface *software_list_device::find_mountable_image(const machine
 		mconfig,
 		part,
 		[](const device_image_interface &image) { return !image.exists(); });
+}
+
+
+//-------------------------------------------------
+//  mountable_image_scope - the device to search for
+//  an image to mount a part from this list on
+//-------------------------------------------------
+
+device_t &software_list_device::mountable_image_scope(const machine_config &mconfig, const software_part &part) const
+{
+	// A list instantiated inside a card rather than at the machine root belongs
+	// to that card, so where a system has more than one controller offering the
+	// same interface - a Z-90 has hard- and soft-sectored floppy cards side by
+	// side, both "floppy_5_25" - a part must not simply go to whichever drive
+	// the enumeration reaches first.  On a Z-90 that is the soft-sectored
+	// Z-37's, and a hard-sectored disk mounted there fails to identify and
+	// aborts the launch.  Scope to the card when it has a drive of its own that
+	// takes the interface; everything else, which is nearly every system, falls
+	// back to the machine and distributes exactly as before.
+	device_t *const card = owner();
+	if (card)
+	{
+		for (device_image_interface &image : image_interface_enumerator(*card))
+		{
+			const char *interface = image.image_interface();
+			if (interface != nullptr && part.matches_interface(interface))
+				return *card;
+		}
+	}
+	return mconfig.root_device();
 }
 
 

@@ -3258,6 +3258,153 @@ void ioport_manager::record_port(ioport_port &port)
 
 
 //**************************************************************************
+//  I/O PORT SETTINGS
+//**************************************************************************
+
+//-------------------------------------------------
+//  ioport_settings - constructor
+//-------------------------------------------------
+
+ioport_settings::ioport_settings(ioport_list const &portlist) :
+	m_portlist(portlist),
+	m_values(),
+	m_depth(0)
+{
+	// start every switch where the driver declares it
+	for (auto const &port : m_portlist)
+		for (ioport_field const &field : port.second->fields())
+			if (!field.is_analog())
+				m_values.emplace(&field, field.defvalue() & field.mask());
+}
+
+
+//-------------------------------------------------
+//  apply_system_cfg - override the declared
+//  settings with the user's saved ones
+//-------------------------------------------------
+
+void ioport_settings::apply_system_cfg(game_driver const &system, emu_options const &options)
+{
+	// this is deliberately narrower than configuration_manager: only the
+	// system's own file is read, since default.cfg and the controller file
+	// carry input mappings rather than switch positions
+	emu_file file(options.cfg_directory(), OPEN_FLAG_READ);
+	if (file.open(std::string(system.name) + ".cfg"))
+		return;
+
+	util::xml::file::ptr const root(util::xml::file::read(file, nullptr));
+	if (!root)
+		return;
+
+	util::xml::data_node const *const confignode = root->get_child("mameconfig");
+	if (!confignode || (confignode->get_attribute_int("version", 0) != configuration_manager::CONFIG_VERSION))
+		return;
+
+	for (util::xml::data_node const *systemnode = confignode->get_child("system"); systemnode; systemnode = systemnode->get_next_sibling("system"))
+	{
+		if (strcmp(systemnode->get_attribute_string("name", ""), system.name))
+			continue;
+
+		util::xml::data_node const *const inputnode = systemnode->get_child("input");
+		if (!inputnode)
+			continue;
+
+		for (util::xml::data_node const *portnode = inputnode->get_child("port"); portnode; portnode = portnode->get_next_sibling("port"))
+		{
+			// switches only - anything else in here needs the live state
+			char const *const type = portnode->get_attribute_string("type", "");
+			if (strcmp(type, "DIPSWITCH") && strcmp(type, "CONFIG"))
+				continue;
+
+			char const *const tag = portnode->get_attribute_string("tag", nullptr);
+			ioport_value const mask = portnode->get_attribute_int("mask", 0);
+			if (!tag || !mask)
+				continue;
+
+			auto const port(m_portlist.find(tag));
+			if (m_portlist.end() == port)
+				continue;
+
+			// identified the same way ioport_manager::load_system_config() does
+			ioport_value const defvalue = portnode->get_attribute_int("defvalue", 0);
+			for (ioport_field const &field : port->second->fields())
+			{
+				if ((field.mask() == mask) && ((field.defvalue() & mask) == (defvalue & mask)) && !field.is_analog())
+				{
+					auto const value(m_values.find(&field));
+					if (m_values.end() != value)
+						value->second = portnode->get_attribute_int("value", field.defvalue()) & mask;
+				}
+			}
+		}
+	}
+}
+
+
+//-------------------------------------------------
+//  port_value - the value a port would read with
+//  these settings
+//-------------------------------------------------
+
+ioport_value ioport_settings::port_value(std::string_view tag) const
+{
+	auto const port(m_portlist.find(tag));
+	if (m_portlist.end() == port)
+		return 0;
+
+	// assembled the way ioport_port::update_defvalue() does it, so that
+	// overlapping fields resolve to the same value the machine would read
+	ioport_value result = 0;
+	for (ioport_field const &field : port->second->fields())
+	{
+		if (field.is_analog() || !field_active(field))
+			continue;
+
+		auto const value(m_values.find(&field));
+		if (m_values.end() != value)
+			result = (result & ~field.mask()) | (value->second & field.mask());
+	}
+	return result;
+}
+
+
+//-------------------------------------------------
+//  field_active - whether a field's condition is
+//  satisfied by these settings
+//-------------------------------------------------
+
+bool ioport_settings::field_active(ioport_field const &field) const
+{
+	ioport_condition const &condition = field.condition();
+	if (condition.none())
+		return true;
+
+	// a condition names a port relative to the field's own device, and the
+	// port it names can itself be conditional - bail out rather than recurse
+	// forever should a driver ever manage to write a cycle
+	if (8 <= m_depth)
+		return false;
+
+	++m_depth;
+	ioport_value const value = port_value(field.device().subtag(condition.tag())) & condition.mask();
+	--m_depth;
+
+	switch (condition.condition())
+	{
+	case ioport_condition::ALWAYS:          return true;
+	case ioport_condition::EQUALS:          return (value == condition.value());
+	case ioport_condition::NOTEQUALS:       return (value != condition.value());
+	case ioport_condition::GREATERTHAN:     return (value > condition.value());
+	case ioport_condition::NOTGREATERTHAN:  return (value <= condition.value());
+	case ioport_condition::LESSTHAN:        return (value < condition.value());
+	case ioport_condition::NOTLESSTHAN:     return (value >= condition.value());
+	}
+	return true;
+}
+
+
+
+//**************************************************************************
 //  I/O PORT CONFIGURER
 //**************************************************************************
 

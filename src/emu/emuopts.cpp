@@ -944,14 +944,16 @@ emu_options::software_options emu_options::evaluate_initial_softlist_options(con
 							if (swlistdev.is_compatible(swpart) == SOFTWARE_IS_COMPATIBLE)
 							{
 								// we need to find a mountable image slot, but we need to ensure it is a slot
-								// for which we have not already distributed a part to
+								// for which we have not already distributed a part to, and that it is one
+								// the list's own card offers where the card carries a list of its own
 								device_image_interface *image = software_list_device::find_mountable_image(
 										config,
 										swpart,
 										[&results] (const device_image_interface &candidate)
 										{
 											return results.image.count(candidate.instance_name()) == 0;
-										});
+										},
+										swlistdev.mountable_image_scope(config, swpart));
 
 								// did we find a slot to put this part into?
 								if (image != nullptr)

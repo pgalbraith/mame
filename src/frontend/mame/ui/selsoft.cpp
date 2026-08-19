@@ -107,6 +107,34 @@ public:
 			}
 		}
 
+		// What the system will boot from, if it can say.  A system can carry
+		// more than one controller of the same kind - a Z-90 has hard- and
+		// soft-sectored floppy cards side by side, both "floppy_5_25" - and
+		// what is being chosen here is a boot image.  Media the other
+		// controller reads would mount cleanly and then leave the system
+		// sitting at its monitor prompt, so offer only lists belonging to the
+		// controller that will actually be booted.  The file manager still
+		// offers every drive its own media once the machine is up.
+		device_t const *const bootdev = driver_device::find_boot_device(config, menu.machine().options());
+		auto const beneath =
+				[] (device_t const &device, device_t const &ancestor)
+				{
+					for (device_t const *scan = &device; scan; scan = scan->owner())
+						if (scan == &ancestor)
+							return true;
+					return false;
+				};
+		auto const bootable =
+				[&config, &bootdev, &beneath] (software_list_device &swlist)
+				{
+					// a list declared at the machine root, which is nearly all
+					// of them, belongs to no particular controller
+					if (!bootdev || swlist.get_info().empty() || swlist.get_info().front().parts().empty())
+						return true;
+					device_t const &scope = swlist.mountable_image_scope(config, swlist.get_info().front().parts().front());
+					return (&scope == &config.root_device()) || beneath(scope, *bootdev);
+				};
+
 		// iterate through all software lists
 		std::vector<std::size_t> orphans;
 		struct orphan_less
@@ -120,6 +148,9 @@ public:
 		orphan_less const orphan_cmp{ m_swinfo };
 		for (software_list_device &swlist : software_list_device_enumerator(config.root_device()))
 		{
+			if (!bootable(swlist))
+				continue;
+
 			m_filter_data.add_list(swlist.list_name(), swlist.description());
 			menu.check_for_icons(swlist.list_name().c_str());
 			orphans.clear();
@@ -146,9 +177,11 @@ public:
 				const software_part &part = swinfo.parts().front();
 				if (swlist.is_compatible(part) == SOFTWARE_IS_COMPATIBLE)
 				{
+					// name the drive this would actually be mounted on, which
+					// is the list's own controller where it has one
 					char const *instance_name(nullptr);
 					char const *type_name(nullptr);
-					for (device_image_interface &image : image_interface_enumerator(config.root_device()))
+					for (device_image_interface &image : image_interface_enumerator(swlist.mountable_image_scope(config, part)))
 					{
 						char const *const interface = image.image_interface();
 						if (interface && part.matches_interface(interface))

@@ -11,7 +11,10 @@
 #include "emu.h"
 #include "image.h"
 #include "drivenum.h"
+#include "emuopts.h"
 #include "tilemap.h"
+
+#include <sstream>
 
 
 //**************************************************************************
@@ -77,6 +80,42 @@ void driver_device::empty_init()
 std::vector<std::string> driver_device::searchpath() const
 {
 	return m_searchpath;
+}
+
+
+//-------------------------------------------------
+//  boot_device - default implementation which
+//  names no boot device
+//-------------------------------------------------
+
+device_t *driver_device::boot_device(ioport_settings const &settings) const
+{
+	return nullptr;
+}
+
+
+//-------------------------------------------------
+//  find_boot_device - ask a system that is not
+//  running what it would boot from
+//-------------------------------------------------
+
+device_t *driver_device::find_boot_device(machine_config &config, emu_options const &options)
+{
+	driver_device *const driver = dynamic_cast<driver_device *>(&config.root_device());
+	if (!driver)
+		return nullptr;
+
+	// the same port list ioport_manager::initialize() would build, but with
+	// the user's saved switch positions over the top of the declared ones
+	ioport_list portlist;
+	std::ostringstream errors;
+	for (device_t &device : device_enumerator(config.root_device()))
+		portlist.append(device, errors);
+
+	ioport_settings settings(portlist);
+	settings.apply_system_cfg(config.gamedrv(), options);
+
+	return driver->boot_device(settings);
 }
 
 

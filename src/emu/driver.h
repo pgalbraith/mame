@@ -142,7 +142,38 @@ public:
 
 	virtual std::vector<std::string> searchpath() const override;
 
+	/// \brief Resolve the boot device for a system that is not running
+	///
+	/// Builds the port list for \p config, applies the system's saved
+	/// settings over the driver's declared ones, and asks the driver what it
+	/// would boot from.
+	///
+	/// \param [in] config Configuration for the system to examine.
+	/// \param [in] options Options supplying the configuration directory.
+	/// \return The device the system will boot from, or nullptr.
+	/// \sa boot_device
+	static device_t *find_boot_device(machine_config &config, emu_options const &options);
+
 protected:
+	/// \brief The device this system will try to boot from
+	///
+	/// Answers which controller the system's ROM will go to for a boot
+	/// image, given how the system is switched and jumpered.  The frontend
+	/// asks before the machine is created - it decides on that basis which
+	/// software to offer for a system that carries more than one controller
+	/// of the same kind - so this must answer from \p settings alone, and
+	/// must not read ioports or touch the running machine.
+	///
+	/// Name the controller rather than a drive: the caller scopes what it
+	/// offers to everything beneath the device returned.
+	///
+	/// \param [in] settings How the system is switched.
+	/// \return The device the system will boot from, or nullptr where the
+	///   system has no boot device or none can be named for these settings.
+	///   The default implementation returns nullptr, which leaves the caller
+	///   offering everything the system can mount.
+	virtual device_t *boot_device(ioport_settings const &settings) const;
+
 	// helpers called at startup
 	virtual void driver_start();
 	virtual void machine_start();

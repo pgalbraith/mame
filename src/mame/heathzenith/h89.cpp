@@ -158,6 +158,8 @@ protected:
 
 	virtual void machine_start() override ATTR_COLD;
 	virtual void machine_reset() override ATTR_COLD;
+	virtual device_t *boot_device(ioport_settings const &settings) const override;
+	device_t *find_h89bus_card(std::string_view name) const;
 	TIMER_DEVICE_CALLBACK_MEMBER(h89_irq_timer);
 
 	void h89_mem(address_map &map) ATTR_COLD;
@@ -684,6 +686,55 @@ static INPUT_PORTS_START( z90 )
 
 INPUT_PORTS_END
 
+
+// Which controller the monitor ROM will go to for a boot image.  MTR-90 is the
+// only one here that reaches two floppy controllers at once, and SW501 is what
+// tells it apart: SW501:3,4 and SW501:1,2 name the cards answering as Disk I/O
+// #1 and #2, and SW501:5 picks which of the two it tries first.  A Z-90 leaves
+// the Z-89-37 as #1 and the H-88-1 as #2 and boots #1.
+//
+// Every other setting of those pairs names a controller MAME has yet to
+// emulate, and every other SW501 labelling belongs to a monitor that boots one
+// controller it can find for itself, so both answer with no opinion rather than
+// naming a card that is not fitted.
+device_t *h89_base_state::boot_device(ioport_settings const &settings) const
+{
+	// SW501's bits mean nothing until the labelling is known
+	if ((settings.port_value(":CONFIG") & 0x3c) != 0x04)
+		return nullptr;
+
+	ioport_value const sw501 = settings.port_value(":SW501");
+
+	if (BIT(sw501, 4))
+	{
+		// Disk I/O #1, the Z-89-37 with SW501:3,4 both off
+		if ((sw501 & 0x0c) == 0x00)
+			return find_h89bus_card("z37fdc");
+	}
+	else
+	{
+		// Disk I/O #2, the H-88-1 with SW501:1,2 both off
+		if ((sw501 & 0x03) == 0x00)
+			return find_h89bus_card("h17fdc");
+	}
+
+	return nullptr;
+}
+
+// The right-hand slots are interchangeable as far as the monitor is concerned -
+// it finds a controller by the ports it answers on, not by where it is - so ask
+// for the card by name and let it be in whichever slot it was fitted to.
+device_t *h89_base_state::find_h89bus_card(std::string_view name) const
+{
+	for (char const *slot : { "p504", "p505", "p506" })
+	{
+		device_t *const card = subdevice(util::string_format("%s:%s", slot, name));
+		if (card)
+			return card;
+	}
+
+	return nullptr;
+}
 
 void h89_base_state::machine_start()
 {
