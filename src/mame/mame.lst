@@ -18260,6 +18260,53 @@ yamyamk
 @source:drc/zrt80.cpp
 zrt80
 
+@source:dyna/dyna_cpu91a.cpp
+bsbonanza
+bsbonanza10
+cb2001
+cb4
+cb4a
+cb5
+cb5_11
+cb5_13
+crzybell
+dynastye
+dynastye12
+mystjb
+ndongmul2
+nmondop
+pdouble8
+scherrym
+scherrym12
+scherrymp
+scherrymp10u
+tripjack
+tripjack07
+tripjack11
+
+@source:dyna/dyna_d0404.cpp
+cm2005
+cm2005_014h
+cm2005_100h
+cm2005_102u
+supereld
+
+@source:dyna/dyna_d0703.cpp
+dynasty
+
+@source:dyna/dyna_dc4000.cpp
+aladdin
+aladdina
+aladdinb
+cll2
+cmast92
+cmast92a
+eldoradd
+eldoraddo
+eldoraddob
+eldoraddoc
+eldoraddod
+
 @source:dynax/ddenlovr.cpp
 akamaru
 animaljr
@@ -21813,6 +21860,7 @@ tct2pa
 tripslot
 tshs
 tshs101
+tswx
 tswxp
 xypdk
 xyxcxysj
@@ -29112,7 +29160,8 @@ wallca
 
 @source:midcoin/wink.cpp
 wink
-winka
+winko
+winkob
 
 @source:midw8080/8080bw.cpp
 alieninv
@@ -29260,6 +29309,7 @@ blueshrkmr2
 boothill
 bowler
 checkmat
+checkmata
 clowns
 clowns1
 desertgu
@@ -30417,30 +30467,6 @@ drkseal
 @source:misc/castle.cpp
 castfpt
 castrev
-
-@source:misc/cb2001.cpp
-bsbonanza
-bsbonanza10
-cb2001
-cb4
-cb4a
-cb5
-cb5_11
-cb5_13
-crzybell
-dynastye
-dynastye12
-mystjb
-ndongmul2
-nmondop
-pdouble8
-scherrym
-scherrym12
-scherrymp
-scherrymp10u
-tripjack
-tripjack07
-tripjack11
 
 @source:misc/chamrx1.cpp
 chamrx1
@@ -33682,6 +33708,9 @@ ampscarp
 @source:motorola/assist05.cpp
 assist05
 
+@source:motorola/execphone2.cpp
+execphone2
+
 @source:motorola/exorciser.cpp
 exorciser
 
@@ -36391,6 +36420,9 @@ obdmx
 
 @source:oberheim/ob8.cpp
 ob8
+
+@source:oberheim/obsx.cpp
+obsx
 
 @source:oberheim/xpander.cpp
 xpander
@@ -39762,6 +39794,9 @@ sslam
 sslama
 sslamb
 
+@source:plexus/p20.cpp
+p20
+
 @source:poly88/poly88.cpp
 poly88
 poly8813
@@ -42052,6 +42087,7 @@ speedbsk
 stactics
 
 @source:sega/stv.cpp
+aclub
 astrass
 bakubaku
 batmanfr
@@ -43652,29 +43688,6 @@ dsb46
 
 @source:skeleton/dual68.cpp
 dual68
-
-@source:skeleton/dyna_d0404.cpp
-cm2005
-cm2005_014h
-cm2005_100h
-cm2005_102u
-supereld
-
-@source:skeleton/dyna_d0703.cpp
-dynasty
-
-@source:skeleton/dyna_dc4000.cpp
-aladdin
-aladdina
-aladdinb
-cmast92
-cmast92a
-dynamj
-eldoradd
-eldoraddo
-eldoraddob
-eldoraddoc
-eldoraddod
 
 @source:skeleton/e100.cpp
 e100
@@ -46849,6 +46862,7 @@ rygar3
 rygarj
 rygarj2
 silkworm
+silkwormg
 silkwormj
 silkwormp
 silkwormb
