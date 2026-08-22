@@ -363,7 +363,7 @@ void heath_h17_fdc_base_device::start_tx_write()
 
 	m_tx_pll.set_clock(fm_cell_time());
 	m_tx_pll.reset(machine().time());
-	m_tx_pll.start_writing(machine().time());
+	m_tx_pll.start_writing(machine().time(), m_floppy);
 	m_tx_write_active = true;
 }
 
@@ -382,11 +382,6 @@ void heath_h17_fdc_base_device::write_tx_cell(bool bit)
 {
 	attotime tm;
 	m_tx_pll.write_next_bit(bit, tm, m_floppy, m_tx_pll.ctime + fm_cell_time());
-
-	if (m_tx_pll.write_position >= 30)
-	{
-		m_tx_pll.commit(m_floppy, m_tx_pll.ctime);
-	}
 }
 
 void heath_h17_fdc_base_device::tx_w(int state)
