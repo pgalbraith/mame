@@ -98,6 +98,7 @@ license:CC0-1.0
 		</part>
 	</software>
 
+	<!-- https://sebhc.github.io/sebhc/software/HDOS/HDOS_1-0.zip -->
 	<software name="hdos_50_03_00">
 		<description>HDOS 1.0</description>
 		<year>1979</year>
@@ -114,6 +115,7 @@ license:CC0-1.0
 		</part>
 	</software>
 
+	<!-- https://sebhc.github.io/sebhc/software/HDOS/HDOS_1-5.zip -->
 	<software name="hdos_50_04_00">
 		<description>HDOS 1.5</description>
 		<year>1979</year>
@@ -129,6 +131,7 @@ license:CC0-1.0
 		</part>
 	</software>
 
+	<!-- https://sebhc.github.io/sebhc/software/HDOS/HDOS_1-6.zip -->
 	<software name="hdos_50_05_00">
 		<description>HDOS 1.6</description>
 		<year>1980</year>
