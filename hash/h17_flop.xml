@@ -99,11 +99,28 @@ license:CC0-1.0
 	</software>
 
 	<!-- https://sebhc.github.io/sebhc/software/HDOS/HDOS_1-0.zip -->
+	<software name="hdos_50_00_00">
+		<description>HDOS 1.0 (H8 only)</description>
+		<year>1978</year>
+		<publisher>Heath Company</publisher>
+		<notes>Issue 50.00.00, the original release. It predates the H-89 and H-88, whose 8250 console is only driven from issue 50.03.00 on, so it runs on the H8 alone. Both issues ship in the same archive upstream.</notes>
+		<info name="alt_title" value="Heath Disk Operating System"/>
+		<info name="version" value="50.00.00"/>
+		<info name="partno" value="890-1"/>
+
+		<part name="flop1" interface="floppy_5_25">
+			<dataarea name="flop" size="102400">
+				<rom name="hdos_1-0_issue_50-00-00_890-1.h8d" size="102400" crc="0b839d6a" sha1="583285b24a90673242b56fd8e7ed82a09e9cdf74"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<!-- https://sebhc.github.io/sebhc/software/HDOS/HDOS_1-0.zip -->
 	<software name="hdos_50_03_00">
 		<description>HDOS 1.0</description>
 		<year>1979</year>
 		<publisher>Heath Company</publisher>
-		<notes>First HDOS release to support the H-89 and H-88, adding the 8250 console used on those machines.</notes>
+		<notes>Issue 50.03.00, the first HDOS release to support the H-89 and H-88, adding the 8250 console used on those machines. The earlier issue 50.00.00, which runs on the H8 alone, is a separate entry on this list.</notes>
 		<info name="alt_title" value="Heath Disk Operating System"/>
 		<info name="version" value="50.03.00"/>
 		<info name="partno" value="890-1-3"/>
