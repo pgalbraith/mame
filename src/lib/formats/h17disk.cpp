@@ -815,22 +815,11 @@ bool heath_h17d_format::load(util::random_read &io, uint32_t form_factor, const 
 
 bool heath_h17d_format::save(util::random_read_write &io, const std::vector<uint32_t> &variants, const floppy_image &image) const
 {
-	int tracks, heads;
-	image.get_actual_geometry(tracks, heads);
-
-	format fmt = {};
-	for (int i = 0; formats[i].head_count; i++)
-	{
-		if ((formats[i].head_count == heads) && (formats[i].track_count == tracks))
-		{
-			fmt = formats[i];
-			break;
-		}
-	}
+	format const fmt = heath_h17::find_format(image);
 
 	if (!fmt.head_count)
 	{
-		LOG_FORMATS("unsupported H17D geometry %d/%d\n", heads, tracks);
+		LOG_FORMATS("no H17D layout holds this image\n");
 
 		return false;
 	}

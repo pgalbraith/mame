@@ -180,29 +180,11 @@ bool heath_h8d_format::load(util::random_read &io, uint32_t form_factor, const s
 
 bool heath_h8d_format::save(util::random_read_write &io, const std::vector<uint32_t> &variants, const floppy_image &image) const
 {
-	int track_count, head_count;
-	image.get_actual_geometry(track_count, head_count);
-
-	if (!head_count || !track_count)
-	{
-		LOG_FORMATS("H8D save: empty image\n");
-		return false;
-	}
-
-	// find the matching format
-	format fmt = {};
-	for (int i = 0; formats[i].head_count; i++)
-	{
-		if ((formats[i].head_count == head_count) && (formats[i].track_count == track_count))
-		{
-			fmt = formats[i];
-			break;
-		}
-	}
+	format const fmt = heath_h17::find_format(image);
 
 	if (!fmt.head_count)
 	{
-		LOG_FORMATS("H8D save: no matching format for %d heads %d tracks\n", head_count, track_count);
+		LOG_FORMATS("H8D save: no layout holds this image\n");
 		return false;
 	}
 

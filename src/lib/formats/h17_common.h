@@ -111,6 +111,73 @@ inline bool is_compatible(format const &fmt, std::vector<uint32_t> const &varian
 }
 
 
+// The layout an image is written out as: the smallest one that holds every
+// formatted track on it.
+//
+// A blank has no track to measure.  Its layout comes from the variant the
+// unformatted filesystem stamped on it when it was created.  This controller
+// writes single density whatever the media is rated for, so a double density
+// variant means the same layout as the single density one, with or without
+// its hard sectors.  A blank with no variant at all is written as the
+// smallest layout.
+//
+// This has to answer for a blank rather than refuse it.  The drive truncates
+// the file before it calls save() and does not look at the result, so a save
+// that returns false leaves a 0 byte file, which no format will identify the
+// next time it is mounted.  Only an image with more heads or tracks than any
+// layout holds goes unanswered.
+inline format find_format(floppy_image const &image)
+{
+	int tracks, heads;
+	image.get_actual_geometry(tracks, heads);
+
+	if (!tracks)
+	{
+		switch (image.get_variant())
+		{
+		case floppy_image::SSSD:
+		case floppy_image::SSDD:
+		case floppy_image::SSSD10:
+		case floppy_image::SSDD10:
+			heads = 1;
+			tracks = 40;
+			break;
+		case floppy_image::DSSD:
+		case floppy_image::DSDD:
+		case floppy_image::DSSD10:
+		case floppy_image::DSDD10:
+			heads = 2;
+			tracks = 40;
+			break;
+		case floppy_image::SSQD:
+		case floppy_image::SSQD10:
+			heads = 1;
+			tracks = 80;
+			break;
+		case floppy_image::DSQD:
+		case floppy_image::DSQD10:
+			heads = 2;
+			tracks = 80;
+			break;
+		default:
+			heads = 0;
+			tracks = 0;
+			break;
+		}
+	}
+
+	for (int i = 0; formats[i].head_count; i++)
+	{
+		if ((formats[i].head_count >= heads) && (formats[i].track_count >= tracks))
+		{
+			return formats[i];
+		}
+	}
+
+	return {};
+}
+
+
 // H17 checksum: D = RLCA(byte XOR D) per byte, matching the ROM's RDB/WNB
 // routines.  The sync byte resets D to 0 before the header or data bytes are
 // accumulated, so it is not itself part of the sum.
