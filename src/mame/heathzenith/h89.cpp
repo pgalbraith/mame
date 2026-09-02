@@ -1170,12 +1170,11 @@ void h89_state::z90(machine_config &config)
 
 	H89BUS_RIGHT_SLOT(config.replace(), "p504", "h89bus", [this](device_slot_interface &device) { h89_right_cards(device); }, "z37fdc");
 
-	// An H-88-1 alongside the Z-89-37, which is what MTR-90's two "Disk I/O"
-	// switch settings are for - the hard-sectored card answers as Disk I/O #2.
-	// It also does the job P506 otherwise needs the we_pullup card for: the
-	// H-88-1 is what controls write protection on the floppy RAM, and the
-	// pullup exists only to hold that line enabled on machines without one.
-	H89BUS_RIGHT_SLOT(config.replace(), "p506", "h89bus", [this](device_slot_interface &device) { h89_right_p506_cards(device); }, "h17fdc").set_p506_signalling(true);
+	// P506 keeps the we_pullup h89_base puts there: the Z-90 was sold with the
+	// Z-89-37 alone.  An H-88-1 can still be fitted in that slot, which is what
+	// MTR-90's second "Disk I/O" switch setting is for - the hard-sectored card
+	// answers as Disk I/O #2 - and it then takes over holding the floppy RAM
+	// write protect line that the pullup is there to hold on its own.
 
 	LOGSETUP("%s: about to call set_io_prom_tag\n", FUNCNAME);
 	H89BUS_IO_DECODER_SOCKET(config, "h89bus:io_decoder", io_decoder_options, "444_61");
