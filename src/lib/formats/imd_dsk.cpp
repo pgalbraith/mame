@@ -453,13 +453,23 @@ bool imd_format::load(util::random_read &io, uint32_t form_factor, const std::ve
 
 	uint64_t pos, savepos;
 	for(pos=0; pos < size && img[pos] != 0x1a; pos++) { }
+	if(pos >= size)
+		return false;    // no comment terminator, so not an IMD file
 	pos++;
 
 	comment.resize(pos);
 	memcpy(&comment[0], &img[0], pos);
 
-	if(pos >= size)
-		return false;
+	// Nothing after the comment means no track records, and a record is the
+	// only way this format says a cylinder is formatted.  That is what save()
+	// writes for a disk nothing has been written on yet, and it reads back
+	// the same way: unformatted, with no geometry of its own.  The form
+	// factor is the drive's; the variant stays unset until the machine
+	// formats the disk, when the next save takes it from the tracks.
+	if(pos >= size) {
+		image.set_form_variant(form_factor, 0);
+		return true;
+	}
 
 	int tracks, heads;
 	image.get_maximal_geometry(tracks, heads);
@@ -1179,12 +1189,15 @@ bool imd_format::detect_track(const floppy_image &image, int cyl, int head,
 bool imd_format::save(util::random_read_write &io, const std::vector<uint32_t> &variants,
 					  const floppy_image &image) const
 {
+	// A disk with no formatted tracks gets the header and nothing else.  The
+	// record loop below then runs zero times, and load() reads a file that
+	// ends at the comment back as unformatted.  Refusing instead is worse
+	// than it looks: the drive truncates the file before it calls save() and
+	// does not check the result, so a refusal leaves a 0 byte file that no
+	// format identifies, and a machine started with that file mounted dies
+	// with a fatal error.
 	int tracks = 0, heads = 0;
 	image.get_actual_geometry(tracks, heads);
-	if (tracks <= 0 || heads <= 0) {
-		osd_printf_error("imd_format: image has no formatted tracks; refusing to save.\n");
-		return false;
-	}
 
 	int max_tracks = 0, max_heads = 0;
 	image.get_maximal_geometry(max_tracks, max_heads);
