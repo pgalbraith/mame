@@ -294,6 +294,7 @@ void heath_h17_fdc_base_device::device_start()
 	save_item(NAME(m_motor_on));
 	save_item(NAME(m_write_gate));
 	save_item(NAME(m_tx_write_active));
+	save_item(NAME(m_tx_last_commit));
 	save_item(NAME(m_sync_char_received));
 	save_item(NAME(m_rx_cell_start));
 	save_item(NAME(m_rx_scan));
@@ -311,6 +312,7 @@ void heath_h17_fdc_base_device::device_reset()
 	m_sync_char_received = false;
 	m_step_direction     = 0;
 	m_side               = 0;
+	m_tx_last_commit     = attotime::zero;
 
 	m_tx_timer->adjust(attotime::from_hz(USRT_TX_CLOCK), 0, attotime::from_hz(USRT_TX_CLOCK));
 	reset_rx_separator();
@@ -352,6 +354,17 @@ void heath_h17_fdc_base_device::set_write_gate(bool write_gate)
 	{
 		start_tx_write();
 	}
+	else
+	{
+		// The read separator was idle for the duration of the write (it must
+		// not decode the flux the board is laying down).  Re-anchor it at the
+		// current head position so the read-back HDOS does to verify a freshly
+		// written sector starts from a clean cell, as it is re-anchored after a
+		// seek or a drive change.  Without this the first read after a write
+		// resumes from a stale position, mis-syncs, and INIT's verify aborts
+		// with "UNABLE TO READ/WRITE THIS DISKETTE".
+		reset_rx_separator();
+	}
 }
 
 void heath_h17_fdc_base_device::start_tx_write()
@@ -365,6 +378,7 @@ void heath_h17_fdc_base_device::start_tx_write()
 	m_tx_pll.reset(machine().time());
 	m_tx_pll.start_writing(machine().time(), m_floppy);
 	m_tx_write_active = true;
+	m_tx_last_commit  = m_tx_pll.ctime;
 }
 
 void heath_h17_fdc_base_device::stop_tx_write()
@@ -393,6 +407,25 @@ void heath_h17_fdc_base_device::tx_w(int state)
 
 	write_tx_cell(true);
 	write_tx_cell(BIT(state, 0));
+
+	// Flush what has been laid down so far, often enough that no single flush
+	// ever covers more than one revolution.
+	//
+	// floppy_image_device turns a write into one angular span, so it cannot
+	// represent a write that ran longer than a revolution: find_position()
+	// folds every time onto the same 200ms, and the flux comes out of order in
+	// the track buffer.  HDOS's INIT holds the write gate on for about 360ms
+	// on its first pass over a track, and that is exactly what corrupted the
+	// two sectors either side of the index - the point the fold lands on -
+	// leaving the volume label at track 0 sector 9 unreadable.
+	//
+	// Committing as the write proceeds is what wd_fdc and upd765 do, for the
+	// same reason.
+	if ((m_tx_pll.ctime - m_tx_last_commit) >= tx_commit_interval())
+	{
+		m_tx_pll.commit(m_floppy, m_tx_pll.ctime);
+		m_tx_last_commit = m_tx_pll.ctime;
+	}
 }
 
 // Receive data separator.
@@ -424,7 +457,7 @@ void heath_h17_fdc_base_device::tx_w(int state)
 
 void heath_h17_fdc_base_device::schedule_rx_cell()
 {
-	if (!m_motor_on || !m_floppy)
+	if (!m_motor_on || !m_floppy || m_tx_write_active)
 	{
 		m_rx_timer->adjust(attotime::never);
 		return;
@@ -461,7 +494,7 @@ void heath_h17_fdc_base_device::rx_emit_cell()
 
 TIMER_CALLBACK_MEMBER(heath_h17_fdc_base_device::rx_timer_cb)
 {
-	if (!m_motor_on || !m_floppy)
+	if (!m_motor_on || !m_floppy || m_tx_write_active)
 	{
 		m_rx_timer->adjust(attotime::never);
 		return;

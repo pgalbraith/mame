@@ -79,6 +79,7 @@ protected:
 	required_device<timer_device> m_tx_timer;
 	emu_timer *m_rx_timer;
 	fdc_pll_t m_tx_pll;
+	attotime  m_tx_last_commit; // when the write in progress was last flushed
 
 	// Receive data separator; see the block comment on it in h17_fdc_base.cpp.
 	attotime m_rx_cell_start;   // when the bit cell being assembled began
@@ -111,6 +112,11 @@ protected:
 	// A bit cell holds an FM clock half-cell followed by a data half-cell.
 	static attotime fm_cell_time() { return attotime::from_hz(USRT_TX_CLOCK * 2); }
 	static attotime fm_bit_time()  { return attotime::from_hz(USRT_TX_CLOCK); }
+
+	// How often a write in progress is flushed to the image.  It only has to
+	// be comfortably inside one 200ms revolution; a sector is 20ms, so this
+	// leaves an order of magnitude in hand.
+	static attotime tx_commit_interval() { return attotime::from_msec(20); }
 };
 
 #endif // MAME_BUS_HEATHZENITH_H17_H17_FDC_BASE_H
