@@ -507,6 +507,18 @@ end
 
 --------------------------------------------------
 --
+--@src/lib/formats/c1571_dsk.h,FORMATS["C1571_DSK"] = true
+--------------------------------------------------
+
+if opt_tool(FORMATS, "C1571_DSK") then
+	files {
+		MAME_DIR.. "src/lib/formats/c1571_dsk.cpp",
+		MAME_DIR.. "src/lib/formats/c1571_dsk.h",
+	}
+end
+
+--------------------------------------------------
+--
 --@src/lib/formats/c4040_dsk.h,FORMATS["C4040_DSK"] = true
 --------------------------------------------------
 
@@ -1645,6 +1657,18 @@ if opt_tool(FORMATS, "PASTI_DSK") then
 		MAME_DIR.. "src/lib/formats/pasti_dsk.cpp",
 		MAME_DIR.. "src/lib/formats/pasti_dsk.h",
 	}
+end
+
+--------------------------------------------------
+--
+--@src/lib/formats/pc88_t88.h,FORMATS["PC88_T88"] = true
+--------------------------------------------------
+
+if opt_tool(FORMATS, "PC88_T88") then
+       files {
+               MAME_DIR.. "src/lib/formats/pc88_t88.cpp",
+               MAME_DIR.. "src/lib/formats/pc88_t88.h",
+       }
 end
 
 --------------------------------------------------
