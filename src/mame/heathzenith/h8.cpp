@@ -88,6 +88,19 @@ static DEVICE_INPUT_DEFAULTS_START( h8_h17_ha_8_8 )
 	DEVICE_INPUT_DEFAULTS( "SW1", 0x80, 0x80 )
 DEVICE_INPUT_DEFAULTS_END
 
+// Put jumper X1-X2 back to the open position Heath shipped, so the monitor ROM
+// stays at 0000-0FFF and cannot be switched out from the bus.  The CPU card
+// closes it by default to give CP/M the ORG-0 it needs, but that trade goes the
+// wrong way on a hard-sectored machine: XCON8 disables the ROM on its way to a
+// boot, and every HDOS 1.x release then counts the RAM that appears underneath
+// and quits with "?01 HDOS REQUIRES AT LEAST 12K!" - 50.00.00, 50.03.00 and
+// 50.04.00 size 62K, 50.05.00 sizes 61K.  Only HDOS 2.0 knows to start above
+// the ROM window and boots either way.  Open, all five size the usual 56K.
+// Close it again to run something that wants RAM under the ROM.
+static DEVICE_INPUT_DEFAULTS_START( h8_h17_cpu_8080 )
+	DEVICE_INPUT_DEFAULTS( "CONFIG", 0x04, 0x00 )
+DEVICE_INPUT_DEFAULTS_END
+
 void h8_state::machine_start()
 {
 }
@@ -148,6 +161,8 @@ void h8_state::h8_h17(machine_config &config)
 	// ...and set that monitor's boot mode switch to Auto, so it boots the H-17
 	// on its own rather than waiting at a blank screen.
 	m_p10->set_option_device_input_defaults("ha_8_8", DEVICE_INPUT_DEFAULTS_NAME(h8_h17_ha_8_8));
+
+	m_p2->set_option_device_input_defaults("cpu8080", DEVICE_INPUT_DEFAULTS_NAME(h8_h17_cpu_8080));
 }
 
 // ROM definition
