@@ -59,9 +59,11 @@ public:
 		, m_h8bus(*this, "h8bus")
 		, m_p1(*this, "p1")
 		, m_p2(*this, "p2")
+		, m_p10(*this, "p10")
 		{}
 
 	void h8(machine_config &config);
+	void h8_h17(machine_config &config);
 
 protected:
 	virtual void machine_start() override ATTR_COLD;
@@ -71,11 +73,20 @@ private:
 	required_device<h8bus_device> m_h8bus;
 	required_device<h8bus_slot_device> m_p1;
 	required_device<h8bus_slot_device> m_p2;
+	required_device<h8bus_slot_device> m_p10;
 };
 
 // Input ports
 static INPUT_PORTS_START( h8 )
 INPUT_PORTS_END
+
+// This machine comes with the disk system already in it, so have the HA-8-8
+// boot from it rather than stopping in the monitor: XCON8 takes its commands
+// from the front panel and prints nothing at all while it waits, so SW1:8 at
+// Normal leaves a blank terminal that reads as a hung machine.
+static DEVICE_INPUT_DEFAULTS_START( h8_h17_ha_8_8 )
+	DEVICE_INPUT_DEFAULTS( "SW1", 0x80, 0x80 )
+DEVICE_INPUT_DEFAULTS_END
 
 void h8_state::machine_start()
 {
@@ -114,16 +125,41 @@ void h8_state::h8(machine_config &config)
 	H8BUS_SLOT(config,  "p7", "h8bus", h8_cards,     nullptr);
 	H8BUS_SLOT(config,  "p8", "h8bus", h8_cards,     nullptr);
 	H8BUS_SLOT(config,  "p9", "h8bus", h8_cards,     "h_8_5");
-	H8BUS_SLOT(config, "p10", "h8bus", h8_p10_cards, "ha_8_8");
+	H8BUS_SLOT(config, m_p10, "h8bus", h8_p10_cards, "ha_8_8");
+}
+
+void h8_state::h8_h17(machine_config &config)
+{
+	h8(config);
+
+	// The H-17 operation manual has the controller going near the back of the
+	// bus, and P8 is the last free slot before the serial card in P9.
+	H8BUS_SLOT(config.replace(), "p8", "h8bus", h8_cards, "h_8_17");
+
+	// Standard PAM-8 knows nothing about disks - the H-17 operation manual has
+	// you key 030 000 into the PC and press GO to reach the controller ROM - so
+	// a disk machine wants one of the two monitors that boot on their own.
+	// XCON8 is the Heath part (444-70, and it says so in its own image); the
+	// other, PAM-8/AT, is not a dump at all but a reconstruction assembled from
+	// a 27-Oct-81 listing, whose text records that its original part number is
+	// unknown.  Prefer the genuine one.
+	m_p2->set_option_default_bios("cpu8080", "xcon8");
+
+	// ...and set that monitor's boot mode switch to Auto, so it boots the H-17
+	// on its own rather than waiting at a blank screen.
+	m_p10->set_option_device_input_defaults("ha_8_8", DEVICE_INPUT_DEFAULTS_NAME(h8_h17_ha_8_8));
 }
 
 // ROM definition
 ROM_START( h8 )
 ROM_END
 
+#define rom_h8_h17 rom_h8
+
 } // anonymous namespace
 
 // Driver
 
-//    YEAR  NAME  PARENT  COMPAT  MACHINE  INPUT  CLASS,    INIT        COMPANY          FULLNAME               FLAGS
-COMP( 1977, h8,   0,      0,      h8,      h8,    h8_state, empty_init, "Heath Company", "H-8", MACHINE_SUPPORTS_SAVE )
+//    YEAR  NAME    PARENT  COMPAT  MACHINE  INPUT  CLASS,    INIT        COMPANY          FULLNAME                              FLAGS
+COMP( 1977, h8,     0,      0,      h8,      h8,    h8_state, empty_init, "Heath Company", "H-8",                                MACHINE_SUPPORTS_SAVE )
+COMP( 1978, h8_h17, h8,     0,      h8_h17,  h8,    h8_state, empty_init, "Heath Company", "H-8 with H-17 Disk and H-19 Monitor", MACHINE_SUPPORTS_SAVE )
