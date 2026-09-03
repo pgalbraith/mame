@@ -398,6 +398,12 @@ INPUT_PORTS_END
 // different monitor ROMs, so the "Switch SW501 Definitions" config below picks
 // which set of labels applies; it defaults to MTR-90 here and each machine
 // whose default ROM is something else moves it to match.
+//
+// Boot mode defaults to Auto rather than the Normal a machine shipped with, so
+// that starting one with a bootable disk brings the disk up instead of stopping
+// at the monitor's H: prompt.  Nothing is lost by it: a monitor that finds no
+// bootable disk in Auto reports the failure and drops through to that same
+// prompt.
 static INPUT_PORTS_START( h89_base )
 
 	PORT_START("SW501")
@@ -447,7 +453,7 @@ static INPUT_PORTS_START( h89_base )
 	PORT_DIPNAME( 0x40, 0x00, "Console Baud rate" )                  PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
 	PORT_DIPSETTING(    0x00, "9600" )
 	PORT_DIPSETTING(    0x40, "19200" )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
@@ -471,7 +477,7 @@ static INPUT_PORTS_START( h89_base )
 	PORT_DIPNAME( 0x40, 0x00, "Console Baud rate" )                  PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x08)
 	PORT_DIPSETTING(    0x00, "9600" )
 	PORT_DIPSETTING(    0x40, "19200" )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x08)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x08)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
@@ -495,7 +501,7 @@ static INPUT_PORTS_START( h89_base )
 	PORT_DIPSETTING(    0x50, "reserved for future use" )
 	PORT_DIPSETTING(    0x60, "MMS Network (77422)" )
 	PORT_DIPSETTING(    0x70, "Use MMS I/O board Config Port" )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
@@ -526,7 +532,7 @@ static INPUT_PORTS_START( h89_base )
 	PORT_DIPNAME( 0x40, 0x00, "Have a LLL controller installed" )    PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x10)
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x10)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x10)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
@@ -558,7 +564,7 @@ static INPUT_PORTS_START( h89_base )
 	PORT_DIPNAME( 0x40, 0x00, "? Have a LLL controller installed" )  PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x14)
 	PORT_DIPSETTING(    0x00, "? No" )
 	PORT_DIPSETTING(    0x40, "? Yes" )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x14)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x14)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
@@ -574,7 +580,7 @@ static INPUT_PORTS_START( h89_base )
 	PORT_DIPNAME( 0x20, 0x20, "Perform memory test at start" )       PORT_DIPLOCATION("SW501:6")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x18)
 	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x40, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x18)
+	PORT_DIPNAME( 0x40, 0x40, "Boot mode" )                          PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x18)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x40, "Auto" )
 	PORT_DIPNAME( 0x80, 0x00, "Baud Rate" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x18)
@@ -601,7 +607,7 @@ static INPUT_PORTS_START( h89_base )
 	PORT_DIPNAME( 0x40, 0x00, "Console Baud rate" )                  PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x1c)
 	PORT_DIPSETTING(    0x00, "9600" )
 	PORT_DIPSETTING(    0x40, "19200" )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x1c)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x1c)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
@@ -625,7 +631,7 @@ static INPUT_PORTS_START( h89_base )
 	PORT_DIPNAME( 0x40, 0x00, "Console Baud rate" )                  PORT_DIPLOCATION("SW501:7")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x20)
 	PORT_DIPSETTING(    0x00, "9600" )
 	PORT_DIPSETTING(    0x40, "19200" )
-	PORT_DIPNAME( 0x80, 0x00, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x20)
+	PORT_DIPNAME( 0x80, 0x80, "Boot mode" )                          PORT_DIPLOCATION("SW501:8")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x20)
 	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "Auto" )
 
