@@ -103,7 +103,7 @@ license:CC0-1.0
 		<description>HDOS 1.0 (H8 only)</description>
 		<year>1978</year>
 		<publisher>Heath Company</publisher>
-		<notes>Issue 50.00.00, the original release. It predates the H-89 and H-88, whose 8250 console is only driven from issue 50.03.00 on, so it runs on the H8 alone. Both issues ship in the same archive upstream.</notes>
+		<notes>Issue 50.00.00, the original release. It predates the H-89 and H-88, whose 8250 console is only driven from issue 50.03.00 on, so it runs on the H8 alone. Both issues ship in the same archive upstream. Its disk initializer is INIT17, not INIT: it verifies the media by timing the sector holes in CPU loop iterations, a window calibrated for the H8's 8080, which is why the 50.03.00 build of it fails on the Z80 machines (see that entry). HDOS 1.5 replaced INIT17 with INIT and dropped the check.</notes>
 		<info name="alt_title" value="Heath Disk Operating System"/>
 		<info name="version" value="50.00.00"/>
 		<info name="partno" value="890-1"/>
@@ -120,7 +120,7 @@ license:CC0-1.0
 		<description>HDOS 1.0</description>
 		<year>1979</year>
 		<publisher>Heath Company</publisher>
-		<notes>Issue 50.03.00, the first HDOS release to support the H-89 and H-88, adding the 8250 console used on those machines. The earlier issue 50.00.00, which runs on the H8 alone, is a separate entry on this list.</notes>
+		<notes>Issue 50.03.00, the first HDOS release to support the H-89 and H-88, adding the 8250 console used on those machines. The earlier issue 50.00.00, which runs on the H8 alone, is a separate entry on this list. Its disk initializer INIT17 does not work on the H-88 or H-89: before writing anything it checks the media by counting CPU loop iterations per sector-hole period, against a window calibrated for the H8's 8080, and the Z80 runs the same loop at a different rate (31 T-states per pass against the 8080's 29 at the same 2.048 MHz), so every disk is rejected with WRONG TYPE OF MEDIA. It boots and runs on those machines otherwise. To initialize disks there use the INIT from HDOS 1.5 (issue 50.04.00) or later, which dropped the check; INIT17 itself works on the H8.</notes>
 		<info name="alt_title" value="Heath Disk Operating System"/>
 		<info name="version" value="50.03.00"/>
 		<info name="partno" value="890-1-3"/>
