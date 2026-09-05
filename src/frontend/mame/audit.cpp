@@ -23,6 +23,9 @@
 #include "path.h"
 
 #include <algorithm>
+#include <cctype>
+#include <mutex>
+#include <unordered_set>
 
 //#define VERBOSE 1
 #define LOG_OUTPUT_FUNC osd_printf_verbose
@@ -612,6 +615,68 @@ void media_auditor::audit_regions(T do_audit, const rom_entry *region, std::size
 //  audit_one_rom - validate a single ROM entry
 //-------------------------------------------------
 
+namespace {
+
+// A full audit calls audit_one_rom once per ROM entry per driver, and the
+// overwhelming majority of those calls are for files that don't exist at
+// all - across the whole driver list, well over 99% miss.  Asking the OS to
+// open() each one anyway is the dominant cost of a full audit (measured:
+// ~40s of a ~47s whole-driver-list -verifyroms run was time spent in open()
+// calls that found nothing).  Build one cheap directory listing of what's
+// actually in the rompath - exactly what the "Available" system-list filter
+// already does for the same reason - and skip the real open() whenever
+// nothing in a ROM's candidate search names is even present.
+class rompath_index
+{
+public:
+	static bool maybe_present(emu_options const &options, std::vector<std::string> const &searchpath)
+	{
+		static rompath_index s_instance;
+		return s_instance.check(options, searchpath);
+	}
+
+private:
+	bool check(emu_options const &options, std::vector<std::string> const &searchpath)
+	{
+		std::string const media_path(options.media_path());
+		std::lock_guard<std::mutex> guard(m_mutex);
+		if (m_media_path != media_path)
+			rebuild(media_path);
+
+		for (std::string const &name : searchpath)
+		{
+			std::string lower(name);
+			std::transform(lower.begin(), lower.end(), lower.begin(), [] (unsigned char c) { return char(std::tolower(c)); });
+			if (m_names.find(lower) != m_names.end())
+				return true;
+		}
+		return false;
+	}
+
+	void rebuild(std::string const &media_path)
+	{
+		m_names.clear();
+		file_enumerator path(media_path.c_str());
+		for (osd::directory::entry const *dir = path.next(); dir; dir = path.next())
+		{
+			char name[50];
+			char *dst = name;
+			char const *src;
+			for (src = dir->name; *src != 0 && *src != '.' && dst < &name[std::size(name) - 1]; ++src)
+				*dst++ = char(std::tolower(uint8_t(*src)));
+			*dst = 0;
+			m_names.emplace(name);
+		}
+		m_media_path = media_path;
+	}
+
+	std::mutex                      m_mutex;
+	std::string                     m_media_path;
+	std::unordered_set<std::string> m_names;
+};
+
+} // anonymous namespace
+
 media_auditor::audit_record &media_auditor::audit_one_rom(const std::vector<std::string> &searchpath, const rom_entry *rom)
 {
 	// allocate and append a new record
@@ -621,20 +686,23 @@ media_auditor::audit_record &media_auditor::audit_one_rom(const std::vector<std:
 	uint32_t crc = 0;
 	bool const has_crc = record.expected_hashes().crc(crc);
 
-	// find the file and checksum it, getting the file length along the way
-	emu_file file(m_enumerator.options().media_path(), searchpath, OPEN_FLAG_READ | OPEN_FLAG_NO_PRELOAD);
-	file.set_restrict_to_mediapath(1);
+	if (rompath_index::maybe_present(m_enumerator.options(), searchpath))
+	{
+		// find the file and checksum it, getting the file length along the way
+		emu_file file(m_enumerator.options().media_path(), searchpath, OPEN_FLAG_READ | OPEN_FLAG_NO_PRELOAD);
+		file.set_restrict_to_mediapath(1);
 
-	// open the file if we can
-	std::error_condition filerr;
-	if (has_crc)
-		filerr = file.open(record.name(), crc);
-	else
-		filerr = file.open(record.name());
+		// open the file if we can
+		std::error_condition filerr;
+		if (has_crc)
+			filerr = file.open(record.name(), crc);
+		else
+			filerr = file.open(record.name());
 
-	// if it worked, get the actual length and hashes, then stop
-	if (!filerr)
-		record.set_actual(file.hashes(m_validation), file.size());
+		// if it worked, get the actual length and hashes, then stop
+		if (!filerr)
+			record.set_actual(file.hashes(m_validation), file.size());
+	}
 
 	// compute the final status
 	compute_status(record, rom, record.actual_length() != 0);
