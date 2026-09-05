@@ -455,8 +455,14 @@ void menu_select_game::build_available_list()
 			included[drivnum] = true;
 	}
 
-	// now check and include NONE_NEEDED
-	if (!ui().options().hide_romless())
+	// now check and include systems that need nothing beyond what's already found -
+	// either because they genuinely require no ROMs (hide_romless), or because they're
+	// a clone that adds no ROM beyond what its already-found parent supplies
+	// (hide_clones_without_unique_roms).  These are two distinct situations - a clone
+	// still requires real ROM files to run, it just doesn't need any the parent hasn't
+	// already accounted for - so each gets its own, independently-set option rather than
+	// reusing one flag for both.
+	if (!ui().options().hide_romless() || !ui().options().hide_clones_without_unique_roms())
 	{
 		// FIXME: can't use the convenience macros with tiny ROM entries
 		auto const is_required_rom =
@@ -478,9 +484,46 @@ void menu_select_game::build_available_list()
 					}
 				}
 
-				if (!noroms)
+				if (noroms)
 				{
-					// check if clone == parent
+					// the machine's own ROM_START is empty - but that doesn't mean the
+					// system needs nothing at all, since its default configuration can
+					// still plug in fixed/default sub-devices that carry their own
+					// required ROMs (e.g. a CPU board holding the only copy of the
+					// monitor ROM).  Check the actual configured device tree, unless
+					// this class of system is being hidden from Available outright.
+					if (ui().options().hide_romless())
+					{
+						noroms = false;
+					}
+					else
+					{
+						driver_enumerator enumerator(machine().options(), driver);
+						enumerator.next();
+						for (device_t &device : device_enumerator(enumerator.config()->root_device()))
+						{
+							if (&device == &enumerator.config()->root_device())
+								continue; // already checked via driver.rom above
+
+							for (rom_entry const *region = rom_first_region(device); noroms && region; region = rom_next_region(region))
+							{
+								for (rom_entry const *devrom = rom_first_file(region); noroms && devrom; devrom = rom_next_file(devrom))
+								{
+									if (!ROM_ISOPTIONAL(devrom) && !util::hash_collection(devrom->hashdata()).flag(util::hash_collection::FLAG_NO_DUMP))
+										noroms = false;
+								}
+							}
+
+							if (!noroms)
+								break;
+						}
+					}
+				}
+				else if (!ui().options().hide_clones_without_unique_roms())
+				{
+					// the machine's own ROM_START isn't empty - see whether every required
+					// entry is already accounted for by an already-found parent (a clone
+					// that adds nothing beyond what's already found for it)
 					auto const cx(driver_list::clone(driver));
 					if ((0 <= cx) && included[cx])
 					{

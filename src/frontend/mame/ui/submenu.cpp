@@ -47,7 +47,8 @@ std::vector<submenu::option> submenu::misc_options()
 			{ option_type::UI,   N_("Skip BIOS selection menu"),                                 OPTION_SKIP_BIOS_MENU },
 			{ option_type::UI,   N_("Skip software part selection menu"),                        OPTION_SKIP_PARTS_MENU },
 			{ option_type::UI,   N_("Info auto audit"),                                          OPTION_INFO_AUTO_AUDIT },
-			{ option_type::UI,   N_("Hide systems that don't require ROMs in available filter"), OPTION_HIDE_ROMLESS } };
+			{ option_type::UI,   N_("Hide systems that don't require ROMs in available filter"), OPTION_HIDE_ROMLESS },
+			{ option_type::UI,   N_("Hide clones without unique ROMs in available filter"),      OPTION_HIDE_CLONES_WITHOUT_UNIQUE_ROMS } };
 }
 
 std::vector<submenu::option> submenu::advanced_options()

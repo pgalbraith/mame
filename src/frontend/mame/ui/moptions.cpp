@@ -88,6 +88,7 @@ const options_entry ui_options::s_option_entries[] =
 	{ OPTION_FORCED4X3,                     "1",                option_type::BOOLEAN,    "force 4:3 aspect ratio for snapshots in the software menu" },
 	{ OPTION_INFO_AUTO_AUDIT,               "0",                option_type::BOOLEAN,    "automatically audit media for the general info panel" },
 	{ OPTION_HIDE_ROMLESS,                  "1",                option_type::BOOLEAN,    "hide systems that don't require ROMs in the available system filter" },
+	{ OPTION_HIDE_CLONES_WITHOUT_UNIQUE_ROMS, "1",              option_type::BOOLEAN,    "hide clones that need ROMs but require none beyond what their parent already provides, in the available system filter" },
 
 	// sentinel
 	{ nullptr }

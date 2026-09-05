@@ -80,6 +80,7 @@
 #define OPTION_FORCED4X3              "forced4x3"
 #define OPTION_INFO_AUTO_AUDIT        "info_audit_enabled"
 #define OPTION_HIDE_ROMLESS           "hide_romless"
+#define OPTION_HIDE_CLONES_WITHOUT_UNIQUE_ROMS "hide_clones_without_unique_roms"
 
 
 class ui_options : public core_options
@@ -154,6 +155,7 @@ public:
 	char const *software_right_image() const { return value(OPTION_SOFTWARE_RIGHT_IMAGE); }
 	bool info_audit() const { return bool_value(OPTION_INFO_AUTO_AUDIT); }
 	bool hide_romless() const { return bool_value(OPTION_HIDE_ROMLESS); }
+	bool hide_clones_without_unique_roms() const { return bool_value(OPTION_HIDE_CLONES_WITHOUT_UNIQUE_ROMS); }
 
 	rgb_t rgb_value(const char *option) const;
 
