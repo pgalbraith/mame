@@ -17,6 +17,7 @@
 #include <list>
 #include <string>
 #include <string_view>
+#include <vector>
 
 
 namespace ui {
@@ -129,6 +130,11 @@ public:
 	virtual ~menu_software() override;
 	virtual void populate() override;
 	virtual bool handle(event const *ev) override;
+
+	// returns every software list, at the narrowest enclosing scope, that
+	// carries at least one part matching interface - i.e. the choices this
+	// menu would offer for imagedev
+	static std::vector<software_list_device *> usable_lists(device_t &imagedev, char const *interface);
 
 private:
 	device_t               &m_imagedev;

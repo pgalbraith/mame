@@ -267,28 +267,44 @@ void menu_control_device_image::start_file()
 
 void menu_control_device_image::start_softlist()
 {
-	menu::stack_push<menu_software>(
-			ui(),
-			target(),
-			m_image.device(),
-			m_image.image_interface(),
-			[this] (software_list_device *sld)
-			{
-				if (!sld)
+	// if there's only one software list this image could actually use, go straight
+	// to it rather than showing a "choice" of one
+	auto const usable = menu_software::usable_lists(m_image.device(), m_image.image_interface());
+	if (usable.size() == 1)
+	{
+		software_list_device *const sld = usable[0];
+		menu::stack_push<menu_software_list>(
+				ui(),
+				target(),
+				*sld,
+				m_image.image_interface(),
+				[this, sld] (std::string_view item) { software_item_selected(*sld, item); });
+	}
+	else
+	{
+		menu::stack_push<menu_software>(
+				ui(),
+				target(),
+				m_image.device(),
+				m_image.image_interface(),
+				[this] (software_list_device *sld)
 				{
-					stack_pop(); // pop the software lists menu
-					stack_pop(); // pop the fake menu that orchestrates the other menus
-				}
-				else
-				{
-					menu::stack_push<menu_software_list>(
-							ui(),
-							target(),
-							*sld,
-							m_image.image_interface(),
-							[this, sld] (std::string_view item) { software_item_selected(*sld, item); });
-				}
-			});
+					if (!sld)
+					{
+						stack_pop(); // pop the software lists menu
+						stack_pop(); // pop the fake menu that orchestrates the other menus
+					}
+					else
+					{
+						menu::stack_push<menu_software_list>(
+								ui(),
+								target(),
+								*sld,
+								m_image.image_interface(),
+								[this, sld] (std::string_view item) { software_item_selected(*sld, item); });
+					}
+				});
+	}
 }
 
 

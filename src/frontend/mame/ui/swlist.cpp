@@ -421,42 +421,37 @@ menu_software::~menu_software()
 }
 
 
-//-------------------------------------------------
-//  populate
-//-------------------------------------------------
+namespace {
 
-void menu_software::populate()
+// does this list carry anything an image device with this interface could actually accept?
+bool swlist_usable(software_list_device &swlistdev, char const *interface)
 {
-	bool have_compatible = false;
+	if (!interface || swlistdev.get_info().empty())
+		return false;
+	for (const software_info &swinfo : swlistdev.get_info())
+		for (const software_part &swpart : swinfo.parts())
+			if (swpart.matches_interface(interface))
+				return true;
+	return false;
+}
 
-	// does this list carry anything the image device could actually accept?
-	auto const usable =
-			[this] (software_list_device &swlistdev)
-			{
-				if (!m_interface || swlistdev.get_info().empty())
-					return false;
-				for (const software_info &swinfo : swlistdev.get_info())
-					for (const software_part &swpart : swinfo.parts())
-						if (swpart.matches_interface(m_interface))
-							return true;
-				return false;
-			};
-
-	// A list instantiated inside a card rather than at the machine root belongs
-	// to that card, so where a system has more than one controller offering the
-	// same interface - a Z-90 has hard- and soft-sectored floppy cards side by
-	// side, both "floppy_5_25" - each drive should offer only the media it can
-	// read.  Walk up from the image to the nearest enclosing device that has a
-	// usable list of its own and enumerate from there.  Systems that declare
-	// their lists at the root, which is nearly all of them, walk the whole way
-	// up and get the machine-wide set exactly as before.
-	device_t *scope = &m_imagedev;
+// A list instantiated inside a card rather than at the machine root belongs
+// to that card, so where a system has more than one controller offering the
+// same interface - a Z-90 has hard- and soft-sectored floppy cards side by
+// side, both "floppy_5_25" - each drive should offer only the media it can
+// read.  Walk up from the image to the nearest enclosing device that has a
+// usable list of its own and enumerate from there.  Systems that declare
+// their lists at the root, which is nearly all of them, walk the whole way
+// up and get the machine-wide set exactly as before.
+device_t &swlist_usable_scope(device_t &imagedev, char const *interface)
+{
+	device_t *scope = &imagedev;
 	while (scope->owner())
 	{
 		bool scoped = false;
 		for (software_list_device &swlistdev : software_list_device_enumerator(*scope))
 		{
-			if (usable(swlistdev))
+			if (swlist_usable(swlistdev, interface))
 			{
 				scoped = true;
 				break;
@@ -466,19 +461,49 @@ void menu_software::populate()
 			break;
 		scope = scope->owner();
 	}
+	return *scope;
+}
+
+} // anonymous namespace
+
+
+//-------------------------------------------------
+//  usable_lists
+//-------------------------------------------------
+
+std::vector<software_list_device *> menu_software::usable_lists(device_t &imagedev, char const *interface)
+{
+	std::vector<software_list_device *> result;
+	device_t &scope = swlist_usable_scope(imagedev, interface);
+	for (software_list_device &swlistdev : software_list_device_enumerator(scope))
+		if (swlist_usable(swlistdev, interface))
+			result.push_back(&swlistdev);
+	return result;
+}
+
+
+//-------------------------------------------------
+//  populate
+//-------------------------------------------------
+
+void menu_software::populate()
+{
+	bool have_compatible = false;
+
+	device_t &scope = swlist_usable_scope(m_imagedev, m_interface);
 
 	// Add original software lists for this system
-	software_list_device_enumerator iter(*scope);
+	software_list_device_enumerator iter(scope);
 	for (software_list_device &swlistdev : iter)
 	{
-		if (swlistdev.is_original() && usable(swlistdev))
+		if (swlistdev.is_original() && swlist_usable(swlistdev, m_interface))
 			item_append(swlistdev.description(), 0, (void *)&swlistdev);
 	}
 
 	// add compatible software lists for this system
 	for (software_list_device &swlistdev : iter)
 	{
-		if (swlistdev.is_compatible() && usable(swlistdev))
+		if (swlistdev.is_compatible() && swlist_usable(swlistdev, m_interface))
 		{
 			if (!have_compatible)
 				item_append(_("[compatible lists]"), FLAG_UI_HEADING | FLAG_DISABLE, nullptr);
