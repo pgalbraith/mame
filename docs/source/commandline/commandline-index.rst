@@ -42,6 +42,7 @@ Frontend Verbs
 | :ref:`listbios <mame-commandline-listbios>`
 | :ref:`listsamples <mame-commandline-listsamples>`
 | :ref:`verifyroms <mame-commandline-verifyroms>`
+| :ref:`auditroms <mame-commandline-auditroms>`
 | :ref:`verifysamples <mame-commandline-verifysamples>`
 | :ref:`romident <mame-commandline-romident>`
 | :ref:`listdevices <mame-commandline-listdevices>`

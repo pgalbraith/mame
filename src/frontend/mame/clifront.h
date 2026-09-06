@@ -62,6 +62,7 @@ private:
 	void listsoftware(const std::vector<std::string> &args);
 	void verifysoftware(const std::vector<std::string> &args);
 	void verifyroms(const std::vector<std::string> &args);
+	void auditroms(const std::vector<std::string> &args);
 	void verifysamples(const std::vector<std::string> &args);
 	void romident(const std::vector<std::string> &args);
 	void getsoftlist(const std::vector<std::string> &args);

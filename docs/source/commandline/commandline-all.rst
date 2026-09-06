@@ -432,6 +432,29 @@ overwritten.
             romset gradius [nemesis] is good
             1 romsets found, 1 were OK.
 
+.. _mame-commandline-auditroms:
+
+**-auditroms**
+
+    Audits every system's ROMs, the same check **-verifyroms** performs, and
+    saves the results for the internal UI's **Available** system filter to use
+    on its next launch. Unlike **-verifyroms**, this command does not accept a
+    *pattern* - it always audits the complete list of systems, so the saved
+    result is never a partial answer for systems this run didn't consider.
+
+    This is the command-line equivalent of pressing **F1** at the system
+    selection screen and choosing "Audit media for all systems" - both run the
+    identical audit and write the identical file, in the same *ui* path, named
+    after the current executable (for example ``ui/mame_avail.ini``). Running
+    **-verifyroms** does *not* update this file; only **-auditroms** or the
+    interactive **F1** menu do.
+
+    Example:
+        .. code-block:: bash
+
+            mame -auditroms
+            Audited 4093 systems, 3812 available - wrote ui/mame_avail.ini
+
 .. _mame-commandline-verifysamples:
 
 **-verifysamples** [<*pattern*>]

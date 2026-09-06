@@ -45,6 +45,8 @@
 #include <cstdio>
 #include <iostream>
 
+extern const char UI_VERSION_TAG[];
+
 
 //**************************************************************************
 //  CONSTANTS
@@ -70,6 +72,7 @@
 #define CLICOMMAND_LISTBIOS             "listbios"
 #define CLICOMMAND_LISTSAMPLES          "listsamples"
 #define CLICOMMAND_VERIFYROMS           "verifyroms"
+#define CLICOMMAND_AUDITROMS            "auditroms"
 #define CLICOMMAND_VERIFYSAMPLES        "verifysamples"
 #define CLICOMMAND_ROMIDENT             "romident"
 #define CLICOMMAND_LISTDEVICES          "listdevices"
@@ -115,6 +118,7 @@ const options_entry cli_option_entries[] =
 	{ CLICOMMAND_LISTROMS       ";lr",      "0",       core_options::option_type::COMMAND,    "list required ROMs for a driver" },
 	{ CLICOMMAND_LISTSAMPLES,               "0",       core_options::option_type::COMMAND,    "list optional samples for a driver" },
 	{ CLICOMMAND_VERIFYROMS,                "0",       core_options::option_type::COMMAND,    "report romsets that have problems" },
+	{ CLICOMMAND_AUDITROMS,                 "0",       core_options::option_type::COMMAND,    "audit every system and save results for the UI's available system filter" },
 	{ CLICOMMAND_VERIFYSAMPLES,             "0",       core_options::option_type::COMMAND,    "report samplesets that have problems" },
 	{ CLICOMMAND_ROMIDENT,                  "0",       core_options::option_type::COMMAND,    "compare files with known MAME ROMs" },
 	{ CLICOMMAND_LISTDEVICES    ";ld",      "0",       core_options::option_type::COMMAND,    "list devices in a system" },
@@ -1075,6 +1079,62 @@ void cli_frontend::verifyroms(const std::vector<std::string> &args)
 
 
 //-------------------------------------------------
+//  auditroms - audit every system's ROMs and save
+//  the result for the UI's "Available" system
+//  filter to pick up on its next launch (the file
+//  menu_audit::save_available_machines() writes
+//  from the "Audit ROMs" menu, which -verifyroms
+//  never touches)
+//-------------------------------------------------
+
+void cli_frontend::auditroms(const std::vector<std::string> &args)
+{
+	// load ui.ini so a customised ui_path is honoured, matching what the interactive UI itself uses
+	ui_options ui_opts;
+	{
+		emu_file ui_ini_file(m_options.ini_path(), OPEN_FLAG_READ);
+		if (!ui_ini_file.open("ui.ini"))
+		{
+			try { ui_opts.parse_ini_file((util::core_file &)ui_ini_file, OPTION_PRIORITY_MAME_INI, OPTION_PRIORITY_MAME_INI < OPTION_PRIORITY_DRIVER_INI, true); }
+			catch (options_exception &) { osd_printf_error("**Error loading ui.ini**\n"); }
+		}
+	}
+
+	// audit every system - always the complete list, never a subset, so the saved file is
+	// never a partial answer for systems this run didn't even consider (see the "Available"
+	// filter trusting a smaller build's audit results wholesale when several MAME builds
+	// share one working directory)
+	driver_enumerator drivlist(m_options);
+	media_auditor auditor(drivlist);
+	std::vector<std::string> available;
+	unsigned audited = 0;
+	while (drivlist.next())
+	{
+		media_auditor::summary const summary = auditor.audit_media(AUDIT_VALIDATE_FAST);
+		if ((summary == media_auditor::CORRECT) || (summary == media_auditor::BEST_AVAILABLE) || (summary == media_auditor::NONE_NEEDED))
+			available.push_back(drivlist.driver().name);
+		++audited;
+	}
+
+	// clear out any cached files
+	util::archive_file::cache_clear();
+
+	// save the results in the exact format and location save_available_machines() uses
+	emu_file file(ui_opts.ui_path(), OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
+	if (file.open(std::string(emulator_info::get_configname()) + "_avail.ini"))
+		throw emu_fatalerror("Unable to create file %s_avail.ini\n", emulator_info::get_configname());
+
+	file.printf("#\n%s%s\n#\n\n", UI_VERSION_TAG, emulator_info::get_bare_build_version());
+	for (std::string const &name : available)
+		file.printf("%s\n", name);
+	file.close();
+
+	osd_printf_info("Audited %u systems, %u available - wrote %s/%s_avail.ini\n",
+			audited, unsigned(available.size()), ui_opts.ui_path(), emulator_info::get_configname());
+}
+
+
+//-------------------------------------------------
 //  info_verifysamples - verify the sample sets of
 //  one or more games
 //-------------------------------------------------
@@ -1697,6 +1757,7 @@ const cli_frontend::info_command_struct *cli_frontend::find_command(const std::s
 		{ CLICOMMAND_LISTROMS,          0, -1, &cli_frontend::listroms,         "[pattern] ..." },
 		{ CLICOMMAND_LISTSAMPLES,       0,  1, &cli_frontend::listsamples,      "[system name]" },
 		{ CLICOMMAND_VERIFYROMS,        0, -1, &cli_frontend::verifyroms,       "[pattern] ..." },
+		{ CLICOMMAND_AUDITROMS,         0,  0, &cli_frontend::auditroms,        "" },
 		{ CLICOMMAND_VERIFYSAMPLES,     0,  1, &cli_frontend::verifysamples,    "[system name|*]" },
 		{ CLICOMMAND_LISTMEDIA,         0,  1, &cli_frontend::listmedia,        "[system name]" },
 		{ CLICOMMAND_LISTSOFTWARE,      0,  1, &cli_frontend::listsoftware,     "[system name]" },
