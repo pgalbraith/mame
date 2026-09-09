@@ -807,7 +807,7 @@ OSD-related Options
       -
       - auto
       - osx
-      - sdl
+      - sdl [#UIFPSDLMacOS]_
       - none
     * - **Linux**
       -
@@ -822,6 +822,9 @@ OSD-related Options
 ..  [#UIFPSDLWindows] SDL support on Windows requires that you compile MAME with
                       the support in. By default SDL is not included in Windows
                       builds of MAME.
+
+..  [#UIFPSDLMacOS]   SDL support on macOS requires that you compile MAME with
+                      the support in.
 
 Example:
     .. code-block:: bash
@@ -843,6 +846,7 @@ Example:
       - rawinput
       - dinput
       - win32
+      -
       - sdl [#KBIPSDLWindows]_
       - none
     * - **SDL (macOS and Linux)**
@@ -850,7 +854,16 @@ Example:
       -
       -
       -
+      -
       - sdl
+      - none
+    * - **macOS native**
+      - auto [#KBIPAutoMac]_
+      -
+      -
+      -
+      - mac
+      -
       - none
 
 ..  rubric:: Footnotes
@@ -863,6 +876,8 @@ Example:
                       builds of MAME.
 
 ..  [#KBIPAutoSDL] ``auto`` on SDL will default to ``sdl``.
+
+..  [#KBIPAutoMac] ``auto`` on macOS native will default to ``mac``.
 
 .. Tip:: Note that user-mode keyboard emulation tools such as joy2key will
          almost certainly require the use of **-keyboardprovider win32** on
@@ -888,6 +903,7 @@ Example:
       - rawinput
       - dinput
       - win32
+      -
       - sdl [#MIPSDLWindows]_
       - none
     * - **SDL (macOS and Linux)**
@@ -895,7 +911,16 @@ Example:
       -
       -
       -
+      -
       - sdl
+      - none
+    * - **macOS native**
+      - auto [#MIPAutoMac]_
+      -
+      -
+      -
+      - mac
+      -
       - none
 
 ..  rubric:: Footnotes
@@ -908,6 +933,8 @@ Example:
                       builds of MAME.
 
 ..  [#MIPAutoSDL] ``auto`` on SDL will default to ``sdl``.
+
+..  [#MIPAutoMac] ``auto`` on macOS native will default to ``mac``.
 
 Example:
     .. code-block:: bash
@@ -931,11 +958,11 @@ Example:
       - sdl [#LGIPSDLWindows]_
       -
       - none
-    * - **macOS**
+    * - **SDL**
       - auto [#LGIPAutoSDL]_
       -
       -
-      - sdl
+      - sdl [#LGIPSDLMacOS]_
       -
       - none
     * - **Linux**
@@ -944,6 +971,13 @@ Example:
       -
       - sdl
       - x11
+      - none
+    * - **macOS native**
+      - auto [#LGIPAutoMac]_
+      -
+      -
+      - mac
+      -
       - none
 
 ..  rubric:: Footnotes
@@ -956,6 +990,12 @@ Example:
                       builds of MAME.
 
 ..  [#LGIPAutoSDL] On SDL, ``auto`` will default to ``sdl``.
+
+..  [#LGIPSDLMacOS] SDL support on macOS requires that you compile MAME with
+                    the support in.
+
+..  [#LGIPAutoMac] On macOS native, ``auto`` will default to ``mac``, which
+                   reads the system pointer.
 
 Example:
     .. code-block:: bash
@@ -978,6 +1018,8 @@ Example:
       - winhybrid
       - dinput
       - xinput
+      -
+      -
       - sdlgame [#JIPSDLWindows]_
       - sdljoy [#JIPSDLWindows]_
       - none
@@ -986,8 +1028,20 @@ Example:
       -
       -
       -
+      -
+      -
       - sdlgame
       - sdljoy
+      - none
+    * - **macOS native**
+      - auto [#JIPAutoMac]_
+      -
+      -
+      -
+      - macgame
+      - macjoy
+      -
+      -
       - none
 
 ..  rubric:: Footnotes
@@ -1000,6 +1054,8 @@ Example:
 
 ..  [#JIPAutoSDL] On SDL, auto will default to ``sdlgame``.
 
+..  [#JIPAutoMac] On macOS without SDL support, auto will default to ``macgame``.
+
 winhybrid
     Uses XInput for compatible game controllers, falling back to DirectInput for
     other game controllers.  Typically provides the best experience on Windows.
@@ -1009,6 +1065,13 @@ dinput
     controls are combined with using XInput game controllers via DirectInput.
 xinput
     Supports up to four XInput game controllers.
+macgame
+    Uses the macOS Game Controller framework for game controllers with button/axis
+    mappings available, including Sony and Microsoft console controllers and
+    MFi-certified controllers.  Provides consistent button and axis assignment and
+    meaningful control names.
+macjoy
+    Uses the macOS IOKit framework for all game controllers.
 sdlgame
     Uses the SDL game controller API for game controllers with button/axis
     mappings available, falling back to the SDL joystick API for other game
@@ -2165,17 +2228,22 @@ Core Video Options
       options.  It is recommended if you have a 3D-capable video card or onboard
       Intel video of the HD3000 line or better.
 
-    On other platforms (including SDL on Windows):
+    On other platforms (including SDL on Windows or macOS):
 
     * Using ``accel`` tells MAME to render video using SDL’s 2D acceleration if
       possible.
     * Using ``soft`` uses software rendering for video output.  This isn’t as
       fast or as nice as OpenGL, but it will work on any platform.
 
+    On macOS native:
+
+    * Using ``soft`` uses software rendering for video output.  This isn’t as
+      fast or as nice as OpenGL, but it will work on any platform.
+
     Defaults:
 
     * The default on Windows is ``d3d``.
-    * The default for macOS is ``opengl`` because OS X is guaranteed to have a
+    * The default for macOS is ``opengl`` because macOS is guaranteed to have a
       compliant OpenGL stack.
     * The default on all other systems is ``soft``.
 
@@ -3054,10 +3122,10 @@ Core Sound Options
       - Yes
     * - ``coreaudio``
       - macOS
+      - Yes
       - No
-      - No
-      - No
-      - No
+      - Yes
+      - Yes
     * - ``pipewire``
       - Linux
       - Yes
