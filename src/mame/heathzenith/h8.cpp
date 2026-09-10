@@ -175,6 +175,6 @@ ROM_END
 
 // Driver
 
-//    YEAR  NAME    PARENT  COMPAT  MACHINE  INPUT  CLASS,    INIT        COMPANY          FULLNAME                              FLAGS
-COMP( 1977, h8,     0,      0,      h8,      h8,    h8_state, empty_init, "Heath Company", "H-8",                                MACHINE_SUPPORTS_SAVE )
-COMP( 1978, h8_h17, h8,     0,      h8_h17,  h8,    h8_state, empty_init, "Heath Company", "H-8 with H-17 Disk and H-19 Monitor", MACHINE_SUPPORTS_SAVE )
+//    YEAR  NAME    PARENT  COMPAT  MACHINE  INPUT  CLASS,    INIT        COMPANY          FULLNAME                               FLAGS
+COMP( 1977, h8,     0,      0,      h8,      h8,    h8_state, empty_init, "Heath Company", "H-8",                                 MACHINE_SUPPORTS_SAVE )
+COMP( 1978, h8_h17, h8,     0,      h8_h17,  h8,    h8_state, empty_init, "Heath Company", "H-8 with H-17 Disk and H-19 Terminal", MACHINE_SUPPORTS_SAVE )
