@@ -76,6 +76,11 @@ protected:
 	u8   m_console_intr_level;
 	bool m_console_rxrdy;
 	bool m_console_dtr_n;
+
+	// where the serial port answered last time it was mapped, 0 before the
+	// first time, and whether the cassette section was mapped alongside it
+	u8   m_serial_base;
+	bool m_cassette_mapped;
 };
 
 h_8_5_device::h_8_5_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
@@ -195,6 +200,11 @@ void h_8_5_device::update_console_int()
 
 void h_8_5_device::device_start()
 {
+	m_serial_base     = 0;
+	m_cassette_mapped = false;
+
+	save_item(NAME(m_serial_base));
+	save_item(NAME(m_cassette_mapped));
 	save_item(NAME(m_cass_data));
 	save_item(NAME(m_cassbit));
 	save_item(NAME(m_cassold));
@@ -283,6 +293,33 @@ static INPUT_PORTS_START( h_8_5_jumpers )
 	PORT_CONFSETTING(   0x30, "Level 6")
 	PORT_CONFSETTING(   0x38, "Level 7")
 
+	// The serial port answers at 372 octal as shipped - that is the console -
+	// but the address is a jumper, and a second H-8-5 jumpered to 374 is how an
+	// H8 got an alternate terminal before the H-8-4 existed.  REMark issue 6
+	// (1979) has a reader running two Teletypes and two printers on "port 374Q
+	// boards", and issue 8 walks through converting one: "I also changed the
+	// port address for 372 to 374".  HDOS ships a driver for exactly that
+	// address - ATDVD in HOS-1-SL (595-2466) picks between PORT = 374-5 and the
+	// H-8-4's 320-7 on its H84IO switch, and 374-5 is this jumper moved.
+	//
+	// Only the two attested settings are offered.  The reader who moved his
+	// board notes the decode keeps the high digit at 3 ("the first number must
+	// be a three if you wish to keep your cassette interface"), so there may be
+	// more; the assembly manual, which is not to hand, would settle it.
+	PORT_CONFNAME(0x40, 0x00, "Serial I/O address")
+	PORT_CONFSETTING(   0x00, "372-373 octal")
+	PORT_CONFSETTING(   0x40, "374-375 octal")
+
+	// A second board fighting the first for 370 would be no use, so the second
+	// one was not built with a cassette section at all: REMark issue 6 again,
+	// "the port 374Q boards also have all cassette I/O components omitted".
+	// That is a build choice rather than a jumper, but leaving it out is what
+	// makes two of these cards in one machine work.  Only the ports go; the
+	// cassette devices are still there, just unreachable.
+	PORT_CONFNAME(0x80, 0x00, "Cassette interface")
+	PORT_CONFSETTING(   0x00, "Installed")
+	PORT_CONFSETTING(   0x80, "Omitted")
+
 INPUT_PORTS_END
 
 ioport_constructor h_8_5_device::device_input_ports() const
@@ -292,15 +329,41 @@ ioport_constructor h_8_5_device::device_input_ports() const
 
 void h_8_5_device::map_io(address_space_installer & space)
 {
-	space.install_readwrite_handler(0xf8, 0xf9,
-		read8sm_delegate(m_uart, FUNC(i8251_device::read)),
-		write8sm_delegate(m_uart, FUNC(i8251_device::write))
-	);
+	// The bus maps its cards from the CPU card's reset, so this runs again on
+	// every reset.  Reading the jumpers here is what lets a setting changed in
+	// the machine configuration menu take effect, and a serial port that has
+	// moved gives up the window it had before - only ever a window this card
+	// installed itself.
+	ioport_value const jumpers(m_jumpers->read());
 
-	space.install_readwrite_handler(0xfa, 0xfb,
+	u8 const serial_base(BIT(jumpers, 6) ? 0xfc : 0xfa);
+	bool const cassette(!BIT(jumpers, 7));
+
+	if (m_cassette_mapped && !cassette)
+	{
+		space.unmap_readwrite(0xf8, 0xf9);
+	}
+
+	if (m_serial_base && (m_serial_base != serial_base))
+	{
+		space.unmap_readwrite(m_serial_base, m_serial_base + 1);
+	}
+
+	if (cassette)
+	{
+		space.install_readwrite_handler(0xf8, 0xf9,
+			read8sm_delegate(m_uart, FUNC(i8251_device::read)),
+			write8sm_delegate(m_uart, FUNC(i8251_device::write))
+		);
+	}
+
+	space.install_readwrite_handler(serial_base, serial_base + 1,
 		read8sm_delegate(m_console, FUNC(i8251_device::read)),
 		write8sm_delegate(m_console, FUNC(i8251_device::write))
 	);
+
+	m_serial_base     = serial_base;
+	m_cassette_mapped = cassette;
 }
 
 
