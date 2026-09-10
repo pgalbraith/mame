@@ -1128,9 +1128,15 @@ void cli_frontend::auditroms(const std::vector<std::string> &args)
 	if (file.open(std::string(emulator_info::get_configname()) + "_avail.ini"))
 		throw emu_fatalerror("Unable to create file %s_avail.ini\n", emulator_info::get_configname());
 
-	file.printf("#\n%s%s\n#\n\n", UI_VERSION_TAG, emulator_info::get_bare_build_version());
-	for (std::string const &name : available)
-		file.printf("%s\n", name);
+	{
+		util::owritestream str(file);
+		str.imbue(std::locale::classic());
+
+		util::stream_format(str, "#\n%s%s\n#\n\n", UI_VERSION_TAG, emulator_info::get_bare_build_version());
+		for (std::string const &name : available)
+			str << name << '\n';
+		str << std::flush;
+	}
 	file.close();
 
 	osd_printf_info("Audited %u systems, %u available - wrote %s/%s_avail.ini\n",
