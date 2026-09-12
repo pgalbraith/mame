@@ -2481,6 +2481,20 @@ end
 
 ---------------------------------------------------
 --
+--@src/devices/bus/heathzenith/h47/h47_intf.h,BUSES["HEATHZENITH_H47"] = true
+---------------------------------------------------
+
+if BUSES["HEATHZENITH_H47"] then
+	files {
+		MAME_DIR .. "src/devices/bus/heathzenith/h47/h47.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h47/h47.h",
+		MAME_DIR .. "src/devices/bus/heathzenith/h47/h47_intf.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h47/h47_intf.h",
+	}
+end
+
+---------------------------------------------------
+--
 --@src/devices/bus/heathzenith/h8/h8bus.h,BUSES["HEATHZENITH_H8"] = true
 ---------------------------------------------------
 
@@ -2508,6 +2522,8 @@ if BUSES["HEATHZENITH_H8"] then
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/ha_8_8.h",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_16.cpp",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_16.h",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_47.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_47.h",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_64.cpp",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_64.h",
 	}
@@ -2548,6 +2564,8 @@ if BUSES["HEATHZENITH_H89"] then
 		MAME_DIR .. "src/devices/bus/heathzenith/h89/we_pullup.h",
 		MAME_DIR .. "src/devices/bus/heathzenith/h89/z_89_11.cpp",
 		MAME_DIR .. "src/devices/bus/heathzenith/h89/z_89_11.h",
+		MAME_DIR .. "src/devices/bus/heathzenith/h89/z_89_47.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h89/z_89_47.h",
 		MAME_DIR .. "src/devices/bus/heathzenith/h89/z37_fdc.cpp",
 		MAME_DIR .. "src/devices/bus/heathzenith/h89/z37_fdc.h",
 	}

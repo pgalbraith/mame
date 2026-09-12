@@ -114,6 +114,7 @@
 #include "bus/heathzenith/h89/sigmasoft_sound.h"
 #include "bus/heathzenith/h89/we_pullup.h"
 #include "bus/heathzenith/h89/z_89_11.h"
+#include "bus/heathzenith/h89/z_89_47.h"
 #include "bus/heathzenith/h89/z37_fdc.h"
 #include "bus/heathzenith/intr_cntrl/intr_cntrl.h"
 
@@ -496,12 +497,12 @@ static INPUT_PORTS_START( h89_base )
 	// MTR-90 (444-84 or 444-142)
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
 	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
-	PORT_DIPSETTING(    0x01, "H/Z-47 (Not yet implemented)" )
+	PORT_DIPSETTING(    0x01, "H/Z-47" )
 	PORT_DIPSETTING(    0x02, "Z-67 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x03, "Undefined" )
 	PORT_DIPNAME( 0x0c, 0x00, "Disk I/O #1" )                        PORT_DIPLOCATION("SW501:3,4")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
 	PORT_DIPSETTING(    0x00, "H-89-37 (H37)" )
-	PORT_DIPSETTING(    0x04, "H/Z-47 (Not yet implemented)" )
+	PORT_DIPSETTING(    0x04, "H/Z-47" )
 	PORT_DIPSETTING(    0x08, "Z-67 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x0c, "Undefined" )
 	PORT_DIPNAME( 0x10, 0x00, "Primary Boot from" )                  PORT_DIPLOCATION("SW501:5")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
@@ -544,12 +545,12 @@ static INPUT_PORTS_START( h89_base )
 	// MMS 444-84B (and possibly 444-84A)
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
 	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
-	PORT_DIPSETTING(    0x01, "H/Z-47 (Not yet implemented)" )
+	PORT_DIPSETTING(    0x01, "H/Z-47" )
 	PORT_DIPSETTING(    0x02, "MMS 77320 SASI or Z-67 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x03, "MMS 77422 Network Controller" )
 	PORT_DIPNAME( 0x0c, 0x00, "Disk I/O #1" )                        PORT_DIPLOCATION("SW501:3,4")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
 	PORT_DIPSETTING(    0x00, "H-89-37 (H37)" )
-	PORT_DIPSETTING(    0x04, "H/Z-47 (Not yet implemented)" )
+	PORT_DIPSETTING(    0x04, "H/Z-47" )
 	PORT_DIPSETTING(    0x08, "MMS 77320 SASI or Z-67 (Not yet implemented)" )
 	PORT_DIPSETTING(    0x0c, "MMS 77422 Network Controller" )
 	PORT_DIPNAME( 0x70, 0x00, "Default Boot Device" )                PORT_DIPLOCATION("SW501:5,6,7")   PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
@@ -1117,6 +1118,7 @@ void h89_base_state::h89_right_cards(device_slot_interface &device)
 	device.option_add("h_88_5",  H89BUS_H_88_5);
 	device.option_add("ss_snd",  H89BUS_SIGMASOFT_SND);
 	device.option_add("z_89_11", H89BUS_Z_89_11);
+	device.option_add("z_89_47", H89BUS_Z_89_47);
 	device.option_add("z37fdc",  H89BUS_Z37).machine_config(
 		[this](device_t *device)
 		{
@@ -1141,6 +1143,7 @@ void h89_base_state::h89_right_p506_cards(device_slot_interface &device)
 	device.option_add("ha_88_3",   H89BUS_HA_88_3);
 	device.option_add("ss_snd",    H89BUS_SIGMASOFT_SND);
 	device.option_add("we_pullup", H89BUS_WE_PULLUP);
+	device.option_add("z_89_47",   H89BUS_Z_89_47);
 }
 
 static void io_decoder_options(device_slot_interface &device)
