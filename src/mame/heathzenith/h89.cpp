@@ -14,6 +14,66 @@
       - Z-89 - same as Heath's H89, but assembled
       - Z-90 - came with a soft-sectored floppy disk controller
 
+    HOW THE H-89 AND Z-90 ARE STOCKED, AND WHY IT IS NOT THEIR 1979 SPEC
+    --------------------------------------------------------------------
+    Two things here are later than the machines' own introduction, and both
+    are deliberate - the aim is a machine that runs the software people
+    actually want to run, not a museum piece of the first shipping week:
+
+      64K of RAM.  The H-89 shipped with 16K.  64K came from the WH-88-16
+        Wired Memory Expansion Board, an ordinary catalog part (#857 sells it
+        inside the Small Business system), so this is an upgrade anyone could
+        buy rather than a custom expansion.
+
+      Three floppy drives.  One was built into the cabinet; the second and
+        third came in an external HS-77 (hard-sectored) or HS-37 (soft-
+        sectored) box, sold separately - catalog #860's ordering table prices
+        one H-17-1 at 100K and two at 200K.  Three is the most the controller
+        handles and makes the machines useful for copying disks.
+
+    Neither is an oversight; do not "correct" them without asking.  The H-88
+    next door is set to 48K on purpose, that being the ceiling its own
+    specification quotes for the cassette model.
+
+    ORG-0 is NOT one of these, despite looking like it should be.  It is GPP
+    bit 5, "Latched bit MEM 1 H on memory expansion connector", set by whatever
+    software wants it, and machine_start installs the Org-0 view at every
+    memory size - below 64K by remapping the top 8K down to zero, at 64K from
+    the expansion board's upper half.  So it is not a consequence of the 64K
+    and needs no ROM change: MTR-89 boots both CP/M 2.2.02 and 2.2.04 from a
+    hard-sectored disk here, straight through to "STANDARD SYSTEM (Y OR N)?".
+    Worth knowing that catalog #853 says "H-89 systems require H-88-7 ROM Kit"
+    for CP/M, which sits oddly with that - whatever the kit did for a real
+    H-89, the emulated one does not need it to run these images.
+
+    THE 1982 CATALOG SYSTEMS, AND WHY NONE OF THEM IS A MACHINE HERE
+    ----------------------------------------------------------------
+    Catalogs #857 and #858 advertise three H-89 systems at package prices.
+    Unlike the H-8's HKS-81/82/85 and WHS-83, none of them has an order number
+    - each is a list of parts to buy together ("Order the H-89 Computer now
+    with three serial I/O ports; ... Specify model numbers when ordering"), so
+    the bundle was a discount and some free software rather than a product.
+    Worked through, each is a machine already here plus settings:
+
+      H-89 Hobbyist/Word Processing - 48K, three serial ports, 200K on two
+        5.25" drives.  That is stock h89: p505 already holds the HA-88-3 with
+        all three ports populated and p506 the H-88-1.  Add -ramsize 48K, and
+        empty one of the three drive connectors the controller offers.
+
+      H-89 Small Business/Programming - 64K, three serial ports, a Z-89-37 and
+        the HS-37-2 system, 1.38 MB over three 5.25" drives.  The capacity is
+        the giveaway: 1.38 MB is two 640K soft-sectored drives plus the 100K
+        hard-sectored one built in, so the machine carries both controllers.
+        Only MTR-90 reaches two floppy controllers at once (see boot_device
+        below), which makes this a z90 with an H-88-1 added - the arrangement
+        the comment in z90() already describes.  `z90 -p506 h17fdc` boots
+        CP/M 2.2.04 off the Z-89-37 with the hard-sectored card alongside.
+
+      H-89 Commercial Business - 64K and a Zenith Z-67 Winchester.  Not
+        buildable: there is no Z-67, SASI or hard disk device in
+        src/devices/bus/heathzenith/ at all, only the unimplemented SW501
+        labels in this file.
+
     Monitor Commands (for MTR-90):
       B Boot
       C Convert (number)
@@ -1149,6 +1209,13 @@ void h88_state::h88(machine_config &config)
 	m_intr_socket->set_fixed(true);
 
 	H89BUS_RIGHT_SLOT(config.replace(), "p504", "h89bus", [this](device_slot_interface &device) { h89_right_cards(device); }, "h_88_5");
+
+	// The All-In-One came with 16K and its own specification quotes 48K as the
+	// ceiling, so default there rather than to what shipped - memory should not
+	// be the thing standing in the way of running something.  64K is left on
+	// the list because the WH-88-16 that reaches it is an ordinary catalog
+	// board, not a custom expansion.
+	m_ram->set_default_size("48K").set_extra_options("16K,32K,64K");
 
 	LOGSETUP("%s: about to call set_io_prom_tag\n", FUNCNAME);
 	H89BUS_IO_DECODER_SOCKET(config, "h89bus:io_decoder", io_decoder_options, "444_43");
