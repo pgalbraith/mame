@@ -17,6 +17,7 @@
 #include "bus/rs232/rs232.h"
 #include "formats/h8_cas.h"
 
+#include "softlist_dev.h"
 #include "speaker.h"
 
 #define LOG_LINES (1U << 1)
@@ -405,13 +406,24 @@ void h_8_5_device::device_add_mconfig(machine_config &config)
 	m_cass_player->set_formats(h8_cassette_formats);
 	m_cass_player->set_default_state(CASSETTE_STOPPED | CASSETTE_MOTOR_ENABLED | CASSETTE_SPEAKER_ENABLED);
 	m_cass_player->add_route(ALL_OUTPUTS, "mono", 0.15);
-	m_cass_player->set_interface("h8_cass_player");
+	m_cass_player->set_interface("h88_cass_player");
 
 	CASSETTE(config, m_cass_recorder);
 	m_cass_recorder->set_formats(h8_cassette_formats);
 	m_cass_recorder->set_default_state(CASSETTE_STOPPED | CASSETTE_MOTOR_ENABLED | CASSETTE_SPEAKER_ENABLED);
 	m_cass_recorder->add_route(ALL_OUTPUTS, "mono", 0.15);
-	m_cass_recorder->set_interface("h8_cass_recorder");
+	m_cass_recorder->set_interface("h88_cass_recorder");
+
+	// The same tapes the H-88-5 reads.  Both cards are an 8251 clocked at 4800
+	// Hz answering at 370-371 octal, running Kansas City at 1200 baud, so the
+	// media is interchangeable - and the list is H8 software to begin with:
+	// BUG-8, Extended Benton Harbor BASIC, the H8 assembler and the H8 editor,
+	// which is Heath's H-8-18 cassette package.  Catalog #853 spells the
+	// pairing out, one Cassette Operating System needing "an H-8-5 Serial I/O
+	// and Cassette Interface to run with the Heath H-8 Computer" and an
+	// H-88-5 on an All-In-One.  The list is named and owned by the H-88-5 the
+	// same way h17_flop is named for the H-88-1 and shared with the H-8-17.
+	SOFTWARE_LIST(config, "cass_list").set_compatible("h88_cass");
 
 	TIMER(config, "kansas_w").configure_periodic(FUNC(h_8_5_device::kansas_w), attotime::from_hz(4800));
 	TIMER(config, "kansas_r").configure_periodic(FUNC(h_8_5_device::kansas_r), attotime::from_hz(40000));
