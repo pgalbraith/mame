@@ -15,6 +15,7 @@
 #include "main.h"
 #include "romload.h"
 #include "speaker.h"
+#include "formats/flopimg.h"
 #include "video/rgbutil.h"
 
 #include "corestr.h"
@@ -1430,6 +1431,285 @@ void validate_rgb()
 
 
 //-------------------------------------------------
+//  validate_floppy - test GCR5 sector extraction
+//-------------------------------------------------
+
+// The helpers under test are protected statics.  A derived class reaches them
+// as a scope; it is never instantiated, so the pure virtuals are left alone.
+struct floppy_format_probe : floppy_image_format_t
+{
+	using floppy_image_format_t::extract_sectors_from_bitstream_gcr5;
+	using floppy_image_format_t::extract_sectors_from_bitstream_victor_gcr5;
+	using floppy_image_format_t::gcr5_w;
+	using floppy_image_format_t::raw_w;
+	using floppy_image_format_t::bit_r;
+};
+
+
+void validate_floppy()
+{
+	/*
+	    Checks GCR5 header/data block pairing on tracks where the two
+	    block types are not present in equal numbers.  The victor path
+	    verifies no checksum, so a mispaired block is written back to the
+	    image on save with nothing to catch it.
+
+	    Tracks are built as cell levels and converted straight to a
+	    bitstream - GCR5 is a raw code with no clock separation, so bit_r
+	    recovers the same bits the PLL would.  Both block id codes start
+	    with a zero bit, which is what the extractors look for after ten
+	    one bits.  Payload can never fake that sync mark: the longest run
+	    of ones GCR5 produces is eight, across a code boundary.  The
+	    trailing 0x55 gap keeps the precharge at the index from leaving
+	    the scanner in sync at position zero.
+
+	    Payloads are fixed rather than random so a failure is reproducible
+	    from the log.
+	*/
+
+	using levels = std::vector<uint32_t>;
+	using sectors_t = std::vector<std::vector<uint8_t>>;
+
+	auto const rawbyte =
+			[] (levels &b, uint8_t v, int count = 1)
+			{
+				for(int i = 0; i != count; i++)
+					floppy_format_probe::raw_w(b, 8, v);
+			};
+	auto const gcr =
+			[] (levels &b, uint8_t v, int count = 1)
+			{
+				for(int i = 0; i != count; i++)
+					floppy_format_probe::gcr5_w(b, v);
+			};
+	auto const gap = [&rawbyte] (levels &b, int count) { rawbyte(b, 0x55, count); };
+	auto const sync_bytes = [&rawbyte] (levels &b, int count) { rawbyte(b, 0xff, count); };
+	auto const sync_words =
+			[] (levels &b, int count)
+			{
+				for(int i = 0; i != count; i++)
+					floppy_format_probe::raw_w(b, 10, 0x3ff);
+			};
+
+	auto const payload =
+			[] (uint8_t seed, size_t size)
+			{
+				std::vector<uint8_t> r(size);
+				for(size_t i = 0; i != size; i++)
+					r[i] = uint8_t(seed + i * 7);
+				return r;
+			};
+
+	// mirrors d64_format::get_sector_desc
+	auto const d64_header =
+			[&gcr, &gap, &sync_bytes] (levels &b, uint8_t sector, uint8_t track, uint8_t crc_fudge = 0)
+			{
+				const uint8_t id1 = 0x30, id2 = 0x30;
+				sync_bytes(b, 5);
+				gcr(b, 0x08);
+				gcr(b, sector ^ track ^ id2 ^ id1 ^ crc_fudge);
+				gcr(b, sector);
+				gcr(b, track);
+				gcr(b, id2);
+				gcr(b, id1);
+				gcr(b, 0x0f, 2);
+				gap(b, 9);
+			};
+	auto const d64_data =
+			[&gcr, &gap, &sync_bytes] (levels &b, const std::vector<uint8_t> &data, uint8_t crc_fudge = 0)
+			{
+				sync_bytes(b, 5);
+				gcr(b, 0x07);
+				uint8_t crc = 0;
+				for(uint8_t v : data) {
+					gcr(b, v);
+					crc ^= v;
+				}
+				gcr(b, crc ^ crc_fudge);
+				gcr(b, 0x00, 2);
+				gap(b, 8);
+			};
+
+	// mirrors victor9k_format::get_sector_desc - the block ids are swapped
+	// relative to d64, and neither checksum is ever verified
+	auto const victor_header =
+			[&gcr, &gap, &sync_words] (levels &b, uint8_t track, uint8_t sector)
+			{
+				sync_words(b, 15);
+				gcr(b, 0x07);
+				gcr(b, track);
+				gcr(b, sector);
+				gcr(b, 0x00);
+				gap(b, 8);
+			};
+	auto const victor_data =
+			[&gcr, &gap, &sync_words] (levels &b, const std::vector<uint8_t> &data)
+			{
+				sync_words(b, 5);
+				gcr(b, 0x08);
+				for(uint8_t v : data)
+					gcr(b, v);
+				gcr(b, 0x00, 2);
+				gap(b, 8);
+			};
+
+	auto const to_bitstream =
+			[] (const levels &b)
+			{
+				std::vector<bool> r;
+				r.reserve(b.size());
+				for(size_t i = 0; i != b.size(); i++)
+					r.push_back(floppy_format_probe::bit_r(b, int(i)));
+				return r;
+			};
+
+	auto const check_count =
+			[] (const char *desc, const sectors_t &s, size_t expected)
+			{
+				if(s.size() != expected)
+					osd_printf_error("Error testing %s: got %d sectors (expected %d)\n", desc, int(s.size()), int(expected));
+			};
+	auto const check_sector =
+			[] (const char *desc, const sectors_t &s, unsigned n, const std::vector<uint8_t> &expected)
+			{
+				if(s.size() <= n) {
+					osd_printf_error("Error testing %s: sector %d missing (expected %d bytes)\n", desc, n, int(expected.size()));
+					return;
+				}
+				if(s[n].size() != expected.size()) {
+					osd_printf_error("Error testing %s: sector %d is %d bytes (expected %d)\n", desc, n, int(s[n].size()), int(expected.size()));
+					return;
+				}
+				for(size_t i = 0; i != expected.size(); i++)
+					if(s[n][i] != expected[i]) {
+						osd_printf_error("Error testing %s: sector %d differs at byte %d, got %02x (expected %02x)\n", desc, n, int(i), s[n][i], expected[i]);
+						return;
+					}
+			};
+	auto const check_empty =
+			[] (const char *desc, const sectors_t &s, unsigned n)
+			{
+				if((s.size() > n) && !s[n].empty())
+					osd_printf_error("Error testing %s: sector %d returned %d bytes (expected none)\n", desc, n, int(s[n].size()));
+			};
+
+	const auto p0 = payload(0x20, 256);
+	const auto p1 = payload(0x40, 256);
+	const auto p2 = payload(0x60, 256);
+
+	// control: each header pairs with its own data block, whatever order
+	// the sectors appear in
+	{
+		levels b;
+		gap(b, 20);
+		d64_header(b, 2, 18); d64_data(b, p2);
+		d64_header(b, 0, 18); d64_data(b, p0);
+		d64_header(b, 1, 18); d64_data(b, p1);
+		gap(b, 20);
+		const auto s = floppy_format_probe::extract_sectors_from_bitstream_gcr5(to_bitstream(b), 0, 35);
+		check_count("gcr5 healthy track", s, 3);
+		check_sector("gcr5 healthy track", s, 0, p0);
+		check_sector("gcr5 healthy track", s, 1, p1);
+		check_sector("gcr5 healthy track", s, 2, p2);
+	}
+
+	// a header with no data block of its own must not take the next one
+	{
+		levels b;
+		gap(b, 20);
+		d64_header(b, 0, 18); d64_data(b, p0);
+		d64_header(b, 1, 18);
+		d64_header(b, 2, 18); d64_data(b, p2);
+		gap(b, 20);
+		const auto s = floppy_format_probe::extract_sectors_from_bitstream_gcr5(to_bitstream(b), 0, 35);
+		check_count("gcr5 missing data block", s, 3);
+		check_sector("gcr5 missing data block", s, 0, p0);
+		check_empty("gcr5 missing data block", s, 1);
+		check_sector("gcr5 missing data block", s, 2, p2);
+	}
+
+	// two headers in a row - the first one's data block is missing
+	{
+		levels b;
+		gap(b, 20);
+		d64_header(b, 3, 18);
+		d64_header(b, 4, 18); d64_data(b, p1);
+		gap(b, 20);
+		const auto s = floppy_format_probe::extract_sectors_from_bitstream_gcr5(to_bitstream(b), 0, 35);
+		check_count("gcr5 adjacent headers", s, 5);
+		check_empty("gcr5 adjacent headers", s, 3);
+		check_sector("gcr5 adjacent headers", s, 4, p1);
+	}
+
+	// a data block placed before its header still pairs with it, over the
+	// index
+	{
+		levels b;
+		d64_data(b, p0);
+		d64_header(b, 1, 18); d64_data(b, p1);
+		gap(b, 40);
+		d64_header(b, 0, 18);
+		gap(b, 20);
+		const auto s = floppy_format_probe::extract_sectors_from_bitstream_gcr5(to_bitstream(b), 0, 35);
+		check_count("gcr5 pairing over the index", s, 2);
+		check_sector("gcr5 pairing over the index", s, 0, p0);
+		check_sector("gcr5 pairing over the index", s, 1, p1);
+	}
+
+	// no data blocks at all yields nothing, rather than decoding from the
+	// start of the bitstream
+	{
+		levels b;
+		gap(b, 20);
+		d64_header(b, 0, 18);
+		d64_header(b, 1, 18);
+		d64_header(b, 2, 18);
+		gap(b, 20);
+		const auto s = floppy_format_probe::extract_sectors_from_bitstream_gcr5(to_bitstream(b), 0, 35);
+		check_count("gcr5 no data blocks", s, 0);
+	}
+
+	// the victor variant has no checksum to discard a mispaired block
+	{
+		const auto v0 = payload(0x11, 512);
+		const auto v2 = payload(0x33, 512);
+		levels b;
+		gap(b, 20);
+		victor_header(b, 5, 0); victor_data(b, v0);
+		victor_header(b, 5, 1);
+		victor_header(b, 5, 2); victor_data(b, v2);
+		gap(b, 20);
+		const auto s = floppy_format_probe::extract_sectors_from_bitstream_victor_gcr5(to_bitstream(b));
+		check_count("victor gcr5 missing data block", s, 3);
+		check_sector("victor gcr5 missing data block", s, 0, v0);
+		check_empty("victor gcr5 missing data block", s, 1);
+		check_sector("victor gcr5 missing data block", s, 2, v2);
+	}
+
+	// pairing must not bypass the checksums the d64 path does have
+	{
+		levels b;
+		gap(b, 20);
+		d64_header(b, 0, 18, 1); d64_data(b, p0);
+		d64_header(b, 1, 18); d64_data(b, p1);
+		gap(b, 20);
+		const auto s = floppy_format_probe::extract_sectors_from_bitstream_gcr5(to_bitstream(b), 0, 35);
+		check_count("gcr5 bad header checksum", s, 2);
+		check_empty("gcr5 bad header checksum", s, 0);
+		check_sector("gcr5 bad header checksum", s, 1, p1);
+	}
+	{
+		levels b;
+		gap(b, 20);
+		d64_header(b, 0, 18); d64_data(b, p0, 1);
+		gap(b, 20);
+		const auto s = floppy_format_probe::extract_sectors_from_bitstream_gcr5(to_bitstream(b), 0, 35);
+		check_empty("gcr5 bad data checksum", s, 0);
+	}
+}
+
+
+//-------------------------------------------------
 //  validate_delegates_mfp - test delegate member
 //  function functionality
 //-------------------------------------------------
@@ -1987,6 +2267,7 @@ bool validity_checker::check_all_matching(const char *string)
 	validate_integer_semantics();
 	validate_inlines();
 	validate_rgb();
+	validate_floppy();
 	validate_delegates_mfp();
 	validate_delegates_latebind();
 	validate_delegates_functoid();
