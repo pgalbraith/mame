@@ -2410,6 +2410,42 @@ std::vector<std::vector<uint8_t>> floppy_image_format_t::extract_sectors_from_tr
 }
 
 
+namespace {
+
+// Pair a GCR5 header block with the data block that follows it most
+// closely, wrapping over the index.  Returns false when another header
+// block comes first, which means this header's data block is missing.
+// Pairing header i with data block i instead only works while both are
+// detected in equal numbers; one missed block mispairs every sector
+// after it.
+bool gcr5_find_data_block(const uint32_t *hblk, uint32_t hblk_count, const uint32_t *dblk, uint32_t dblk_count, uint32_t i, uint32_t size, uint32_t &dpos)
+{
+	auto const delta = [size](uint32_t from, uint32_t to) -> uint32_t {
+		return to >= from ? to - from : to + size - from;
+	};
+
+	uint32_t best = 0xffffffff;
+	for(uint32_t j = 0; j != dblk_count; j++) {
+		uint32_t d = delta(hblk[i], dblk[j]);
+		if(d < best) {
+			best = d;
+			dpos = dblk[j];
+		}
+	}
+	if(best == 0xffffffff)
+		return false;
+
+	for(uint32_t j = 0; j != hblk_count; j++) {
+		uint32_t d = delta(hblk[i], hblk[j]);
+		if(d && d < best)
+			return false;
+	}
+
+	return true;
+}
+
+} // anonymous namespace
+
 std::vector<std::vector<uint8_t>> floppy_image_format_t::extract_sectors_from_bitstream_gcr5(const std::vector<bool> &bitstream, int head, int tracks)
 {
 	std::vector<std::vector<uint8_t>> sectors;
@@ -2454,7 +2490,7 @@ std::vector<std::vector<uint8_t>> floppy_image_format_t::extract_sectors_from_bi
 	}
 
 	// Then extract the sectors
-	for(int i=0; i<hblk_count; i++) {
+	for(uint32_t i=0; i<hblk_count; i++) {
 		uint32_t pos = hblk[i];
 		[[maybe_unused]] uint8_t block_id = sbyte_gcr5_r(bitstream, pos);
 		uint8_t crc = sbyte_gcr5_r(bitstream, pos);
@@ -2468,7 +2504,10 @@ std::vector<std::vector<uint8_t>> floppy_image_format_t::extract_sectors_from_bi
 			continue;
 		}
 
-		pos = dblk[i];
+		if(!gcr5_find_data_block(hblk, hblk_count, dblk, dblk_count, i, bitstream.size(), pos)) {
+			// no data block for this header
+			continue;
+		}
 		block_id = sbyte_gcr5_r(bitstream, pos);
 
 		if (track > tracks) track -= tracks;
@@ -2536,13 +2575,16 @@ std::vector<std::vector<uint8_t>> floppy_image_format_t::extract_sectors_from_bi
 	}
 
 	// Then extract the sectors
-	for(int i=0; i<hblk_count; i++) {
+	for(uint32_t i=0; i<hblk_count; i++) {
 		uint32_t pos = hblk[i];
 		[[maybe_unused]] uint8_t block_id = sbyte_gcr5_r(bitstream, pos);
 		[[maybe_unused]] uint8_t track = sbyte_gcr5_r(bitstream, pos);
 		uint8_t sector = sbyte_gcr5_r(bitstream, pos);
 
-		pos = dblk[i];
+		if(!gcr5_find_data_block(hblk, hblk_count, dblk, dblk_count, i, bitstream.size(), pos)) {
+			// no data block for this header
+			continue;
+		}
 		block_id = sbyte_gcr5_r(bitstream, pos);
 
 		if(sectors.size() <= sector)
