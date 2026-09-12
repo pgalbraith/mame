@@ -57,7 +57,7 @@
 
       H-89 Hobbyist/Word Processing - 48K, three serial ports, 200K on two
         5.25" drives.  That is stock h89: p505 already holds the HA-88-3 with
-        all three ports populated and p506 the H-88-1.  Add -ramsize 48K, and
+        all three ports populated and p506 the H-88-1.  Add -ram 48k, and
         empty one of the three drive connectors the controller offers.
 
       H-89 Small Business/Programming - 64K, three serial ports, a Z-89-37 and
@@ -69,10 +69,11 @@
         the comment in z90() already describes.  `z90 -p506 h17fdc` boots
         CP/M 2.2.04 off the Z-89-37 with the hard-sectored card alongside.
 
-      H-89 Commercial Business - 64K and a Zenith Z-67 Winchester.  Not
-        buildable: there is no Z-67, SASI or hard disk device in
-        src/devices/bus/heathzenith/ at all, only the unimplemented SW501
-        labels in this file.
+      H-89 Commercial Business - 64K and a Zenith Z-67 Winchester.  The
+        Z-89-67 that reaches it wants the 444-61 I/O decode PROM under it,
+        the way every card on the two disk blocks does, so this is
+        `h89 -ram 64k -h89bus:io_decoder 444_61 -p504 z_89_67 -hard <chd>`
+        with SW501 set to boot from the Z-67.
 
     Monitor Commands (for MTR-90):
       B Boot
@@ -115,6 +116,7 @@
 #include "bus/heathzenith/h89/we_pullup.h"
 #include "bus/heathzenith/h89/z_89_11.h"
 #include "bus/heathzenith/h89/z_89_47.h"
+#include "bus/heathzenith/h89/z_89_67.h"
 #include "bus/heathzenith/h89/z37_fdc.h"
 #include "bus/heathzenith/intr_cntrl/intr_cntrl.h"
 
@@ -498,12 +500,12 @@ static INPUT_PORTS_START( h89_base )
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
 	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
 	PORT_DIPSETTING(    0x01, "H/Z-47" )
-	PORT_DIPSETTING(    0x02, "Z-67 (Not yet implemented)" )
+	PORT_DIPSETTING(    0x02, "Z-67" )
 	PORT_DIPSETTING(    0x03, "Undefined" )
 	PORT_DIPNAME( 0x0c, 0x00, "Disk I/O #1" )                        PORT_DIPLOCATION("SW501:3,4")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
 	PORT_DIPSETTING(    0x00, "H-89-37 (H37)" )
 	PORT_DIPSETTING(    0x04, "H/Z-47" )
-	PORT_DIPSETTING(    0x08, "Z-67 (Not yet implemented)" )
+	PORT_DIPSETTING(    0x08, "Z-67" )
 	PORT_DIPSETTING(    0x0c, "Undefined" )
 	PORT_DIPNAME( 0x10, 0x00, "Primary Boot from" )                  PORT_DIPLOCATION("SW501:5")       PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x04)
 	PORT_DIPSETTING(    0x00, "Disk I/O #2" )
@@ -546,12 +548,12 @@ static INPUT_PORTS_START( h89_base )
 	PORT_DIPNAME( 0x03, 0x00, "Disk I/O #2" )                        PORT_DIPLOCATION("SW501:1,2")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
 	PORT_DIPSETTING(    0x00, "H-88-1 (H17)" )
 	PORT_DIPSETTING(    0x01, "H/Z-47" )
-	PORT_DIPSETTING(    0x02, "MMS 77320 SASI or Z-67 (Not yet implemented)" )
+	PORT_DIPSETTING(    0x02, "Z-67 (MMS 77320 SASI not yet implemented)" )
 	PORT_DIPSETTING(    0x03, "MMS 77422 Network Controller" )
 	PORT_DIPNAME( 0x0c, 0x00, "Disk I/O #1" )                        PORT_DIPLOCATION("SW501:3,4")     PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
 	PORT_DIPSETTING(    0x00, "H-89-37 (H37)" )
 	PORT_DIPSETTING(    0x04, "H/Z-47" )
-	PORT_DIPSETTING(    0x08, "MMS 77320 SASI or Z-67 (Not yet implemented)" )
+	PORT_DIPSETTING(    0x08, "Z-67 (MMS 77320 SASI not yet implemented)" )
 	PORT_DIPSETTING(    0x0c, "MMS 77422 Network Controller" )
 	PORT_DIPNAME( 0x70, 0x00, "Default Boot Device" )                PORT_DIPLOCATION("SW501:5,6,7")   PORT_CONDITION("CONFIG", 0x3c, EQUALS, 0x0c)
 	PORT_DIPSETTING(    0x00, "MMS 77316 Dbl Den 5\"" )
@@ -1119,6 +1121,7 @@ void h89_base_state::h89_right_cards(device_slot_interface &device)
 	device.option_add("ss_snd",  H89BUS_SIGMASOFT_SND);
 	device.option_add("z_89_11", H89BUS_Z_89_11);
 	device.option_add("z_89_47", H89BUS_Z_89_47);
+	device.option_add("z_89_67", H89BUS_Z_89_67);
 	device.option_add("z37fdc",  H89BUS_Z37).machine_config(
 		[this](device_t *device)
 		{
@@ -1144,6 +1147,7 @@ void h89_base_state::h89_right_p506_cards(device_slot_interface &device)
 	device.option_add("ss_snd",    H89BUS_SIGMASOFT_SND);
 	device.option_add("we_pullup", H89BUS_WE_PULLUP);
 	device.option_add("z_89_47",   H89BUS_Z_89_47);
+	device.option_add("z_89_67",   H89BUS_Z_89_67);
 }
 
 static void io_decoder_options(device_slot_interface &device)

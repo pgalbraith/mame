@@ -16,6 +16,7 @@
 #include "h_8_17.h"
 #include "h_8_4.h"
 #include "h_8_5.h"
+#include "h_8_67.h"
 #include "ha_8_6.h"
 #include "ha_8_8.h"
 #include "wh_8_16.h"
@@ -50,6 +51,7 @@ void h8_cards(device_slot_interface &device)
 	device.option_add("h_8_4",   H8BUS_H_8_4);
 	device.option_add("h_8_5",   H8BUS_H_8_5);
 	device.option_add("h_8_17",  H8BUS_H_8_17);
+	device.option_add("h_8_67",  H8BUS_H_8_67);
 	device.option_add("wh_8_16", H8BUS_WH_8_16);
 	device.option_add("wh_8_47", H8BUS_WH_8_47);
 	device.option_add("wh_8_64", H8BUS_WH_8_64);

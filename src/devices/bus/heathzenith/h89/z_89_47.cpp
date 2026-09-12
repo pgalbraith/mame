@@ -40,18 +40,22 @@
 
     THE PULL-UP AT P506
     -------------------
-    The same page has the owner fit a 4700 ohm resistor "between pins 1 and
+    The same page has the owner fit a pull-up resistor "between pins 1 and
     12 of P512" when the board goes in that slot.  P506 is where the H-17
     normally sits, and the H-17 is what write-enables the 1k of floppy RAM
     on the CPU board; a card that takes its place has to hold that line up
     on its own or the RAM stays write protected and HDOS will not boot.
     Heath sold exactly such a resistor with the Z-89-37 for the same reason,
     and MAME already models it as the we_pullup device.  So a card in P506
-    asserts FMWE here.  That the guide's resistor is that same line is
-    inference - the pin numbering was not checked against a schematic - but
-    it is the safe way round: holding the line up is what every other P506
-    card of the period does, and the cost of being wrong is a kilobyte of
-    RAM that stays writable.
+    asserts FMWE here.
+
+    That the guide's resistor is that line is settled by what it says next,
+    about the other board of the pair: the pull-up "is also included on
+    Z-89-67, with a jumper connector to enable or disable it, depending on
+    whether the Z-89-67 is installed at P506/P512 or P504/P510 (the pullup
+    must be disabled if P504/P510 is used)".  A line that has to be held up
+    in one slot and left alone in the other is the P506 signal, and FMWE is
+    the P506 signal a disk card has any business driving.
 
     An H-89 fitted with this card at 174 has given up its H-17, since the
     hard-sectored controller is the other thing P506 is for.
