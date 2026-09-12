@@ -1389,7 +1389,11 @@ void floppy_image_device::wspan_remove_damaged(std::vector<wspan> &wspans, const
 	for(size_t pos = 0; pos != track.size(); pos++)
 		if((track[pos] & floppy_image::MG_MASK) == floppy_image::MG_D) {
 			int start = track[pos] & floppy_image::TIME_MASK;
-			int end = track[pos+1] & floppy_image::TIME_MASK;
+			// A zone is normally closed by the entry that follows it, but
+			// some formats (86f) encode weak cells as bare per-cell entries
+			// with no terminator, so a D entry can be the last of the track.
+			// Such a zone runs to the end of the revolution.
+			int end = pos+1 != track.size() ? track[pos+1] & floppy_image::TIME_MASK : 199999999;
 			int ne = wspans.size();
 			for(int i=0; i != ne; i++) {
 				// D range outside of span range
