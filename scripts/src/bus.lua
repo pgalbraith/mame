@@ -2457,6 +2457,18 @@ end
 
 ---------------------------------------------------
 --
+--@src/devices/bus/heathzenith/h9/h9.h,BUSES["HEATHZENITH_H9"] = true
+---------------------------------------------------
+
+if BUSES["HEATHZENITH_H9"] then
+	files {
+		MAME_DIR .. "src/devices/bus/heathzenith/h9/h9.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h9/h9.h",
+	}
+end
+
+---------------------------------------------------
+--
 --@src/devices/bus/heathzenith/h17/h17_fdc_base.h,BUSES["HEATHZENITH_H17_FDC"] = true
 ---------------------------------------------------
 
@@ -5008,6 +5020,8 @@ if BUSES["RS232"] then
 		MAME_DIR .. "src/devices/bus/rs232/exorterm.h",
 		MAME_DIR .. "src/devices/bus/rs232/heath_h19.cpp",
 		MAME_DIR .. "src/devices/bus/rs232/heath_h19.h",
+		MAME_DIR .. "src/devices/bus/rs232/heath_h9.cpp",
+		MAME_DIR .. "src/devices/bus/rs232/heath_h9.h",
 		MAME_DIR .. "src/devices/bus/rs232/hlemouse.cpp",
 		MAME_DIR .. "src/devices/bus/rs232/hlemouse.h",
 		MAME_DIR .. "src/devices/bus/rs232/ie15.cpp",
