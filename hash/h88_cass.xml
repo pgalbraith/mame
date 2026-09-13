@@ -43,6 +43,32 @@ license:CC0-1.0
 		</part>
 	</software>
 
+	<software name="bhbconsa" cloneof="bhbcons">
+		<description>Benton Harbor BASIC Console Functions (alternate)</description>
+		<year>19??</year>
+		<publisher>&lt;unknown&gt;</publisher>
+		<notes>The same as bhbcons except that its first two jumps go to 6C00 instead of 216E and 2174. The SEBHC readme calls it UNKNOWN and says it crashes.</notes>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="336">
+				<rom name="bhbcons_alt.h8t" size="336" crc="bf4bf325" sha1="ce92c81cacf460658f9c2259b9eb540c45ddc8b6"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="bhbcons">
+		<description>Benton Harbor BASIC Console Functions</description>
+		<year>19??</year>
+		<publisher>&lt;unknown&gt;</publisher>
+		<notes>Console and cassette port routines with a type-ahead buffer; the title is from the tape label, as the SEBHC readme gives it. Not a program to start with GO: its first jump goes to 216E, past the end of its own code.</notes>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="336">
+				<rom name="bhbcons.h8t" size="336" crc="13a1e9f3" sha1="482fbb9b12267cb8fc06c4b44a722b033dbda923"/>
+			</dataarea>
+		</part>
+	</software>
+
 	<software name="bug8_02_01_01" cloneof="bug8">
 		<description>BUG-8 02.01.01</description>
 		<year>1977</year>
@@ -98,6 +124,19 @@ license:CC0-1.0
 		</part>
 	</software>
 
+	<software name="chaseled">
+		<description>Chase LED</description>
+		<year>19??</year>
+		<publisher>&lt;unknown&gt;</publisher>
+		<notes>A front panel program that reads the keypad. The SEBHC readme calls it a cute front panel game; where it came from is unknown.</notes>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="1518">
+				<rom name="chaseled.h8t" size="1518" crc="c27dc283" sha1="4ca2c4dc07c6192f63aaf318bae3a95e63b98945"/>
+			</dataarea>
+		</part>
+	</software>
+
 	<software name="chess" supported="partial">
 		<description>Chess</description>
 		<year>1978</year>
@@ -109,6 +148,19 @@ license:CC0-1.0
 		<part name="cass" interface="h88_cass_player">
 			<dataarea name="cass" size="5355">
 				<rom name="chess.h8t" size="5355" crc="0fa8eac4" sha1="ff8382c09e245a84a1dc20f26846b3ff79e04928"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="clock">
+		<description>Clock</description>
+		<year>1978</year>
+		<publisher>Heath Users Group</publisher>
+		<notes>The same program as the Clock on HUG Software Tape I (hugtape1, part cass72): the tape record is identical, and this file has two stray bytes after it.</notes>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="510">
+				<rom name="clock.h8t" size="510" crc="79db50e7" sha1="5c309a03fa8429e4903139bfda1090fc3d84e721"/>
 			</dataarea>
 		</part>
 	</software>
@@ -258,6 +310,41 @@ license:CC0-1.0
 			<feature name="part_id" value="Derby 27.00.00"/>
 			<dataarea name="cass" size="7181">
 				<rom name="derby_27_00_00.h8t" size="7181" crc="6f62bb70" sha1="368cf666c4902323d9def45780e9cce35ef4da4a"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="h17test">
+		<description>H-17 Test Programs</description>
+		<year>19??</year>
+		<publisher>&lt;unknown&gt;</publisher>
+		<notes>Two small programs for the H-17 disk system, of unknown origin.</notes>
+		<info name="usage" value="Needs an H-8-17 controller. The speed test spins drive 0, which needs a disk in it, and keeps its result at 040.205 (octal), where 200 means 300 rpm."/>
+
+		<part name="cass1" interface="h88_cass_player">
+			<feature name="part_id" value="H17MTEST: H-17 RAM test"/>
+			<dataarea name="cass" size="68">
+				<rom name="h17mtest.h8t" size="68" crc="1631f14b" sha1="df32384d9ebf2b7514c677cea8e5cf1c22f3f083"/>
+			</dataarea>
+		</part>
+
+		<part name="cass2" interface="h88_cass_player">
+			<feature name="part_id" value="H17RSTST: drive speed test"/>
+			<dataarea name="cass" size="115">
+				<rom name="h17rstst.h8t" size="115" crc="01b880f3" sha1="3edf5314dc9f59a7f205822e54cec941d58e2c02"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="h8demo">
+		<description>H8 Front Panel Demo</description>
+		<year>19??</year>
+		<publisher>&lt;unknown&gt;</publisher>
+		<notes>Cycles four patterns across the front panel display and beeps. Not the H8 Demo on HUG Software Tape I, which is a different, much larger program.</notes>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="141">
+				<rom name="h8demo.h8t" size="141" crc="ff0c2e72" sha1="b7130da87eec5fe563a790620fce2e7a7249ea78"/>
 			</dataarea>
 		</part>
 	</software>
@@ -873,6 +960,47 @@ license:CC0-1.0
 			<feature name="part_id" value="Side 2: Odd &amp; Even (BASIC 10.02)"/>
 			<dataarea name="cass" size="4713">
 				<rom name="s2_odd_and_even.h8t" size="4713" crc="4adc086a" sha1="23370437078794dfeab8fa8b21f7ada224f128a1"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="ledtest">
+		<description>LED Test Programs</description>
+		<year>19??</year>
+		<publisher>&lt;unknown&gt;</publisher>
+		<notes>Three small front panel display programs of unknown origin. LED1 steps every digit through the segment patterns; LED2 and LED3 count on the display, paced by the monitor's clock.</notes>
+
+		<part name="cass1" interface="h88_cass_player">
+			<feature name="part_id" value="LED1"/>
+			<dataarea name="cass" size="81">
+				<rom name="led1.h8t" size="81" crc="a6ee0b32" sha1="08f1b854173e91cfa7f579c21ee4f3c505879296"/>
+			</dataarea>
+		</part>
+
+		<part name="cass2" interface="h88_cass_player">
+			<feature name="part_id" value="LED2"/>
+			<dataarea name="cass" size="88">
+				<rom name="led2.h8t" size="88" crc="cc1cee8f" sha1="54fa9fa0a0187c52377014b66889168ce1243a9f"/>
+			</dataarea>
+		</part>
+
+		<part name="cass3" interface="h88_cass_player">
+			<feature name="part_id" value="LED3"/>
+			<dataarea name="cass" size="88">
+				<rom name="led3.h8t" size="88" crc="79a8da9f" sha1="facdff37b099a5aff49ad35fb10f6209f7bac5d2"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="mastermind">
+		<description>Mastermind</description>
+		<year>1978</year>
+		<publisher>Heath Users Group</publisher>
+		<notes>The same program as the Mastermind on HUG Software Tape I (hugtape1, part cass69): the tape record is identical, and this file has two stray bytes after it.</notes>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="954">
+				<rom name="mastermind.h8t" size="954" crc="3a77b60e" sha1="8cf0aff620c22a084bacfb3d829758614cc677d9"/>
 			</dataarea>
 		</part>
 	</software>
