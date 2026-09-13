@@ -3,16 +3,73 @@
 <!--
 license:CC0-1.0
 -->
-<softwarelist name="h88_cass" description="Heath H88 cassettes">
+<softwarelist name="h88_cass" description="Heath H8/H88 cassettes">
+
+	<software name="bhbasic_05_01_01" cloneof="bhbasic">
+		<description>Benton Harbor BASIC 05.01.01</description>
+		<year>1977</year>
+		<publisher>Heath Company</publisher>
+		<notes>Supplied with the H8 on cassette.</notes>
+		<info name="alt_title" value="Heath/Wintek H8 BASIC"/>
+		<info name="developer" value="Heath Company" />
+		<info name="developer" value="Wintek Corp." />
+		<info name="distributor" value="Heath Company"/>
+		<info name="version" value="05.01.01"/>
+		<info name="usage" value="Requires 8K RAM"/>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="7721">
+				<rom name="bhbasic_05_01_01.h8t" size="7721" crc="0d8681be" sha1="b431bcc633f84606258296daadbf5fa455f1c2ac"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="bhbasic">
+		<description>Benton Harbor BASIC 05.01.02</description>
+		<year>1977</year>
+		<publisher>Heath Company</publisher>
+		<notes>Supplied with the H8 on cassette.</notes>
+		<info name="alt_title" value="Heath/Wintek H8 BASIC"/>
+		<info name="developer" value="Heath Company" />
+		<info name="developer" value="Wintek Corp." />
+		<info name="distributor" value="Heath Company"/>
+		<info name="version" value="05.01.02"/>
+		<info name="usage" value="Requires 8K RAM"/>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="7722">
+				<rom name="bhbasic_05_01_02.h8t" size="7722" crc="2608ab78" sha1="744f8b41b9c2c329bb36048ed61f90d6eba4ff9a"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="bug8_02_01_01" cloneof="bug8">
+		<description>BUG-8 02.01.01</description>
+		<year>1977</year>
+		<publisher>Heath Company</publisher>
+		<notes>Supplied with the H8 on cassette.</notes>
+		<info name="alt_title" value="Heath/Wintek Terminal Debugger"/>
+		<info name="developer" value="Heath Company" />
+		<info name="developer" value="Wintek Corp." />
+		<info name="distributor" value="Heath Company"/>
+		<info name="version" value="02.01.01"/>
+		<info name="usage" value="Requires 3K RAM plus the user program"/>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="3942">
+				<rom name="bug8_02_01_01.h8t" size="3942" crc="ff5f4ebf" sha1="f370c2e1fb8446f214662b31f0f333e7205ce479"/>
+			</dataarea>
+		</part>
+	</software>
 
 	<software name="bug8_02_05_00" cloneof="bug8">
 		<description>BUG-8 02.05.00</description>
 		<year>1978</year>
-		<publisher>Heath Corp.</publisher>
+		<publisher>Heath Company</publisher>
 		<info name="alt_title" value="Heath/Wintek Terminal Debugger"/>
-		<info name="developer" value="Heath Corp." />
+		<info name="developer" value="Heath Company" />
 		<info name="developer" value="Wintek Corp." />
-		<info name="distributor" value="Heath Corp."/>
+		<info name="distributor" value="Heath Company"/>
 		<info name="release" value="197806xx"/>
 		<info name="version" value="02.05.00"/>
 
@@ -26,11 +83,11 @@ license:CC0-1.0
 	<software name="bug8">
 		<description>BUG-8 02.06.00</description>
 		<year>1978</year>
-		<publisher>Heath Corp.</publisher>
+		<publisher>Heath Company</publisher>
 		<info name="alt_title" value="Heath/Wintek Terminal Debugger"/>
-		<info name="developer" value="Heath Corp." />
+		<info name="developer" value="Heath Company" />
 		<info name="developer" value="Wintek Corp." />
-		<info name="distributor" value="Heath Corp."/>
+		<info name="distributor" value="Heath Company"/>
 		<info name="release" value="197806xx"/>
 		<info name="version" value="02.06.00"/>
 
@@ -41,14 +98,66 @@ license:CC0-1.0
 		</part>
 	</software>
 
-	<software name="exbasic_10_05_00" cloneof="exbasic">
-		<description>Extended Benton Harbor Basic 10.05.00</description>
+	<software name="chess" supported="partial">
+		<description>Chess</description>
 		<year>1978</year>
-		<publisher>Heath Corp.</publisher>
-		<info name="alt_title" value="Extended Benton Harbor Basic"/>
-		<info name="developer" value="Heath Corp." />
+		<publisher>Software Specialists</publisher>
+		<notes>Started on its own it hangs after printing "C": it writes 80 40 4E 17 to the console 8251, which only works if the chip is already in command mode. Loaded after BUG-8, which sets the 8251 up, it starts and asks for the level of play.</notes>
+		<info name="developer" value="Software Specialists"/>
+		<info name="usage" value="Load and run BUG-8 first, press 0 and # together to return to the monitor, press * (CANCEL), change to this tape, then LOAD and GO"/>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="5355">
+				<rom name="chess.h8t" size="5355" crc="0fa8eac4" sha1="ff8382c09e245a84a1dc20f26846b3ff79e04928"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="exbasic_10_01_02" cloneof="exbasic">
+		<description>Extended Benton Harbor BASIC 10.01.02</description>
+		<year>1977</year>
+		<publisher>Heath Company</publisher>
+		<notes>Sold separately on cassette as H8-13.</notes>
+		<info name="alt_title" value="Extended Benton Harbor BASIC"/>
+		<info name="developer" value="Heath Company" />
 		<info name="developer" value="Wintek Corp." />
-		<info name="distributor" value="Heath Corp."/>
+		<info name="distributor" value="Heath Company"/>
+		<info name="version" value="10.01.02"/>
+		<info name="usage" value="Requires 12K RAM, 16K recommended"/>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="10012">
+				<rom name="exbasic_10_01_02.h8t" size="10012" crc="fc3104e6" sha1="28d62cd70a7b9c562fc0e9a57af24a5498deac56"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="exbasic_10_02_01" cloneof="exbasic">
+		<description>Extended Benton Harbor BASIC 10.02.01</description>
+		<year>1978</year>
+		<publisher>Heath Company</publisher>
+		<info name="alt_title" value="Extended Benton Harbor BASIC"/>
+		<info name="developer" value="Heath Company" />
+		<info name="developer" value="Wintek Corp." />
+		<info name="distributor" value="Heath Company"/>
+		<info name="release" value="197801xx"/>
+		<info name="version" value="10.02.01"/>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="10857">
+				<rom name="exbasic_10_02_01.h8t" size="10857" crc="f41437fb" sha1="329cc5b02198e39d997481e36b67dc6ce9742e43"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="exbasic_10_05_00" cloneof="exbasic">
+		<description>Extended Benton Harbor BASIC 10.05.00</description>
+		<year>1978</year>
+		<publisher>Heath Company</publisher>
+		<info name="alt_title" value="Extended Benton Harbor BASIC"/>
+		<info name="developer" value="Heath Company" />
+		<info name="developer" value="Wintek Corp." />
+		<info name="distributor" value="Heath Company"/>
 		<info name="release" value="197806xx"/>
 		<info name="version" value="10.05.00"/>
 
@@ -60,13 +169,13 @@ license:CC0-1.0
 	</software>
 
 	<software name="exbasic_10_05_01" cloneof="exbasic">
-		<description>Extended Benton Harbor Basic 10.05.01</description>
+		<description>Extended Benton Harbor BASIC 10.05.01</description>
 		<year>1978</year>
-		<publisher>Heath Corp.</publisher>
-		<info name="alt_title" value="Extended Benton Harbor Basic"/>
-		<info name="developer" value="Heath Corp." />
+		<publisher>Heath Company</publisher>
+		<info name="alt_title" value="Extended Benton Harbor BASIC"/>
+		<info name="developer" value="Heath Company" />
 		<info name="developer" value="Wintek Corp." />
-		<info name="distributor" value="Heath Corp."/>
+		<info name="distributor" value="Heath Company"/>
 		<info name="release" value="197806xx"/>
 		<info name="version" value="10.05.01"/>
 
@@ -78,13 +187,13 @@ license:CC0-1.0
 	</software>
 
 	<software name="exbasic">
-		<description>Extended Benton Harbor Basic 10.06.00</description>
+		<description>Extended Benton Harbor BASIC 10.06.00</description>
 		<year>1979</year>
-		<publisher>Heath Corp.</publisher>
-		<info name="alt_title" value="Extended Benton Harbor Basic"/>
-		<info name="developer" value="Heath Corp." />
+		<publisher>Heath Company</publisher>
+		<info name="alt_title" value="Extended Benton Harbor BASIC"/>
+		<info name="developer" value="Heath Company" />
 		<info name="developer" value="Wintek Corp." />
-		<info name="distributor" value="Heath Corp."/>
+		<info name="distributor" value="Heath Company"/>
 		<info name="release" value="197905xx"/>
 		<info name="version" value="10.06.00"/>
 
@@ -95,13 +204,90 @@ license:CC0-1.0
 		</part>
 	</software>
 
+	<software name="gameset1">
+		<description>Game Set #1</description>
+		<year>1977</year>
+		<publisher>Heath Company</publisher>
+		<notes>Eight games, issues 20.00.00 to 27.00.00. Tic-Tac-Toe (24.00.00) is missing from this dump.</notes>
+		<info name="developer" value="Heath Company"/>
+		<info name="distributor" value="Heath Company"/>
+
+		<part name="cass1" interface="h88_cass_player">
+			<feature name="part_id" value="Hangman 20.00.00"/>
+			<dataarea name="cass" size="4130">
+				<rom name="hangman_20_00_00.h8t" size="4130" crc="7793b0f6" sha1="5623f3992f6f05bae632b5916da0751b0226cdbd"/>
+			</dataarea>
+		</part>
+
+		<part name="cass2" interface="h88_cass_player">
+			<feature name="part_id" value="Craps 21.00.00"/>
+			<dataarea name="cass" size="5630">
+				<rom name="craps_21_00_00.h8t" size="5630" crc="8cba20d3" sha1="43aef87c2eb06e98a445b920e775912f5fcf3ac5"/>
+			</dataarea>
+		</part>
+
+		<part name="cass3" interface="h88_cass_player">
+			<feature name="part_id" value="Nim 22.00.00"/>
+			<dataarea name="cass" size="2390">
+				<rom name="nim_22_00_00.h8t" size="2390" crc="fe3f4336" sha1="a1f358aa6dd2e44af7161f7eafbca814f78f8597"/>
+			</dataarea>
+		</part>
+
+		<part name="cass4" interface="h88_cass_player">
+			<feature name="part_id" value="Hexapawn 23.00.00"/>
+			<dataarea name="cass" size="4157">
+				<rom name="hexapawn_23_00_00.h8t" size="4157" crc="8138c22f" sha1="1c21f7cee151fbc770ffd7924734916c63d7c124"/>
+			</dataarea>
+		</part>
+
+		<part name="cass5" interface="h88_cass_player">
+			<feature name="part_id" value="Orbit 25.00.00"/>
+			<dataarea name="cass" size="4339">
+				<rom name="orbit_25_00_00.h8t" size="4339" crc="1e358810" sha1="65af68b39ff83964f84a6420f7f9215e2f6a7e0e"/>
+			</dataarea>
+		</part>
+
+		<part name="cass6" interface="h88_cass_player">
+			<feature name="part_id" value="Hamrabi 26.00.00"/>
+			<dataarea name="cass" size="4844">
+				<rom name="hamrabi_26_00_00.h8t" size="4844" crc="0858b9fd" sha1="cb650086b7768bc4c0f0a2cc6df0973592737932"/>
+			</dataarea>
+		</part>
+
+		<part name="cass7" interface="h88_cass_player">
+			<feature name="part_id" value="Derby 27.00.00"/>
+			<dataarea name="cass" size="7181">
+				<rom name="derby_27_00_00.h8t" size="7181" crc="6f62bb70" sha1="368cf666c4902323d9def45780e9cce35ef4da4a"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="hasl8_04_01_01" cloneof="hasl8">
+		<description>Heath H8 Assembler 04.01.01</description>
+		<year>1977</year>
+		<publisher>Heath Company</publisher>
+		<notes>Supplied with the H8 on cassette.</notes>
+		<info name="alt_title" value="Heath/Wintek H8 Assembler"/>
+		<info name="developer" value="Heath Company"/>
+		<info name="developer" value="Wintek Corp."/>
+		<info name="distributor" value="Heath Company"/>
+		<info name="version" value="04.01.01"/>
+		<info name="usage" value="Requires about 8K RAM; large assemblies need two cassette recorders"/>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="6957">
+				<rom name="hasl8_04_01_01.h8t" size="6957" crc="fff4dd89" sha1="c7f487ef2707a4b0aebd5891b6dbe06c96dde12f"/>
+			</dataarea>
+		</part>
+	</software>
+
 	<software name="hasl8_04_05_00" cloneof="hasl8">
 		<description>Heath H8 Assembler 04.05.00</description>
 		<year>1978</year>
-		<publisher>Heath Corp.</publisher>
+		<publisher>Heath Company</publisher>
 		<info name="alt_title" value="Heath HASL"/>
-		<info name="developer" value="Heath Corp."/>
-		<info name="distributor" value="Heath Corp."/>
+		<info name="developer" value="Heath Company"/>
+		<info name="distributor" value="Heath Company"/>
 		<info name="release" value="197806xx"/>
 		<info name="version" value="04.05.00"/>
 
@@ -115,12 +301,12 @@ license:CC0-1.0
 	<software name="hasl8">
 		<description>Heath H8 Assembler 04.06.00</description>
 		<year>1979</year>
-		<publisher>Heath Corp.</publisher>
+		<publisher>Heath Company</publisher>
 		<info name="alt_title" value="Heath HASL"/>
-		<info name="developer" value="Heath Corp."/>
-		<info name="distributor" value="Heath Corp."/>
+		<info name="developer" value="Heath Company"/>
+		<info name="distributor" value="Heath Company"/>
 		<info name="release" value="197905xx"/>
-		<info name="version" value="04.05.00"/>
+		<info name="version" value="04.06.00"/>
 
 		<part name="cass" interface="h88_cass_player">
 			<dataarea name="cass" size="7656">
@@ -129,14 +315,595 @@ license:CC0-1.0
 		</part>
 	</software>
 
+	<software name="hugtape1">
+		<description>HUG Software Tape I</description>
+		<year>1978</year>
+		<publisher>Heath Users Group</publisher>
+		<notes>Parts are in the order of the tape's index. Side 1 is 39 Extended BASIC 10.01 programs, then Blackjack, which is in this dump but not in the index. Side 2 is 25 BASIC programs, 9 object code programs and 5 more BASIC programs; Bomb (side 2, counter 229) is missing from this dump. The index gives Symplot as BASIC 10.01, but the dump is a 10.02 file.</notes>
+		<info name="partno" value="885-1009"/>
+		<info name="usage" value="BASIC programs: start Extended Benton Harbor BASIC of the version shown, press RETURN at its . prompt, type LOAD &quot;&quot; (or the program's name in quotes) and answer Y to SURE?; a 10.02 program also needs UNLOCK before RUN. Object code programs: LOAD from the front panel, then GO."/>
+
+		<part name="cass1" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Stock Reporter (BASIC 10.01)"/>
+			<dataarea name="cass" size="2765">
+				<rom name="s1_stock_reporter.h8t" size="2765" crc="a0dec32c" sha1="5446ed03923c5280baadf2441e9c7aa15aa0b6b4"/>
+			</dataarea>
+		</part>
+
+		<part name="cass2" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Accounts (BASIC 10.01)"/>
+			<dataarea name="cass" size="5111">
+				<rom name="s1_accounts.h8t" size="5111" crc="a73de2f5" sha1="0af77c159fa070f62ec666eb8856e82d7834f174"/>
+			</dataarea>
+		</part>
+
+		<part name="cass3" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Cashflow/Projection (BASIC 10.01)"/>
+			<dataarea name="cass" size="3764">
+				<rom name="s1_cashflow_projection.h8t" size="3764" crc="1f887c30" sha1="c05ac08e64a75eb2b098b4096b300022577b8b4c"/>
+			</dataarea>
+		</part>
+
+		<part name="cass4" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Payroll (BASIC 10.01)"/>
+			<dataarea name="cass" size="2361">
+				<rom name="s1_payroll.h8t" size="2361" crc="63d69c8b" sha1="b9eac2b436c21c5adbdf769857ca7f7bbc7cb1cb"/>
+			</dataarea>
+		</part>
+
+		<part name="cass5" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Declining Interest (BASIC 10.01)"/>
+			<dataarea name="cass" size="1153">
+				<rom name="s1_declining_interest.h8t" size="1153" crc="09faa536" sha1="aebad54059e082e5bc589601042c65bf4a3f4d0b"/>
+			</dataarea>
+		</part>
+
+		<part name="cass6" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Tax Program (BASIC 10.01)"/>
+			<dataarea name="cass" size="9502">
+				<rom name="s1_tax_program.h8t" size="9502" crc="50320217" sha1="5d5e622e22d8ccaf6c59e0960cd6dcfdf2314273"/>
+			</dataarea>
+		</part>
+
+		<part name="cass7" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Check Book (BASIC 10.01)"/>
+			<dataarea name="cass" size="3744">
+				<rom name="s1_check_book.h8t" size="3744" crc="e71e4acd" sha1="690fa173ec532a05a63a2fad16bb06b616bf03db"/>
+			</dataarea>
+		</part>
+
+		<part name="cass8" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Correlation (BASIC 10.01)"/>
+			<dataarea name="cass" size="1931">
+				<rom name="s1_correlation.h8t" size="1931" crc="0a3a65a8" sha1="63066fb48fe80d691776822aacc2a6db7bf2323f"/>
+			</dataarea>
+		</part>
+
+		<part name="cass9" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: One-way Analysis (BASIC 10.01)"/>
+			<dataarea name="cass" size="1743">
+				<rom name="s1_one_way_analysis.h8t" size="1743" crc="f6ad1c7c" sha1="4ace826e203eff82e542602d9f65565a6f48f342"/>
+			</dataarea>
+		</part>
+
+		<part name="cass10" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Equations (BASIC 10.01)"/>
+			<dataarea name="cass" size="2484">
+				<rom name="s1_equations.h8t" size="2484" crc="965f54a2" sha1="cef44e7c16f493a86f3d8d1045ea05c08fcc344b"/>
+			</dataarea>
+		</part>
+
+		<part name="cass11" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: H8 Clock (BASIC 10.01)"/>
+			<dataarea name="cass" size="1191">
+				<rom name="s1_h8_clock.h8t" size="1191" crc="9e1be510" sha1="1711a9e2213c850f6ae63caa178bc8e4d979d5a0"/>
+			</dataarea>
+		</part>
+
+		<part name="cass12" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Birthday Facts (BASIC 10.01)"/>
+			<dataarea name="cass" size="3293">
+				<rom name="s1_birthday_facts.h8t" size="3293" crc="d0ff749b" sha1="1ea0d30ad3da4b3bb7d520a9c724abcacb1f8385"/>
+			</dataarea>
+		</part>
+
+		<part name="cass13" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Maze (BASIC 10.01)"/>
+			<dataarea name="cass" size="2497">
+				<rom name="s1_maze.h8t" size="2497" crc="cfd8d899" sha1="5b4bad80560337c0cfdd488aece65130f0dbe591"/>
+			</dataarea>
+		</part>
+
+		<part name="cass14" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: H8 Music (Reset High Memory) (BASIC 10.01)"/>
+			<dataarea name="cass" size="2816">
+				<rom name="s1_h8_music_reset_high_memory.h8t" size="2816" crc="32ee5f75" sha1="4fed238ae2019320c347bd2b5d8cd0098827d1d9"/>
+			</dataarea>
+		</part>
+
+		<part name="cass15" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: H8 Music (Load Machine Code) (BASIC 10.01)"/>
+			<dataarea name="cass" size="4064">
+				<rom name="s1_h8_music_load_machine_code.h8t" size="4064" crc="992da0b7" sha1="e64df49318812431d03982010f74d721a6eddf00"/>
+			</dataarea>
+		</part>
+
+		<part name="cass16" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: H8 Music Play (BASIC 10.01)"/>
+			<dataarea name="cass" size="4224">
+				<rom name="s1_h8_music_play.h8t" size="4224" crc="c9598705" sha1="3fbced9591ce587247798c888b044a921df0a1ab"/>
+			</dataarea>
+		</part>
+
+		<part name="cass17" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: H8 Music Score #1 (BASIC 10.01)"/>
+			<dataarea name="cass" size="6405">
+				<rom name="s1_h8_music_score_1.h8t" size="6405" crc="be4f1d47" sha1="0167f9c49f7d6affe34cb119c98f4d1477b4d914"/>
+			</dataarea>
+		</part>
+
+		<part name="cass18" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: H8 Music Score #2 (BASIC 10.01)"/>
+			<dataarea name="cass" size="5432">
+				<rom name="s1_h8_music_score_2.h8t" size="5432" crc="b56b4d2e" sha1="207875565e4c9c978d4026f9db34b0d9bc6349aa"/>
+			</dataarea>
+		</part>
+
+		<part name="cass19" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: H8 Music Score #3 (BASIC 10.01)"/>
+			<dataarea name="cass" size="9020">
+				<rom name="s1_h8_music_score_3.h8t" size="9020" crc="26304518" sha1="d2350fe1249ae4ddd55b2228c7e27e243c6c4c87"/>
+			</dataarea>
+		</part>
+
+		<part name="cass20" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Label Printer (BASIC 10.01)"/>
+			<dataarea name="cass" size="2414">
+				<rom name="s1_label_printer.h8t" size="2414" crc="80194920" sha1="a3945117aac22f2f818612795f2806c232e8fc16"/>
+			</dataarea>
+		</part>
+
+		<part name="cass21" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Listings (BASIC 10.01)"/>
+			<dataarea name="cass" size="2581">
+				<rom name="s1_listings.h8t" size="2581" crc="bab4cb03" sha1="83a7e1ca6fe391d40222236caa3571e14d0e78e5"/>
+			</dataarea>
+		</part>
+
+		<part name="cass22" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Headliner (BASIC 10.01)"/>
+			<dataarea name="cass" size="4961">
+				<rom name="s1_headliner.h8t" size="4961" crc="143e25e5" sha1="efed2aaaf5e5aee01b4f91d9a2002a1ab09d3476"/>
+			</dataarea>
+		</part>
+
+		<part name="cass23" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Mailing List (BASIC 10.01)"/>
+			<dataarea name="cass" size="4608">
+				<rom name="s1_mailing_list.h8t" size="4608" crc="c126bc2b" sha1="bc5a7bb04b7e570df18b55a8942ab67411d49373"/>
+			</dataarea>
+		</part>
+
+		<part name="cass24" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Diet (BASIC 10.01)"/>
+			<dataarea name="cass" size="5723">
+				<rom name="s1_diet.h8t" size="5723" crc="131e2299" sha1="23a51fa29e6ee60aab2d136684e235f43947b154"/>
+			</dataarea>
+		</part>
+
+		<part name="cass25" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Home Addresses (BASIC 10.01)"/>
+			<dataarea name="cass" size="2857">
+				<rom name="s1_home_addresses.h8t" size="2857" crc="789a29b2" sha1="130dc40fb08e94a2c9bc2af7792844d6ad99cc15"/>
+			</dataarea>
+		</part>
+
+		<part name="cass26" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: H9 Plot (BASIC 10.01)"/>
+			<dataarea name="cass" size="3590">
+				<rom name="s1_h9_plot.h8t" size="3590" crc="cc51845a" sha1="84af46ac79187f6ccf81d98cdc0b009b986c0739"/>
+			</dataarea>
+		</part>
+
+		<part name="cass27" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Section (BASIC 10.01)"/>
+			<dataarea name="cass" size="2583">
+				<rom name="s1_section.h8t" size="2583" crc="f03f941c" sha1="99f86f855a648aa9366c5b54396503a0c7ba4846"/>
+			</dataarea>
+		</part>
+
+		<part name="cass28" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Alphabetize (BASIC 10.01)"/>
+			<dataarea name="cass" size="646">
+				<rom name="s1_alphabetize.h8t" size="646" crc="6e26b71d" sha1="8758fcd4dd4e7d3234cc5b23ef66b9e7cec49dbf"/>
+			</dataarea>
+		</part>
+
+		<part name="cass29" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Code (BASIC 10.01)"/>
+			<dataarea name="cass" size="2388">
+				<rom name="s1_code.h8t" size="2388" crc="febb07f7" sha1="633bd8e331ba0371ca094e7e97f1282342fa1eb3"/>
+			</dataarea>
+		</part>
+
+		<part name="cass30" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Morse Code (BASIC 10.01)"/>
+			<dataarea name="cass" size="2715">
+				<rom name="s1_morse_code.h8t" size="2715" crc="7d35bf91" sha1="339384769860bc483c215bc6dff0e608d60bd930"/>
+			</dataarea>
+		</part>
+
+		<part name="cass31" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Hunt the Wumpus (BASIC 10.01)"/>
+			<dataarea name="cass" size="5581">
+				<rom name="s1_hunt_the_wumpus.h8t" size="5581" crc="30bb276b" sha1="6ef54f969ee75b6dfb00e1d5df1a2b21d65d3fda"/>
+			</dataarea>
+		</part>
+
+		<part name="cass32" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Dogfight (BASIC 10.01)"/>
+			<dataarea name="cass" size="3108">
+				<rom name="s1_dogfight.h8t" size="3108" crc="ed752f85" sha1="7cbdc021040fb5c65ae339d7a794059fb89fa60a"/>
+			</dataarea>
+		</part>
+
+		<part name="cass33" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Grinch (BASIC 10.01)"/>
+			<dataarea name="cass" size="3014">
+				<rom name="s1_grinch.h8t" size="3014" crc="bbd658b2" sha1="6cdad9cf186a03c6402e4e93ec43508862692e4a"/>
+			</dataarea>
+		</part>
+
+		<part name="cass34" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Lunar Lander (BASIC 10.01)"/>
+			<dataarea name="cass" size="5548">
+				<rom name="s1_lunar_lander.h8t" size="5548" crc="3c600a68" sha1="ce11c93736b40c59bfd994e9c8ef6868ef94ab10"/>
+			</dataarea>
+		</part>
+
+		<part name="cass35" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Trek (BASIC 10.01)"/>
+			<dataarea name="cass" size="5263">
+				<rom name="s1_trek.h8t" size="5263" crc="4ac6fe20" sha1="b2c0acf39e908e9bec592c28d957ea967eb86de0"/>
+			</dataarea>
+		</part>
+
+		<part name="cass36" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Bingo (BASIC 10.01)"/>
+			<dataarea name="cass" size="3734">
+				<rom name="s1_bingo.h8t" size="3734" crc="96585568" sha1="b8b7cebaf5ed75e3fb420fdc5f2be251462b73a7"/>
+			</dataarea>
+		</part>
+
+		<part name="cass37" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Game of Life (BASIC 10.01)"/>
+			<dataarea name="cass" size="2609">
+				<rom name="s1_game_of_life.h8t" size="2609" crc="b2114c45" sha1="57f006b44904d1f3eb5e60f984687f9d9b92e7d4"/>
+			</dataarea>
+		</part>
+
+		<part name="cass38" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Starcruiser (BASIC 10.01)"/>
+			<dataarea name="cass" size="6158">
+				<rom name="s1_starcruiser.h8t" size="6158" crc="56b8e7f5" sha1="28e2d38b7f54ea0d1ab5db05bff8dd0e16839c07"/>
+			</dataarea>
+		</part>
+
+		<part name="cass39" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Gunner (BASIC 10.01)"/>
+			<dataarea name="cass" size="3012">
+				<rom name="s1_gunner.h8t" size="3012" crc="35bed35d" sha1="368707eae1965fe964157e7995996fba96ef0cea"/>
+			</dataarea>
+		</part>
+
+		<part name="cass40" interface="h88_cass_player">
+			<feature name="part_id" value="Side 1: Blackjack (BASIC 10.01)"/>
+			<dataarea name="cass" size="5489">
+				<rom name="s1_blackjack.h8t" size="5489" crc="be5a8127" sha1="bc5b90a35ad43799941e76abb27cd6cd3be85ca7"/>
+			</dataarea>
+		</part>
+
+		<part name="cass41" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Space Wars (BASIC 10.01)"/>
+			<dataarea name="cass" size="6180">
+				<rom name="s2_space_wars.h8t" size="6180" crc="359ebeca" sha1="612e5da0575f7230ea2188498b8311b6736eacde"/>
+			</dataarea>
+		</part>
+
+		<part name="cass42" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Mills Belt Fruit (BASIC 10.01)"/>
+			<dataarea name="cass" size="2923">
+				<rom name="s2_mills_belt_fruit.h8t" size="2923" crc="82fe0563" sha1="2073be09907a0b7d2a9e17a5c7fe2757268f1607"/>
+			</dataarea>
+		</part>
+
+		<part name="cass43" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Jotto (BASIC 10.01)"/>
+			<dataarea name="cass" size="7811">
+				<rom name="s2_jotto.h8t" size="7811" crc="579f862f" sha1="a8063562d286bd75cc08ced641e559f33428cacb"/>
+			</dataarea>
+		</part>
+
+		<part name="cass44" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Klondike (BASIC 10.01)"/>
+			<dataarea name="cass" size="4974">
+				<rom name="s2_klondike.h8t" size="4974" crc="a1ebfdd0" sha1="ebcbb42d268c7acf424118aa5cae12e2684aaa6b"/>
+			</dataarea>
+		</part>
+
+		<part name="cass45" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Math Class (BASIC 10.01)"/>
+			<dataarea name="cass" size="5128">
+				<rom name="s2_math_class.h8t" size="5128" crc="a1faf933" sha1="30e6e4369cfb74b3a4f03826cd52804b229351d2"/>
+			</dataarea>
+		</part>
+
+		<part name="cass46" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Times Table (BASIC 10.01)"/>
+			<dataarea name="cass" size="7958">
+				<rom name="s2_times_table.h8t" size="7958" crc="6f4e0d2d" sha1="0cbf1e8329717c5c73516e85fb7a3d6447c01c44"/>
+			</dataarea>
+		</part>
+
+		<part name="cass47" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Math Facts Quiz (BASIC 10.01)"/>
+			<dataarea name="cass" size="3741">
+				<rom name="s2_math_facts_quiz.h8t" size="3741" crc="2c9420f8" sha1="abf313dfc6e9f935119c913bab7d19fdcd2bd918"/>
+			</dataarea>
+		</part>
+
+		<part name="cass48" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Math (BASIC 10.01)"/>
+			<dataarea name="cass" size="2392">
+				<rom name="s2_math.h8t" size="2392" crc="73bbfe20" sha1="1994a12595e3e2093155867a7cf4f404483cf72c"/>
+			</dataarea>
+		</part>
+
+		<part name="cass49" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Multiplication Table (BASIC 10.01)"/>
+			<dataarea name="cass" size="1197">
+				<rom name="s2_multiplication_table.h8t" size="1197" crc="eee465c7" sha1="09c47a0788ca832e8ca3b983244977412ef5807f"/>
+			</dataarea>
+		</part>
+
+		<part name="cass50" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Math Quiz (BASIC 10.01)"/>
+			<dataarea name="cass" size="2596">
+				<rom name="s2_math_quiz.h8t" size="2596" crc="58cd8bc0" sha1="7dffbbdd80e1ba501b2cf128d4978a59bff8567a"/>
+			</dataarea>
+		</part>
+
+		<part name="cass51" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Arithmetic Practice (BASIC 10.01)"/>
+			<dataarea name="cass" size="4744">
+				<rom name="s2_arithmetic_practice.h8t" size="4744" crc="6bdde930" sha1="461002b4bc708261678921959bc98cfeef6bd0b2"/>
+			</dataarea>
+		</part>
+
+		<part name="cass52" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Craps (BASIC 10.02)"/>
+			<dataarea name="cass" size="4344">
+				<rom name="s2_craps.h8t" size="4344" crc="ea634d45" sha1="4223537e627be18e3fe5ab77ec5bd4c82444e848"/>
+			</dataarea>
+		</part>
+
+		<part name="cass53" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Gallery (BASIC 10.02)"/>
+			<dataarea name="cass" size="4996">
+				<rom name="s2_gallery.h8t" size="4996" crc="50185fc3" sha1="23a9b9fcb1364eed29ad29f8488f28ef19b38bb6"/>
+			</dataarea>
+		</part>
+
+		<part name="cass54" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Spelling Words (BASIC 10.02)"/>
+			<dataarea name="cass" size="2132">
+				<rom name="s2_spelling_words.h8t" size="2132" crc="02296d39" sha1="517d3aedc7b186bede18ec73a3b068a330d57b22"/>
+			</dataarea>
+		</part>
+
+		<part name="cass55" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Records (BASIC 10.02)"/>
+			<dataarea name="cass" size="4919">
+				<rom name="s2_records.h8t" size="4919" crc="b871e239" sha1="687c55ea7042ca20d4bab7e770c3ad29f75ddf04"/>
+			</dataarea>
+		</part>
+
+		<part name="cass56" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Payroll (BASIC 10.02)"/>
+			<dataarea name="cass" size="6080">
+				<rom name="s2_payroll.h8t" size="6080" crc="adf78fbb" sha1="8d2b82c25eb56c3120c199724b06dbf697dcd219"/>
+			</dataarea>
+		</part>
+
+		<part name="cass57" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Missile (BASIC 10.01)"/>
+			<dataarea name="cass" size="2929">
+				<rom name="s2_missile.h8t" size="2929" crc="8b0bcc81" sha1="c0cf132817f52805127b1d4c4e6be9e915cf106b"/>
+			</dataarea>
+		</part>
+
+		<part name="cass58" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Lunar Lander (BASIC 10.01)"/>
+			<dataarea name="cass" size="4351">
+				<rom name="s2_lunar_lander.h8t" size="4351" crc="50c00340" sha1="1d18dd51dce5eb1322de8abeccc3f4d49db1e6bd"/>
+			</dataarea>
+		</part>
+
+		<part name="cass59" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: One Arm Bandit (BASIC 10.01)"/>
+			<dataarea name="cass" size="2650">
+				<rom name="s2_one_arm_bandit.h8t" size="2650" crc="5a09c29b" sha1="72eec3bdbf9ad84e5234f1547b26f9f99f781c68"/>
+			</dataarea>
+		</part>
+
+		<part name="cass60" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Othello (BASIC 10.02)"/>
+			<dataarea name="cass" size="6190">
+				<rom name="s2_othello.h8t" size="6190" crc="d217b56c" sha1="d6db546368e7a40010dc8f406b85c406e0ce19c4"/>
+			</dataarea>
+		</part>
+
+		<part name="cass61" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Crazy 8's (BASIC 10.01)"/>
+			<dataarea name="cass" size="9124">
+				<rom name="s2_crazy_8s.h8t" size="9124" crc="5faa2018" sha1="4bf79b2a79e95c50d5dac4248dc39a7628801888"/>
+			</dataarea>
+		</part>
+
+		<part name="cass62" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Biorythm (BASIC 10.01)"/>
+			<dataarea name="cass" size="2996">
+				<rom name="s2_biorythm.h8t" size="2996" crc="2d7ee348" sha1="0f3031c03c15d4acc38ddf6a2df599d41d9eff02"/>
+			</dataarea>
+		</part>
+
+		<part name="cass63" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: 8080 Disassembler (BASIC 10.01)"/>
+			<dataarea name="cass" size="3576">
+				<rom name="s2_8080_disassembler.h8t" size="3576" crc="0f1a2fa3" sha1="ffac8afa141e4176ffa0bed2b4cc3a30d51084f4"/>
+			</dataarea>
+		</part>
+
+		<part name="cass64" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Symplot (BASIC 10.02)"/>
+			<dataarea name="cass" size="1865">
+				<rom name="s2_symplot.h8t" size="1865" crc="3bdc9f62" sha1="e96976b869c44f4599e1b8bc2d3814e0f192374e"/>
+			</dataarea>
+		</part>
+
+		<part name="cass65" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Bowling (BASIC 10.02)"/>
+			<dataarea name="cass" size="3517">
+				<rom name="s2_bowling.h8t" size="3517" crc="5134c799" sha1="d502ba10cfb84fe44075711ea766c6656e4e8280"/>
+			</dataarea>
+		</part>
+
+		<part name="cass66" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Alarm Clock (object code)"/>
+			<dataarea name="cass" size="3917">
+				<rom name="s2_alarm_clock_object.h8t" size="3917" crc="07a9489c" sha1="5eaf40c7ba351eeaf2b3f839fcf4f6cef4533229"/>
+			</dataarea>
+		</part>
+
+		<part name="cass67" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Hidden Pea (object code)"/>
+			<dataarea name="cass" size="3820">
+				<rom name="s2_hidden_pea_object.h8t" size="3820" crc="34365129" sha1="17dab20bb0ceb856eef1031e46c9e13136360e1d"/>
+			</dataarea>
+		</part>
+
+		<part name="cass68" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: H8 Memory Test (object code)"/>
+			<dataarea name="cass" size="864">
+				<rom name="s2_h8_memory_test_object.h8t" size="864" crc="144d5cfa" sha1="84ffc0419ad6c0ba084d764c4aacebc3aa4e2042"/>
+			</dataarea>
+		</part>
+
+		<part name="cass69" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Mastermind (object code)"/>
+			<dataarea name="cass" size="952">
+				<rom name="s2_mastermind_object.h8t" size="952" crc="55dc6a61" sha1="d8a744c6e51d00663f35fe832340ed3fc92beeb3"/>
+			</dataarea>
+		</part>
+
+		<part name="cass70" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: H8 Demo (object code)"/>
+			<dataarea name="cass" size="3760">
+				<rom name="s2_h8_demo_object.h8t" size="3760" crc="8fa1a045" sha1="640b6241abd4f845d44cf6f69b655bb5ea22ea44"/>
+			</dataarea>
+		</part>
+
+		<part name="cass71" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: ASR Driver (object code)"/>
+			<dataarea name="cass" size="772">
+				<rom name="s2_asr_driver_object.h8t" size="772" crc="82be93c1" sha1="76720405af1ccef09e316e06bfb3537e2f004e2a"/>
+			</dataarea>
+		</part>
+
+		<part name="cass72" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Clock (object code)"/>
+			<dataarea name="cass" size="508">
+				<rom name="s2_clock_object.h8t" size="508" crc="e064eb2e" sha1="e2eb898c3da5eb6395154482e744e1fb3336a289"/>
+			</dataarea>
+		</part>
+
+		<part name="cass73" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Chess Timer (object code)"/>
+			<dataarea name="cass" size="279">
+				<rom name="s2_chess_timer_object.h8t" size="279" crc="1c71845a" sha1="67e37cb4f0b06e15f24d859cccf6abe500914e77"/>
+			</dataarea>
+		</part>
+
+		<part name="cass74" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Othello (object code)"/>
+			<dataarea name="cass" size="3688">
+				<rom name="s2_othello_object.h8t" size="3688" crc="e1a148c8" sha1="69867df0ddf7ce0d69c73a0fcd683a003a99a770"/>
+			</dataarea>
+		</part>
+
+		<part name="cass75" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Loop Antenna Designer (BASIC 10.02)"/>
+			<dataarea name="cass" size="2552">
+				<rom name="s2_loop_antenna_designer.h8t" size="2552" crc="fe4ba7ae" sha1="934eaa5053ba0dc3f6d7ef83570ecb5673f4d8f3"/>
+			</dataarea>
+		</part>
+
+		<part name="cass76" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Listings in DEC &amp; OCT (BASIC 10.02)"/>
+			<dataarea name="cass" size="2605">
+				<rom name="s2_listings_in_dec_and_oct.h8t" size="2605" crc="177e466b" sha1="1eef186717d9b42933d97bc7f8b2d3273fe8371b"/>
+			</dataarea>
+		</part>
+
+		<part name="cass77" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: H8 Reflex Test (BASIC 10.02)"/>
+			<dataarea name="cass" size="1782">
+				<rom name="s2_h8_reflex_test.h8t" size="1782" crc="eb16cba0" sha1="2dc668879024e135578cfe77f9280c0cdc69459d"/>
+			</dataarea>
+		</part>
+
+		<part name="cass78" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Slot Machine (BASIC 10.02)"/>
+			<dataarea name="cass" size="4507">
+				<rom name="s2_slot_machine.h8t" size="4507" crc="6cc5016a" sha1="e66625b2bc2db080ea0bc7cae3a69f13da138ca9"/>
+			</dataarea>
+		</part>
+
+		<part name="cass79" interface="h88_cass_player">
+			<feature name="part_id" value="Side 2: Odd &amp; Even (BASIC 10.02)"/>
+			<dataarea name="cass" size="4713">
+				<rom name="s2_odd_and_even.h8t" size="4713" crc="4adc086a" sha1="23370437078794dfeab8fa8b21f7ada224f128a1"/>
+			</dataarea>
+		</part>
+	</software>
+
+	<software name="ted8_03_01_01" cloneof="ted8">
+		<description>Heath/Wintek H8 Editor 03.01.01</description>
+		<year>1977</year>
+		<publisher>Heath Company</publisher>
+		<notes>Supplied with the H8 on cassette.</notes>
+		<info name="alt_title" value="TED-8"/>
+		<info name="developer" value="Heath Company" />
+		<info name="developer" value="Wintek Corp." />
+		<info name="distributor" value="Heath Company"/>
+		<info name="version" value="03.01.01"/>
+		<info name="usage" value="Requires 8K RAM"/>
+
+		<part name="cass" interface="h88_cass_player">
+			<dataarea name="cass" size="5277">
+				<rom name="ted8_03_01_01.h8t" size="5277" crc="d7c11007" sha1="3607dcd7a522bf868920a3a54b00e1bc929c4566"/>
+			</dataarea>
+		</part>
+	</software>
+
 	<software name="ted8_03_05_00" cloneof="ted8">
 		<description>Heath/Wintek H8 Editor 03.05.00</description>
-		<year>1979</year>
-		<publisher>Heath Corp.</publisher>
+		<year>1978</year>
+		<publisher>Heath Company</publisher>
 		<info name="alt_title" value="TED-8"/>
-		<info name="developer" value="Heath Corp." />
+		<info name="developer" value="Heath Company" />
 		<info name="developer" value="Wintek Corp." />
-		<info name="distributor" value="Heath Corp."/>
+		<info name="distributor" value="Heath Company"/>
 		<info name="release" value="197803xx"/>
 		<info name="version" value="03.05.00"/>
 
@@ -149,14 +916,14 @@ license:CC0-1.0
 
 	<software name="ted8">
 		<description>Heath/Wintek H8 Editor 03.06.00</description>
-		<year>1979</year>
-		<publisher>Heath Corp.</publisher>
+		<year>1978</year>
+		<publisher>Heath Company</publisher>
 		<info name="alt_title" value="TED-8"/>
-		<info name="developer" value="Heath Corp." />
+		<info name="developer" value="Heath Company" />
 		<info name="developer" value="Wintek Corp." />
-		<info name="distributor" value="Heath Corp."/>
+		<info name="distributor" value="Heath Company"/>
 		<info name="release" value="197803xx"/>
-		<info name="version" value="03.05.00"/>
+		<info name="version" value="03.06.00"/>
 
 		<part name="cass" interface="h88_cass_player">
 			<dataarea name="cass" size="7099">
