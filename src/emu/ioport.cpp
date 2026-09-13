@@ -1226,9 +1226,18 @@ void ioport_field::frame_update(ioport_value &result)
 		return;
 	}
 
-	// if UI is active, ignore digital inputs
-	if (machine().ui().is_menu_active())
+	// while a menu is displayed, or the key that opens it is down, ignore
+	// digital inputs; lock each one out until it's released, so the key that
+	// opened or closed the menu isn't passed on to the emulated system when
+	// the menu goes away
+	if (machine().ui().is_menu_active() || machine().ui().is_menu_requested())
+	{
+		m_live->lockout = true;
+		m_live->last = false;
 		return;
+	}
+	if (m_live->lockout && !machine().input().seq_pressed(seq()))
+		m_live->lockout = false;
 
 	// if user input is locked out here, bail
 	if (m_live->lockout)
