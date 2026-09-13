@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<!--
+license:CC0-1.0
+authors:Paul Galbraith
+-->
+<mamelayout version="2">
+
+	<!--
+	The Teletype's paper, with a strip of the controls that are not keys on
+	its keyboard: the tape reader lever and the tape punch buttons. HERE IS,
+	REPT and BREAK are keyboard keys, repeated here so they can be clicked.
+	-->
+
+	<element name="strip"><rect><color red="0.62" green="0.60" blue="0.55" /></rect></element>
+
+	<element name="button" defstate="0">
+		<rect state="0"><color red="0.30" green="0.30" blue="0.29" /></rect>
+		<rect state="1"><color red="0.16" green="0.16" blue="0.15" /></rect>
+		<rect><bounds x="0.04" y="0.1" width="0.92" height="0.8" /><color red="0.36" green="0.36" blue="0.35" /></rect>
+	</element>
+
+	<element name="l_reader"><text string="TAPE READER"><color red="0.10" green="0.10" blue="0.10" /></text></element>
+	<element name="l_punch"><text string="TAPE PUNCH"><color red="0.10" green="0.10" blue="0.10" /></text></element>
+	<element name="l_keyboard"><text string="KEYBOARD"><color red="0.10" green="0.10" blue="0.10" /></text></element>
+	<element name="t_start"><text string="START"><color red="0.95" green="0.95" blue="0.93" /></text></element>
+	<element name="t_stop"><text string="STOP"><color red="0.95" green="0.95" blue="0.93" /></text></element>
+	<element name="t_on"><text string="ON"><color red="0.95" green="0.95" blue="0.93" /></text></element>
+	<element name="t_off"><text string="OFF"><color red="0.95" green="0.95" blue="0.93" /></text></element>
+	<element name="t_bsp"><text string="B.SP."><color red="0.95" green="0.95" blue="0.93" /></text></element>
+	<element name="t_hereis"><text string="HERE IS"><color red="0.95" green="0.95" blue="0.93" /></text></element>
+	<element name="t_rept"><text string="REPT"><color red="0.95" green="0.95" blue="0.93" /></text></element>
+	<element name="t_break"><text string="BREAK"><color red="0.95" green="0.95" blue="0.93" /></text></element>
+
+	<view name="Teletype">
+		<screen tag="screen"><bounds x="0" y="0" width="1344" height="1008" /></screen>
+		<element ref="strip"><bounds x="0" y="1008" width="1344" height="120" /></element>
+
+		<element ref="l_reader"><bounds x="40" y="1016" width="300" height="30" /></element>
+		<element ref="button" inputtag="CONTROLS" inputmask="0x01"><bounds x="40" y="1052" width="140" height="60" /></element>
+		<element ref="t_start"><bounds x="40" y="1066" width="140" height="32" /></element>
+		<element ref="button" inputtag="CONTROLS" inputmask="0x02"><bounds x="200" y="1052" width="140" height="60" /></element>
+		<element ref="t_stop"><bounds x="200" y="1066" width="140" height="32" /></element>
+
+		<element ref="l_punch"><bounds x="420" y="1016" width="460" height="30" /></element>
+		<element ref="button" inputtag="CONTROLS" inputmask="0x04"><bounds x="420" y="1052" width="140" height="60" /></element>
+		<element ref="t_on"><bounds x="420" y="1066" width="140" height="32" /></element>
+		<element ref="button" inputtag="CONTROLS" inputmask="0x08"><bounds x="580" y="1052" width="140" height="60" /></element>
+		<element ref="t_off"><bounds x="580" y="1066" width="140" height="32" /></element>
+		<element ref="button" inputtag="CONTROLS" inputmask="0x10"><bounds x="740" y="1052" width="140" height="60" /></element>
+		<element ref="t_bsp"><bounds x="740" y="1066" width="140" height="32" /></element>
+
+		<element ref="l_keyboard"><bounds x="960" y="1016" width="344" height="30" /></element>
+		<element ref="button" inputtag="KEYS0" inputmask="0x1000"><bounds x="960" y="1052" width="104" height="60" /></element>
+		<element ref="t_hereis"><bounds x="960" y="1066" width="104" height="32" /></element>
+		<element ref="button" inputtag="MODIFIERS" inputmask="0x04"><bounds x="1080" y="1052" width="104" height="60" /></element>
+		<element ref="t_rept"><bounds x="1080" y="1066" width="104" height="32" /></element>
+		<element ref="button" inputtag="MODIFIERS" inputmask="0x08"><bounds x="1200" y="1052" width="104" height="60" /></element>
+		<element ref="t_break"><bounds x="1200" y="1066" width="104" height="32" /></element>
+	</view>
+
+	<view name="Paper">
+		<screen tag="screen"><bounds x="0" y="0" width="1344" height="1008" /></screen>
+	</view>
+
+</mamelayout>
