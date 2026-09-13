@@ -496,30 +496,6 @@ void acia6850_device::write_txc(int state)
 
 			switch (m_tx_state)
 			{
-			case STATE_START:
-				m_tx_counter = 0;
-
-				if (!(m_status & SR_TDRE) && !(m_status & SR_CTS))
-				{
-					LOG("MC6850 '%s': TX DATA %x\n", tag(), m_tdr);
-
-					m_tx_state = STATE_DATA;
-					m_tx_shift = m_tdr;
-					m_tx_bits = 0;
-					m_tx_parity = 0;
-					m_status |= SR_TDRE;
-
-					LOG("MC6850 '%s': TX START BIT\n", tag());
-
-					output_txd(0);
-				}
-				else
-				{
-					/// TODO: find out if break stops transmitter
-					output_txd(!m_brk);
-				}
-				break;
-
 			case STATE_DATA:
 				if (m_tx_counter == m_divide)
 				{
@@ -571,6 +547,37 @@ void acia6850_device::write_txc(int state)
 					{
 						m_tx_state = STATE_START;
 					}
+				}
+
+				// a waiting character's start bit follows the last stop bit
+				// on the same tick, so back-to-back characters keep the bit rate
+				if (m_tx_state != STATE_START)
+				{
+					break;
+				}
+				[[fallthrough]];
+
+			case STATE_START:
+				m_tx_counter = 0;
+
+				if (!(m_status & SR_TDRE) && !(m_status & SR_CTS))
+				{
+					LOG("MC6850 '%s': TX DATA %x\n", tag(), m_tdr);
+
+					m_tx_state = STATE_DATA;
+					m_tx_shift = m_tdr;
+					m_tx_bits = 0;
+					m_tx_parity = 0;
+					m_status |= SR_TDRE;
+
+					LOG("MC6850 '%s': TX START BIT\n", tag());
+
+					output_txd(0);
+				}
+				else
+				{
+					/// TODO: find out if break stops transmitter
+					output_txd(!m_brk);
 				}
 				break;
 			}
