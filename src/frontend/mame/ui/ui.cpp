@@ -1413,15 +1413,27 @@ bool mame_ui_manager::is_menu_active()
 
 
 //-------------------------------------------------
-//  is_menu_requested - return true if the menu
-//  key is down and the in-game handler will
-//  open the menu for it
+//  is_capturing_input - return true if a menu or
+//  startup screen is taking input, or the menu
+//  key is down and the in-game handler will open
+//  the menu for it
 //-------------------------------------------------
 
-bool mame_ui_manager::is_menu_requested()
+bool mame_ui_manager::is_capturing_input()
 {
-	// the key is only taken when UI controls are enabled; otherwise it belongs to the emulated keyboard
-	return (m_handler_callback_type == ui_callback_type::GENERAL) && ui_active() && machine().ioport().type_pressed(IPT_UI_MENU);
+	switch (m_handler_callback_type)
+	{
+	case ui_callback_type::MENU:
+	case ui_callback_type::MODAL:
+		return true;
+
+	case ui_callback_type::GENERAL:
+		// the menu key is only taken when UI controls are enabled; otherwise it belongs to the emulated keyboard
+		return ui_active() && machine().ioport().type_pressed(IPT_UI_MENU);
+
+	default:
+		return false;
+	}
 }
 
 

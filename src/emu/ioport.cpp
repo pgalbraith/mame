@@ -1226,11 +1226,11 @@ void ioport_field::frame_update(ioport_value &result)
 		return;
 	}
 
-	// while a menu is displayed, or the key that opens it is down, ignore
-	// digital inputs; lock each one out until it's released, so the key that
-	// opened or closed the menu isn't passed on to the emulated system when
-	// the menu goes away
-	if (machine().ui().is_menu_active() || machine().ui().is_menu_requested())
+	// while a menu or startup screen is displayed, or the key that opens the
+	// menu is down, ignore digital inputs; lock each one out until it's
+	// released, so the key that opened or dismissed it isn't passed on to the
+	// emulated system when it goes away
+	if (machine().ui().is_capturing_input())
 	{
 		m_live->lockout = true;
 		m_live->last = false;
@@ -2155,9 +2155,28 @@ digital_joystick &ioport_manager::digjoystick(int player, int number)
 
 void ioport_manager::frame_update_callback()
 {
-	// if we're paused, don't do anything
+	// if we're paused, don't update the ports
 	if (!machine().paused())
+	{
 		frame_update();
+	}
+	else if (machine().ui().is_capturing_input())
+	{
+		// startup screens are shown before the machine is running, so the ports
+		// aren't updated while they're up; lock digital inputs out here too, so the
+		// key that dismisses one is still ignored once emulation starts
+		for (auto &port : m_portlist)
+		{
+			for (ioport_field &field : port.second->fields())
+			{
+				if (!field.live().analog)
+				{
+					field.live().lockout = true;
+					field.live().last = false;
+				}
+			}
+		}
+	}
 }
 
 
