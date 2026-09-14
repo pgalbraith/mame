@@ -43,7 +43,11 @@
     - The 8800b panel stops the CPU and puts data onto it in a different
       way, so neither panel works with the other machine's CPU board.
     - SINGLE STEP's down position is SLOW. Hold it and the machine single
-      steps every 786 ms until it is let go.
+      steps until it is let go: 7.6, 1.9 or 0.48 times a second, set by the
+      SLOW speed jumper. Those rates come from the display/control
+      schematic, where the steps are taken from a counter clocked by phi2
+      at 2 MHz. The manual's text says 786 ms, and "approximately 2 cycles
+      per second" in its switch table; neither fits the counter as drawn.
     - The two AUX switches are its accumulator switches. DISPLAY shows the
       accumulator on the data LEDs and LOAD sets it from A7-A0. INPUT and
       OUTPUT move it from or to the I/O channel set on A15-A8.
@@ -64,8 +68,10 @@
       CPU board differ [https://deramp.com/downloads/altair/hardware/altair_8800c/Front%20Panel%20Manual.pdf]
     - MITS Altair 8800b documentation, April 1977: Table 2-1 for the
       switches, section 3-32 on page 3-72 for SLOW, section 3-33 on page
-      3-73 for RESET/EXT CLR, and Table 3-2 on pages 3-76 to 3-78 for the
-      panel PROM's programs [https://www.manualslib.com/manual/1574204/Mits-Altair-8800b.html]
+      3-73 for RESET/EXT CLR, Table 3-2 on pages 3-76 to 3-78 for the
+      panel PROM's programs, section 3-40 on page 3-88 for the SLOW speed
+      jumpers, and Figure 3-16 sheet 1 for the counter those jumpers tap
+      [https://www.manualslib.com/manual/1574204/Mits-Altair-8800b.html]
 
 ***************************************************************************/
 
@@ -92,6 +98,7 @@ public:
 		, m_bus(*this, "s100")
 		, m_switches(*this, "SWITCHES")
 		, m_controls(*this, "CONTROLS")
+		, m_jumpers(*this, "JUMPERS")
 		, m_leds(*this, "%u.%u", 0U, 0U)
 		, m_levers(*this, "lever%u", 0U)
 		, m_panel_8800b(*this, "panel_8800b")
@@ -193,6 +200,7 @@ private:
 	required_device<s100_bus_device> m_bus;
 	required_ioport m_switches;
 	required_ioport m_controls;
+	optional_ioport m_jumpers;      // the 8800b's SLOW speed jumper
 	output_finder<4, 16> m_leds;    // brightness level 0-4
 	output_finder<8> m_levers;      // control switch positions for the layout: 0 centre, 1 up, 2 down
 	output_finder<> m_panel_8800b;  // 1 gives the layout the 8800b's switch labels
@@ -451,13 +459,19 @@ INPUT_CHANGED_MEMBER(al8800_state::control_changed)
 			single_step();
 		break;
 
-	// Only the 8800b has SLOW: while it is held, the panel single steps every
-	// 786 ms. It gates those steps from a counter that is always running, so
-	// the first step can come any time within 786 ms of pressing the switch;
-	// here it always comes 786 ms after.
+	// Only the 8800b has SLOW: while it is held, the panel single steps on
+	// each rising edge of one output of a 24-bit counter clocked by phi2.
+	// The SLOW speed jumper picks stage 18, 20 or 22 (JA, JB or JC to JD).
+	// The counter is never reset, so the steps fall on a fixed grid of
+	// machine time rather than a fixed delay after the switch goes down.
 	case CTRL_SLOW:
 		if (newval)
-			m_slow_timer->adjust(attotime::from_msec(786), 0, attotime::from_msec(786));
+		{
+			unsigned const stage = 18 + 2 * m_jumpers.read_safe(0);
+			u32 const clock = m_maincpu->clock();
+			u64 const next = ((machine().time().as_ticks(clock) >> stage) + 1) << stage;
+			m_slow_timer->adjust(attotime::from_ticks(next, clock) - machine().time(), 0, attotime::from_ticks(u64(1) << stage, clock));
+		}
 		else
 			m_slow_timer->adjust(attotime::never);
 		break;
@@ -675,6 +689,12 @@ static INPUT_PORTS_START( al8800b )
 	ACCUMULATOR_SWITCH(CTRL_ACC_LOAD,    "ACCUMULATOR LOAD")
 	ACCUMULATOR_SWITCH(CTRL_ACC_INPUT,   "ACCUMULATOR INPUT")
 	ACCUMULATOR_SWITCH(CTRL_ACC_OUTPUT,  "ACCUMULATOR OUTPUT")
+
+	PORT_START("JUMPERS")
+	PORT_CONFNAME(0x03, 0x00, "SLOW speed")
+	PORT_CONFSETTING(0x00, "JA-JD (standard)")
+	PORT_CONFSETTING(0x01, "JB-JD (slower)")
+	PORT_CONFSETTING(0x02, "JC-JD (slowest)")
 INPUT_PORTS_END
 
 
