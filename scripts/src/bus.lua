@@ -5137,6 +5137,8 @@ if BUSES["S100"] then
 		MAME_DIR .. "src/devices/bus/s100/mits2sio.h",
 		MAME_DIR .. "src/devices/bus/s100/mitsdcdd.cpp",
 		MAME_DIR .. "src/devices/bus/s100/mitsdcdd.h",
+		MAME_DIR .. "src/devices/bus/s100/mitspmc.cpp",
+		MAME_DIR .. "src/devices/bus/s100/mitspmc.h",
 		MAME_DIR .. "src/devices/bus/s100/mitsram.cpp",
 		MAME_DIR .. "src/devices/bus/s100/mitsram.h",
 		MAME_DIR .. "src/devices/bus/s100/mitssio.cpp",

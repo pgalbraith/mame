@@ -6,9 +6,8 @@ license:CC0-1.0
 <softwarelist name="88dcdd_flop" description="MITS Altair 88-DCDD 8-inch floppy disks">
 
 	<!--
-	These disks boot from the DBL loader at 177400 (FF00). MITS put it in a PROM
-	on an 88-PMC card, which MAME does not have yet, so put the loader into RAM
-	there and run it.
+	These disks boot from the DBL loader in its PROM at 177400 (FF00) on an
+	88-PMC card, pmc: set the address switches to 177400, EXAMINE, then RUN.
 	-->
 
 	<!-- https://deramp.com/downloads/altair/software/8_inch_floppy/Altair%20DOS/Fortran%202-8.dsk -->

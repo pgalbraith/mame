@@ -29,11 +29,11 @@
     For the Teletype ASR-33 that MITS sold with the machine, choose asr33
     for the 88-2SIO's port 0 and set that port's baud rate jumper to 110.
 
-    The 88-DCDD 8-inch floppy controller is the dcdd card. MITS booted it
-    from the DBL PROM at 177400 on an 88-PMC card, which is not emulated yet,
-    so the loader has to be put into RAM there and run. Altair DOS stops with
-    INSUFFICIENT MEMORY when RAM fills all 64K; 48K, with an 88-1MCS at
-    176000 to hold the loader, boots it.
+    The 88-DCDD 8-inch floppy controller is the dcdd card. It boots from the
+    DBL PROM on the pmc card, an 88-PMC: set the address switches to 177400,
+    EXAMINE, then RUN. RAM must leave the PMC's 174000-177777 alone, and
+    Altair DOS stops with INSUFFICIENT MEMORY when RAM fills all of the rest;
+    three 88-16MCS set to 000000, 040000 and 100000 suit it.
 
     Where this differs from the real panel
     - SINGLE STEP runs one instruction, not one machine cycle, because the
@@ -86,6 +86,7 @@
 #include "bus/s100/s100.h"
 #include "bus/s100/mits2sio.h"
 #include "bus/s100/mitsdcdd.h"
+#include "bus/s100/mitspmc.h"
 #include "bus/s100/mitsram.h"
 #include "bus/s100/mitssio.h"
 #include "cpu/i8085/i8085.h"
@@ -734,6 +735,7 @@ static void al8800_s100_cards(device_slot_interface &device)
 	device.option_add("1mcs", S100_MITS_1MCS);
 	device.option_add("4mcs", S100_MITS_4MCS);
 	device.option_add("16mcs", S100_MITS_16MCS);
+	device.option_add("pmc", S100_MITS_PMC);
 	device.option_add("sio", S100_MITS_SIO);
 	device.option_add("2sio", S100_MITS_2SIO);
 	device.option_add("dcdd", S100_MITS_DCDD);
