@@ -85,6 +85,7 @@
 
 #include "bus/s100/s100.h"
 #include "bus/s100/mits2sio.h"
+#include "bus/s100/mits4pio.h"
 #include "bus/s100/mitsdcdd.h"
 #include "bus/s100/mitspmc.h"
 #include "bus/s100/mitsram.h"
@@ -738,6 +739,7 @@ static void al8800_s100_cards(device_slot_interface &device)
 	device.option_add("pmc", S100_MITS_PMC);
 	device.option_add("sio", S100_MITS_SIO);
 	device.option_add("2sio", S100_MITS_2SIO);
+	device.option_add("4pio", S100_MITS_4PIO);
 	device.option_add("dcdd", S100_MITS_DCDD);
 }
 
