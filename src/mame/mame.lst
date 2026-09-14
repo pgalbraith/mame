@@ -33784,7 +33784,7 @@ tx0_64kw
 tx0_8kwo
 tx0_8kw
 
-@source:mits/al8800.cpp
+@source:mits/al8800b.cpp
 al8800
 al8800b
 

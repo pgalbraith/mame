@@ -2,7 +2,7 @@
 // copyright-holders:Paul Galbraith, AJR
 /***************************************************************************
 
-    MITS Altair 8800
+    MITS Altair 8800b and Altair 8800
 
     The original Altair, sold from January 1975: an 8080 CPU board, a front
     panel of toggle switches and LEDs, and S-100 slots for everything else.
@@ -98,10 +98,10 @@
 
 namespace {
 
-class al8800_state : public driver_device
+class al8800b_state : public driver_device
 {
 public:
-	al8800_state(const machine_config &mconfig, device_type type, const char *tag)
+	al8800b_state(const machine_config &mconfig, device_type type, const char *tag)
 		: driver_device(mconfig, type, tag)
 		, m_maincpu(*this, "maincpu")
 		, m_bus(*this, "s100")
@@ -230,18 +230,18 @@ private:
 };
 
 
-void al8800_state::mem_map(address_map &map)
+void al8800b_state::mem_map(address_map &map)
 {
-	map(0x0000, 0xffff).rw(FUNC(al8800_state::mem_r), FUNC(al8800_state::mem_w));
+	map(0x0000, 0xffff).rw(FUNC(al8800b_state::mem_r), FUNC(al8800b_state::mem_w));
 }
 
-void al8800_state::io_map(address_map &map)
+void al8800b_state::io_map(address_map &map)
 {
-	map(0x00, 0xff).rw(FUNC(al8800_state::io_r), FUNC(al8800_state::io_w));
+	map(0x00, 0xff).rw(FUNC(al8800b_state::io_r), FUNC(al8800b_state::io_w));
 }
 
 
-u8 al8800_state::mem_r(offs_t offset)
+u8 al8800b_state::mem_r(offs_t offset)
 {
 	u8 const data = m_bus->smemr_r(offset);
 
@@ -260,7 +260,7 @@ u8 al8800_state::mem_r(offs_t offset)
 	return data;
 }
 
-void al8800_state::mem_w(offs_t offset, u8 data)
+void al8800b_state::mem_w(offs_t offset, u8 data)
 {
 	m_bus->mwrt_w(offset, data);
 
@@ -273,7 +273,7 @@ void al8800_state::mem_w(offs_t offset, u8 data)
 	}
 }
 
-u8 al8800_state::io_r(offs_t offset)
+u8 al8800b_state::io_r(offs_t offset)
 {
 	// the 8080 puts the port number on both halves of the address bus
 	offs_t const address = offset << 8 | offset;
@@ -292,7 +292,7 @@ u8 al8800_state::io_r(offs_t offset)
 	return data;
 }
 
-void al8800_state::io_w(offs_t offset, u8 data)
+void al8800b_state::io_w(offs_t offset, u8 data)
 {
 	m_bus->sout_w(offset, data);
 
@@ -305,7 +305,7 @@ void al8800_state::io_w(offs_t offset, u8 data)
 }
 
 
-void al8800_state::status_w(u8 data)
+void al8800b_state::status_w(u8 data)
 {
 	// While halted the 8080 core keeps refetching the HLT opcode, which the
 	// real CPU does not. Leave the LEDs on halt acknowledge rather than let
@@ -320,7 +320,7 @@ void al8800_state::status_w(u8 data)
 		m_rows[ROW_STATUS] = data;
 }
 
-void al8800_state::inte_w(int state)
+void al8800b_state::inte_w(int state)
 {
 	m_inte = bool(state);
 	show_other();
@@ -333,7 +333,7 @@ void al8800_state::inte_w(int state)
 // CPU before the next one. For SINGLE STEP that is one instruction, as
 // intended; for STOP it lands one instruction later than the real panel,
 // which nobody could time a switch closely enough to notice.
-void al8800_state::stop_now()
+void al8800b_state::stop_now()
 {
 	m_run = false;
 	m_stepping = false;
@@ -343,7 +343,7 @@ void al8800_state::stop_now()
 	m_show_stopped_timer->adjust(attotime::zero);
 }
 
-void al8800_state::single_step()
+void al8800b_state::single_step()
 {
 	if (stopped())
 	{
@@ -354,7 +354,7 @@ void al8800_state::single_step()
 }
 
 
-void al8800_state::show_prot(bool state)
+void al8800b_state::show_prot(bool state)
 {
 	if (m_prot != state)
 	{
@@ -363,7 +363,7 @@ void al8800_state::show_prot(bool state)
 	}
 }
 
-void al8800_state::show_other()
+void al8800b_state::show_other()
 {
 	u16 data = 0;
 	if (m_inte)
@@ -375,7 +375,7 @@ void al8800_state::show_other()
 	m_rows[ROW_OTHER] = data;
 }
 
-void al8800_state::show_stopped()
+void al8800b_state::show_stopped()
 {
 	// waiting in an opcode fetch: its address on the bus, memory's reply on Data In
 	offs_t const pc = m_maincpu->pc();
@@ -402,7 +402,7 @@ void al8800_state::show_stopped()
 //
 // When no cycles ran in a frame the machine is stopped, and the LEDs show
 // what is on the bus.
-void al8800_state::count_cycle()
+void al8800b_state::count_cycle()
 {
 	m_cycles++;
 	for (unsigned row = 0; row < 4; row++)
@@ -413,7 +413,7 @@ void al8800_state::count_cycle()
 	}
 }
 
-TIMER_CALLBACK_MEMBER(al8800_state::update_leds)
+TIMER_CALLBACK_MEMBER(al8800b_state::update_leds)
 {
 	// brightness thresholds for levels 1 to 4
 	static constexpr double LEVELS[] = { 0.005, 0.05, 0.2, 0.5 };
@@ -440,7 +440,7 @@ TIMER_CALLBACK_MEMBER(al8800_state::update_leds)
 }
 
 
-INPUT_CHANGED_MEMBER(al8800_state::control_changed)
+INPUT_CHANGED_MEMBER(al8800b_state::control_changed)
 {
 	show_lever(param, newval);
 
@@ -572,7 +572,7 @@ INPUT_CHANGED_MEMBER(al8800_state::control_changed)
 // to where it stopped, so the bus sees a real I/O cycle and the program
 // counter ends up where it was. INPUT and OUTPUT take their I/O channel from
 // switches A15-A8.
-INPUT_CHANGED_MEMBER(al8800_state::accumulator_changed)
+INPUT_CHANGED_MEMBER(al8800b_state::accumulator_changed)
 {
 	show_lever(param, newval);
 	if (!newval || !stopped())
@@ -614,7 +614,7 @@ INPUT_CHANGED_MEMBER(al8800_state::accumulator_changed)
 }
 
 
-QUICKLOAD_LOAD_MEMBER(al8800_state::quickload_cb)
+QUICKLOAD_LOAD_MEMBER(al8800b_state::quickload_cb)
 {
 	u64 const length = image.length();
 	if (length == 0 || length > 0x10000)
@@ -640,8 +640,8 @@ QUICKLOAD_LOAD_MEMBER(al8800_state::quickload_cb)
 
 
 #define CONTROL_SWITCH(bit, name) \
-	PORT_BIT(1U << al8800_state::bit, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME(name) \
-	PORT_CHANGED_MEMBER(DEVICE_SELF, FUNC(al8800_state::control_changed), al8800_state::bit)
+	PORT_BIT(1U << al8800b_state::bit, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME(name) \
+	PORT_CHANGED_MEMBER(DEVICE_SELF, FUNC(al8800b_state::control_changed), al8800b_state::bit)
 
 static INPUT_PORTS_START( al8800 )
 	PORT_START("SWITCHES")
@@ -681,8 +681,8 @@ static INPUT_PORTS_START( al8800 )
 INPUT_PORTS_END
 
 #define ACCUMULATOR_SWITCH(bit, name) \
-	PORT_BIT(1U << al8800_state::bit, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME(name) \
-	PORT_CHANGED_MEMBER(DEVICE_SELF, FUNC(al8800_state::accumulator_changed), al8800_state::bit)
+	PORT_BIT(1U << al8800b_state::bit, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME(name) \
+	PORT_CHANGED_MEMBER(DEVICE_SELF, FUNC(al8800b_state::accumulator_changed), al8800b_state::bit)
 
 static INPUT_PORTS_START( al8800b )
 	PORT_INCLUDE( al8800 )
@@ -703,11 +703,11 @@ static INPUT_PORTS_START( al8800b )
 INPUT_PORTS_END
 
 
-void al8800_state::machine_start()
+void al8800b_state::machine_start()
 {
-	m_show_stopped_timer = timer_alloc(FUNC(al8800_state::show_stopped_cb), this);
-	m_led_timer = timer_alloc(FUNC(al8800_state::update_leds), this);
-	m_slow_timer = timer_alloc(FUNC(al8800_state::slow_cb), this);
+	m_show_stopped_timer = timer_alloc(FUNC(al8800b_state::show_stopped_cb), this);
+	m_led_timer = timer_alloc(FUNC(al8800b_state::update_leds), this);
+	m_slow_timer = timer_alloc(FUNC(al8800b_state::slow_cb), this);
 	m_led_timer->adjust(attotime::from_hz(60), 0, attotime::from_hz(60));
 
 	save_item(NAME(m_status));
@@ -720,7 +720,7 @@ void al8800_state::machine_start()
 	save_item(NAME(m_rows));
 }
 
-void al8800_state::machine_reset()
+void al8800b_state::machine_reset()
 {
 	m_halted = false;
 	m_run = false;
@@ -741,7 +741,7 @@ static void al8800_s100_cards(device_slot_interface &device)
 	device.option_add("dcdd", S100_MITS_DCDD);
 }
 
-void al8800_state::al8800(machine_config &config)
+void al8800b_state::al8800(machine_config &config)
 {
 	// The CPU board clock is a 2.000 MHz crystal oscillator with one-shots
 	// shaping the two phases; there is no 8224.
@@ -749,7 +749,7 @@ void al8800_state::al8800(machine_config &config)
 	common(config);
 }
 
-void al8800_state::al8800b(machine_config &config)
+void al8800b_state::al8800b(machine_config &config)
 {
 	// the 8800b CPU board has an 8224 clock generator
 	I8080A(config, m_maincpu, 18_MHz_XTAL / 9);
@@ -758,12 +758,12 @@ void al8800_state::al8800b(machine_config &config)
 	config.set_default_layout(layout_al8800b);
 }
 
-void al8800_state::common(machine_config &config)
+void al8800b_state::common(machine_config &config)
 {
-	m_maincpu->set_addrmap(AS_PROGRAM, &al8800_state::mem_map);
-	m_maincpu->set_addrmap(AS_IO, &al8800_state::io_map);
-	m_maincpu->out_status_func().set(FUNC(al8800_state::status_w));
-	m_maincpu->out_inte_func().set(FUNC(al8800_state::inte_w));
+	m_maincpu->set_addrmap(AS_PROGRAM, &al8800b_state::mem_map);
+	m_maincpu->set_addrmap(AS_IO, &al8800b_state::io_map);
+	m_maincpu->out_status_func().set(FUNC(al8800b_state::status_w));
+	m_maincpu->out_inte_func().set(FUNC(al8800b_state::inte_w));
 
 	// with nothing on the Data In bus during an interrupt acknowledge, its
 	// pull-ups give RST 7, which is the CPU core's default
@@ -776,7 +776,7 @@ void al8800_state::common(machine_config &config)
 
 	config.set_default_layout(layout_al8800);
 
-	QUICKLOAD(config, "quickload", "bin").set_load_callback(FUNC(al8800_state::quickload_cb));
+	QUICKLOAD(config, "quickload", "bin").set_load_callback(FUNC(al8800b_state::quickload_cb));
 }
 
 
@@ -792,6 +792,6 @@ ROM_END
 } // anonymous namespace
 
 
-//    YEAR  NAME     PARENT   COMPAT  MACHINE  INPUT    CLASS         INIT        COMPANY  FULLNAME        FLAGS
-COMP( 1976, al8800b, 0,       0,      al8800b, al8800b, al8800_state, empty_init, "MITS",  "Altair 8800b", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
-COMP( 1975, al8800,  al8800b, 0,      al8800,  al8800,  al8800_state, empty_init, "MITS",  "Altair 8800",  MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
+//    YEAR  NAME     PARENT   COMPAT  MACHINE  INPUT    CLASS          INIT        COMPANY  FULLNAME        FLAGS
+COMP( 1976, al8800b, 0,       0,      al8800b, al8800b, al8800b_state, empty_init, "MITS",  "Altair 8800b", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
+COMP( 1975, al8800,  al8800b, 0,      al8800,  al8800,  al8800b_state, empty_init, "MITS",  "Altair 8800",  MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
