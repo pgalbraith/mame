@@ -86,6 +86,7 @@
 #include "bus/s100/s100.h"
 #include "bus/s100/mits2sio.h"
 #include "bus/s100/mits4pio.h"
+#include "bus/s100/mitsc700.h"
 #include "bus/s100/mitsdcdd.h"
 #include "bus/s100/mitslpc.h"
 #include "bus/s100/mitspio.h"
@@ -745,6 +746,7 @@ static void al8800_s100_cards(device_slot_interface &device)
 	device.option_add("pio", S100_MITS_PIO);
 	device.option_add("dcdd", S100_MITS_DCDD);
 	device.option_add("lpc", S100_MITS_LPC);
+	device.option_add("c700", S100_MITS_C700);
 }
 
 void al8800b_state::al8800(machine_config &config)
