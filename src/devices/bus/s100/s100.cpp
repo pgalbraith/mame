@@ -223,3 +223,81 @@ int s100_bus_device::ps_r(offs_t offset)
 
 	return state;
 }
+
+
+//-------------------------------------------------
+//  sinta_r - the instruction cards put on the
+//  bus for an interrupt acknowledge
+//-------------------------------------------------
+
+uint8_t s100_bus_device::sinta_r(offs_t offset)
+{
+	uint8_t data = 0xff;
+
+	for (device_s100_card_interface &entry : m_device_list)
+		data &= entry.s100_sinta_r(offset);
+
+	return data;
+}
+
+
+//-------------------------------------------------
+//  vi0_w - vi7_w - vectored interrupt lines, to
+//  the host and to cards that prioritise them
+//-------------------------------------------------
+
+void s100_bus_device::vi0_w(int state)
+{
+	m_write_vi0(state);
+	for (device_s100_card_interface &entry : m_device_list)
+		entry.s100_vi0_w(state);
+}
+
+void s100_bus_device::vi1_w(int state)
+{
+	m_write_vi1(state);
+	for (device_s100_card_interface &entry : m_device_list)
+		entry.s100_vi1_w(state);
+}
+
+void s100_bus_device::vi2_w(int state)
+{
+	m_write_vi2(state);
+	for (device_s100_card_interface &entry : m_device_list)
+		entry.s100_vi2_w(state);
+}
+
+void s100_bus_device::vi3_w(int state)
+{
+	m_write_vi3(state);
+	for (device_s100_card_interface &entry : m_device_list)
+		entry.s100_vi3_w(state);
+}
+
+void s100_bus_device::vi4_w(int state)
+{
+	m_write_vi4(state);
+	for (device_s100_card_interface &entry : m_device_list)
+		entry.s100_vi4_w(state);
+}
+
+void s100_bus_device::vi5_w(int state)
+{
+	m_write_vi5(state);
+	for (device_s100_card_interface &entry : m_device_list)
+		entry.s100_vi5_w(state);
+}
+
+void s100_bus_device::vi6_w(int state)
+{
+	m_write_vi6(state);
+	for (device_s100_card_interface &entry : m_device_list)
+		entry.s100_vi6_w(state);
+}
+
+void s100_bus_device::vi7_w(int state)
+{
+	m_write_vi7(state);
+	for (device_s100_card_interface &entry : m_device_list)
+		entry.s100_vi7_w(state);
+}

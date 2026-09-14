@@ -93,6 +93,7 @@
 #include "bus/s100/mitspmc.h"
 #include "bus/s100/mitsram.h"
 #include "bus/s100/mitssio.h"
+#include "bus/s100/mitsvi.h"
 #include "cpu/i8085/i8085.h"
 #include "imagedev/snapquik.h"
 
@@ -748,6 +749,7 @@ static void al8800_s100_cards(device_slot_interface &device)
 	device.option_add("4pio", S100_MITS_4PIO);
 	device.option_add("pio", S100_MITS_PIO);
 	device.option_add("dcdd", S100_MITS_DCDD);
+	device.option_add("vi", S100_MITS_VI);
 	device.option_add("lpc", S100_MITS_LPC);
 	device.option_add("c700", S100_MITS_C700);
 }
@@ -776,10 +778,11 @@ void al8800b_state::common(machine_config &config)
 	m_maincpu->out_status_func().set(FUNC(al8800b_state::status_w));
 	m_maincpu->out_inte_func().set(FUNC(al8800b_state::inte_w));
 
-	// with nothing on the Data In bus during an interrupt acknowledge, its
-	// pull-ups give RST 7, which is the CPU core's default
+	// an interrupt acknowledge reads the Data In bus, where the pull-ups give
+	// RST 7 unless a card such as the 88-VI answers
 	S100_BUS(config, m_bus, 2_MHz_XTAL);
 	m_bus->irq().set_inputline(m_maincpu, I8085_INTR_LINE);
+	m_maincpu->in_inta_func().set(m_bus, FUNC(s100_bus_device::sinta_r));
 	S100_SLOT(config, "s100:1", al8800_s100_cards, "2sio");
 	S100_SLOT(config, "s100:2", al8800_s100_cards, "16mcs");
 	for (unsigned i = 3; i <= 16; i++)

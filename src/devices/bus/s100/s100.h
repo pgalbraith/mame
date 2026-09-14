@@ -182,16 +182,18 @@ public:
 	void unprot_w(offs_t offset);
 	int ps_r(offs_t offset);
 
+	uint8_t sinta_r(offs_t offset);
+
 	void irq_w(int state) { m_write_irq(state); }
 	void nmi_w(int state) { m_write_nmi(state); }
-	void vi0_w(int state) { m_write_vi0(state); }
-	void vi1_w(int state) { m_write_vi1(state); }
-	void vi2_w(int state) { m_write_vi2(state); }
-	void vi3_w(int state) { m_write_vi3(state); }
-	void vi4_w(int state) { m_write_vi4(state); }
-	void vi5_w(int state) { m_write_vi5(state); }
-	void vi6_w(int state) { m_write_vi6(state); }
-	void vi7_w(int state) { m_write_vi7(state); }
+	void vi0_w(int state);
+	void vi1_w(int state);
+	void vi2_w(int state);
+	void vi3_w(int state);
+	void vi4_w(int state);
+	void vi5_w(int state);
+	void vi6_w(int state);
+	void vi7_w(int state);
 	void dma0_w(int state) { m_write_dma0(state); }
 	void dma1_w(int state) { m_write_dma1(state); }
 	void dma2_w(int state) { m_write_dma2(state); }
