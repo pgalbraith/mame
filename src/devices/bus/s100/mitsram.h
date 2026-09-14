@@ -2,7 +2,7 @@
 // copyright-holders:Paul Galbraith
 /**********************************************************************
 
-    MITS Altair static RAM boards
+    MITS Altair RAM boards
 
 **********************************************************************/
 
@@ -16,5 +16,6 @@
 DECLARE_DEVICE_TYPE(S100_MITS_1MCS, device_s100_card_interface)
 DECLARE_DEVICE_TYPE(S100_MITS_4MCS, device_s100_card_interface)
 DECLARE_DEVICE_TYPE(S100_MITS_16MCS, device_s100_card_interface)
+DECLARE_DEVICE_TYPE(S100_MITS_16MCD, device_s100_card_interface)
 
 #endif // MAME_BUS_S100_MITSRAM_H

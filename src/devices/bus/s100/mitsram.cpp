@@ -2,7 +2,7 @@
 // copyright-holders:Paul Galbraith
 /**********************************************************************
 
-    MITS Altair static RAM boards
+    MITS Altair RAM boards
 
     88-1MCS (1975)
     Intel 8101 RAMs fitted 256 bytes at a time, up to 1K; MITS sold the
@@ -22,6 +22,15 @@
     is intended, and closing two makes the board answer in both. No
     memory protect.
 
+    88-16MCD (1977)
+    Thirty-two 4096 dynamic RAMs, 16K in four 4K blocks, refreshed on the
+    board at least once a millisecond and read without wait states. Its
+    address switches work as the 88-16MCS's do, and it has no memory
+    protect either. A jumper picks the RUN line on an 8800b or the WAIT
+    line on an 8800b Turnkey to keep refresh going while the machine is
+    stopped; RAM never fades here, so there is no refresh to emulate and
+    no jumper.
+
     A protected board ignores writes and pulls PS* low when it is read,
     which lights the PROT LED on the front panel.
 
@@ -34,6 +43,7 @@
     - 88-1MCS schematic 880-107 [https://deramp.com/downloads/altair/hardware/altair_8800_computer/Altair%20Schematics.pdf]
     - 88-4MCS manual [https://deramp.com/downloads/altair/hardware/MITS%2088-4MCS%204K%20Static%20RAM.pdf]
     - 88-16MCS documentation, April 1977 [http://www.bitsavers.org/pdf/mits/8800/Altair_88-16K_SRAM_Documentation_197704.pdf]
+    - 88-16MCD documentation, July 1977
 
 **********************************************************************/
 
@@ -262,7 +272,7 @@ ioport_constructor s100_mits_4mcs_device::device_input_ports() const
 
 
 //**************************************************************************
-//  88-16MCS
+//  88-16MCS and 88-16MCD
 //**************************************************************************
 
 class s100_mits_16mcs_device : public device_t, public device_s100_card_interface
@@ -271,6 +281,8 @@ public:
 	s100_mits_16mcs_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 
 protected:
+	s100_mits_16mcs_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock);
+
 	// device_t implementation
 	virtual void device_start() override ATTR_COLD;
 	virtual ioport_constructor device_input_ports() const override ATTR_COLD;
@@ -287,13 +299,28 @@ private:
 	u8 m_ram[0x4000];
 };
 
-s100_mits_16mcs_device::s100_mits_16mcs_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: device_t(mconfig, S100_MITS_16MCS, tag, owner, clock)
+s100_mits_16mcs_device::s100_mits_16mcs_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock)
+	: device_t(mconfig, type, tag, owner, clock)
 	, device_s100_card_interface(mconfig, *this)
 	, m_switches(*this, "SW")
 	, m_ram{ }
 {
 }
+
+s100_mits_16mcs_device::s100_mits_16mcs_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
+	: s100_mits_16mcs_device(mconfig, S100_MITS_16MCS, tag, owner, clock)
+{
+}
+
+// the dynamic RAM board decodes its address the same way
+class s100_mits_16mcd_device : public s100_mits_16mcs_device
+{
+public:
+	s100_mits_16mcd_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
+		: s100_mits_16mcs_device(mconfig, S100_MITS_16MCD, tag, owner, clock)
+	{
+	}
+};
 
 void s100_mits_16mcs_device::device_start()
 {
@@ -338,3 +365,4 @@ ioport_constructor s100_mits_16mcs_device::device_input_ports() const
 DEFINE_DEVICE_TYPE_PRIVATE(S100_MITS_1MCS, device_s100_card_interface, s100_mits_1mcs_device, "s100_mits_1mcs", "MITS 88-1MCS 1K Static RAM")
 DEFINE_DEVICE_TYPE_PRIVATE(S100_MITS_4MCS, device_s100_card_interface, s100_mits_4mcs_device, "s100_mits_4mcs", "MITS 88-4MCS 4K Static RAM")
 DEFINE_DEVICE_TYPE_PRIVATE(S100_MITS_16MCS, device_s100_card_interface, s100_mits_16mcs_device, "s100_mits_16mcs", "MITS 88-16MCS 16K Static RAM")
+DEFINE_DEVICE_TYPE_PRIVATE(S100_MITS_16MCD, device_s100_card_interface, s100_mits_16mcd_device, "s100_mits_16mcd", "MITS 88-16MCD 16K Dynamic RAM")
