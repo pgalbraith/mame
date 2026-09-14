@@ -293,6 +293,7 @@ mame_ui_manager::mame_ui_manager(running_machine &machine)
 	, m_show_profiler(false)
 	, m_popup_text_end(0)
 	, m_last_frame_update(0)
+	, m_natkbd_resync(false)
 	, m_mouse_bitmap(32, 32)
 	, m_mouse_arrow_texture(nullptr)
 	, m_pointers_changed(false)
@@ -383,6 +384,12 @@ void mame_ui_manager::frame_update()
 			if (!target->hidden())
 				target->update_pointer_fields();
 		}
+	}
+	else
+	{
+		// a menu or startup screen has the input; keys still held when it goes
+		// away are its, not the natural keyboard's
+		m_natkbd_resync = true;
 	}
 
 	m_last_frame_update = osd_ticks();
@@ -1451,6 +1458,13 @@ void mame_ui_manager::process_ui_events()
 {
 	// process UI events
 	bool const use_natkbd(machine().natkeyboard().in_use() && (machine().phase() == machine_phase::RUNNING));
+
+	// don't post keys while the UI is taking input, or keys still held from when
+	// it was, so the key that opens or dismisses a menu isn't typed into the
+	// emulated system
+	bool const post_keys(use_natkbd && !is_capturing_input() && !m_natkbd_resync);
+	m_natkbd_resync = false;
+
 	ui_event event;
 	while (machine().ui_input().pop_event(&event))
 	{
@@ -1515,7 +1529,7 @@ void mame_ui_manager::process_ui_events()
 			break;
 
 		case ui_event::type::IME_CHAR:
-			if (use_natkbd)
+			if (post_keys)
 				machine().natkeyboard().post_char(event.ch);
 			break;
 		}
@@ -1543,7 +1557,8 @@ void mame_ui_manager::process_ui_events()
 				*key_down_ptr |= key_down_mask;
 
 				// post the key
-				machine().natkeyboard().post_char(UCHAR_MAMEKEY_BEGIN + code.item_id());
+				if (post_keys)
+					machine().natkeyboard().post_char(UCHAR_MAMEKEY_BEGIN + code.item_id());
 			}
 			else if (!pressed && (*key_down_ptr & key_down_mask))
 			{
