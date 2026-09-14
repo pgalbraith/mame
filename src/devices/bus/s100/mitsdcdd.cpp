@@ -771,10 +771,11 @@ void s100_mits_dcdd_device::floppy_formats(format_registration &fr)
 
 void s100_mits_dcdd_device::device_add_mconfig(machine_config &config)
 {
-	// the 88-DCDD came with one drive; each 88-DISC added another
+	// the 88-DCDD came with one drive and each 88-DISC added another, in a
+	// cabinet of its own; two are fitted by default
 	for (unsigned i = 0; i < DRIVES; i++)
 	{
-		FLOPPY_CONNECTOR(config, m_connectors[i], mits_dcdd_floppies, i ? nullptr : "8sssd", floppy_formats).enable_sound(true);
+		FLOPPY_CONNECTOR(config, m_connectors[i], mits_dcdd_floppies, (i < 2) ? "8sssd" : nullptr, floppy_formats).enable_sound(true);
 		m_connectors[i]->set_sectoring_type(floppy_image::H32);
 	}
 
