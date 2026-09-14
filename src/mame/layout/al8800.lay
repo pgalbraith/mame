@@ -283,15 +283,10 @@ authors:Paul Galbraith
 	<element name="t_deposit"><text string="DEPOSIT"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="DEPOSIT"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
 	<element name="t_next"><text string="NEXT"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="NEXT"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
 	<element name="t_reset"><text string="RESET"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="RESET"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
-	<element name="t_clr" defstate="0"><text string="CLR" state="0"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="CLR" state="0"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="EXT CLR" state="1"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="EXT CLR" state="1"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
+	<element name="t_clr"><text string="CLR"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="CLR"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
 	<element name="t_protect"><text string="PROTECT"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="PROTECT"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
 	<element name="t_unprotect"><text string="UNPROTECT"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="UNPROTECT"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
-	<element name="t_aux1" defstate="0"><text string="AUX" state="0"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="AUX" state="0"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="DISPLAY" state="1"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="DISPLAY" state="1"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
-	<element name="t_aux2" defstate="0"><text string="AUX" state="0"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="AUX" state="0"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="INPUT" state="1"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="INPUT" state="1"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
-	<element name="t_load" defstate="0"><text string="LOAD" state="1"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="LOAD" state="1"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
-	<element name="t_output" defstate="0"><text string="OUTPUT" state="1"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="OUTPUT" state="1"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
-	<element name="t_accumulator" defstate="0"><text string="ACCUMULATOR" state="1"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="ACCUMULATOR" state="1"><bounds x="0.0057" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
-	<element name="t_slow" defstate="0"><text string="SLOW" state="1"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="SLOW" state="1"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
+	<element name="t_aux"><text string="AUX"><bounds x="0" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text><text string="AUX"><bounds x="0.0138" y="0" width="1" height="1" /><color red="0.92" green="0.92" blue="0.90" /></text></element>
 
 	<group name="panel">
 		<element ref="art"><bounds x="0" y="0" width="3180" height="1387" /></element>
@@ -368,8 +363,6 @@ authors:Paul Galbraith
 		<element ref="t_run"><bounds x="774" y="986" width="160" height="30" /></element>
 		<element ref="t_single"><bounds x="1002" y="860" width="160" height="30" /></element>
 		<element ref="t_step"><bounds x="1002" y="890" width="160" height="30" /></element>
-		<!-- the driver sets panel_8800b to 1 on the 8800b, which has SLOW, EXT CLR and the accumulator switches -->
-		<element name="panel_8800b" ref="t_slow"><bounds x="1002" y="986" width="160" height="30" /></element>
 		<element ref="t_examine"><bounds x="1230" y="890" width="160" height="30" /></element>
 		<element ref="t_examine"><bounds x="1230" y="986" width="160" height="30" /></element>
 		<element ref="t_next"><bounds x="1230" y="1014" width="160" height="30" /></element>
@@ -377,14 +370,11 @@ authors:Paul Galbraith
 		<element ref="t_deposit"><bounds x="1458" y="986" width="160" height="30" /></element>
 		<element ref="t_next"><bounds x="1458" y="1014" width="160" height="30" /></element>
 		<element ref="t_reset"><bounds x="1686" y="890" width="160" height="30" /></element>
-		<element name="panel_8800b" ref="t_clr"><bounds x="1686" y="986" width="160" height="30" /></element>
+		<element ref="t_clr"><bounds x="1686" y="986" width="160" height="30" /></element>
 		<element ref="t_protect"><bounds x="1914" y="890" width="160" height="30" /></element>
 		<element ref="t_unprotect"><bounds x="1914" y="986" width="160" height="30" /></element>
-		<element name="panel_8800b" ref="t_accumulator"><bounds x="2142" y="860" width="388" height="30" /></element>
-		<element name="panel_8800b" ref="t_aux1"><bounds x="2142" y="890" width="160" height="30" /></element>
-		<element name="panel_8800b" ref="t_load"><bounds x="2142" y="986" width="160" height="30" /></element>
-		<element name="panel_8800b" ref="t_aux2"><bounds x="2370" y="890" width="160" height="30" /></element>
-		<element name="panel_8800b" ref="t_output"><bounds x="2370" y="986" width="160" height="30" /></element>
+		<element ref="t_aux"><bounds x="2142" y="890" width="160" height="30" /></element>
+		<element ref="t_aux"><bounds x="2370" y="890" width="160" height="30" /></element>
 
 		<!-- control switches: each position is its own clickable half -->
 		<repeat count="8">

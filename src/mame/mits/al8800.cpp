@@ -51,10 +51,10 @@
     - The two AUX switches are its accumulator switches. DISPLAY shows the
       accumulator on the data LEDs and LOAD sets it from A7-A0. INPUT and
       OUTPUT move it from or to the I/O channel set on A15-A8.
+    - Its layout is drawn from a photograph of an 8800b panel.
     - Not working: EXAMINE, DEPOSIT and the data LEDs behave as they do on
       the original panel, not through the 8800b's PROM and its interface
-      card's data latch. The layout is the original's with the 8800b's
-      switch names taken from its manual, not checked against a real panel.
+      card's data latch.
 
     References
     - Altair 8800 Theory of Operation, pages 3-8 cover the CPU board and the
@@ -85,6 +85,7 @@
 #include "imagedev/snapquik.h"
 
 #include "al8800.lh"
+#include "al8800b.lh"
 
 
 namespace {
@@ -97,11 +98,9 @@ public:
 		, m_maincpu(*this, "maincpu")
 		, m_bus(*this, "s100")
 		, m_switches(*this, "SWITCHES")
-		, m_controls(*this, "CONTROLS")
 		, m_jumpers(*this, "JUMPERS")
 		, m_leds(*this, "%u.%u", 0U, 0U)
 		, m_levers(*this, "lever%u", 0U)
-		, m_panel_8800b(*this, "panel_8800b")
 	{
 	}
 
@@ -199,11 +198,9 @@ private:
 	required_device<i8080_cpu_device> m_maincpu;
 	required_device<s100_bus_device> m_bus;
 	required_ioport m_switches;
-	required_ioport m_controls;
 	optional_ioport m_jumpers;      // the 8800b's SLOW speed jumper
 	output_finder<4, 16> m_leds;    // brightness level 0-4
 	output_finder<8> m_levers;      // control switch positions for the layout: 0 centre, 1 up, 2 down
-	output_finder<> m_panel_8800b;  // 1 gives the layout the 8800b's switch labels
 
 	emu_timer *m_show_stopped_timer = nullptr;
 	emu_timer *m_led_timer = nullptr;
@@ -705,9 +702,6 @@ void al8800_state::machine_start()
 	m_slow_timer = timer_alloc(FUNC(al8800_state::slow_cb), this);
 	m_led_timer->adjust(attotime::from_hz(60), 0, attotime::from_hz(60));
 
-	// the 8800b's panel is the one with SLOW, and it labels two switches differently
-	m_panel_8800b = m_controls->field(1U << CTRL_SLOW) ? 1 : 0;
-
 	save_item(NAME(m_status));
 	save_item(NAME(m_inte));
 	save_item(NAME(m_prot));
@@ -750,6 +744,8 @@ void al8800_state::al8800b(machine_config &config)
 	// the 8800b CPU board has an 8224 clock generator
 	I8080A(config, m_maincpu, 18_MHz_XTAL / 9);
 	common(config);
+
+	config.set_default_layout(layout_al8800b);
 }
 
 void al8800_state::common(machine_config &config)
