@@ -63,6 +63,8 @@
 #include "formats/mits_dsk.h"
 #include "imagedev/floppy.h"
 
+#include "softlist_dev.h"
+
 #define LOG_REG (1U << 1)
 
 //#define VERBOSE (LOG_GENERAL | LOG_REG)
@@ -775,6 +777,8 @@ void s100_mits_dcdd_device::device_add_mconfig(machine_config &config)
 		FLOPPY_CONNECTOR(config, m_connectors[i], mits_dcdd_floppies, i ? nullptr : "8sssd", floppy_formats).enable_sound(true);
 		m_connectors[i]->set_sectoring_type(floppy_image::H32);
 	}
+
+	SOFTWARE_LIST(config, "flop_list").set_original("88dcdd_flop");
 }
 
 
