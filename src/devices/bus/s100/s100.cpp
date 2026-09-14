@@ -173,3 +173,53 @@ void s100_bus_device::sout_w(offs_t offset, uint8_t data)
 	for (device_s100_card_interface &entry : m_device_list)
 		entry.s100_sout_w(offset, data);
 }
+
+
+//-------------------------------------------------
+//  slave_clr_w - SLAVE CLR* (EXT CLR on the Altair)
+//-------------------------------------------------
+
+void s100_bus_device::slave_clr_w(int state)
+{
+	for (device_s100_card_interface &entry : m_device_list)
+		entry.s100_slave_clr_w(state);
+}
+
+
+//-------------------------------------------------
+//  prot_w - Altair PROT with an address on the bus
+//-------------------------------------------------
+
+void s100_bus_device::prot_w(offs_t offset)
+{
+	for (device_s100_card_interface &entry : m_device_list)
+		entry.s100_prot_w(offset);
+}
+
+
+//-------------------------------------------------
+//  unprot_w - Altair UNPROT with an address on
+//  the bus
+//-------------------------------------------------
+
+void s100_bus_device::unprot_w(offs_t offset)
+{
+	for (device_s100_card_interface &entry : m_device_list)
+		entry.s100_unprot_w(offset);
+}
+
+
+//-------------------------------------------------
+//  ps_r - Altair PS*, low when the board at this
+//  address is protected
+//-------------------------------------------------
+
+int s100_bus_device::ps_r(offs_t offset)
+{
+	int state = 1;
+
+	for (device_s100_card_interface &entry : m_device_list)
+		state &= entry.s100_ps_r(offset);
+
+	return state;
+}

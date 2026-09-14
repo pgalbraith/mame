@@ -5050,6 +5050,8 @@ if BUSES["RS232"] then
 	files {
 		MAME_DIR .. "src/devices/bus/rs232/adsp2181ekl.cpp",
 		MAME_DIR .. "src/devices/bus/rs232/adsp2181ekl.h",
+		MAME_DIR .. "src/devices/bus/rs232/asr33.cpp",
+		MAME_DIR .. "src/devices/bus/rs232/asr33.h",
 		MAME_DIR .. "src/devices/bus/rs232/auto3a.cpp",
 		MAME_DIR .. "src/devices/bus/rs232/auto3a.h",
 		MAME_DIR .. "src/devices/bus/rs232/exorterm.cpp",
@@ -5101,10 +5103,12 @@ if BUSES["RS232"] then
 	}
 
 	dependency {
+		{ MAME_DIR .. "src/devices/bus/rs232/asr33.cpp",        GEN_DIR .. "emu/layout/asr33.lh" },
 		{ MAME_DIR .. "src/devices/bus/rs232/teletex800.cpp",   GEN_DIR .. "emu/layout/teletex800.lh" },
 	}
 
 	custombuildtask {
+		layoutbuildtask("emu/layout", "asr33"),
 		layoutbuildtask("emu/layout", "teletex800"),
 	}
 end
@@ -5129,6 +5133,12 @@ if BUSES["S100"] then
 		MAME_DIR .. "src/devices/bus/s100/dj2db.h",
 		MAME_DIR .. "src/devices/bus/s100/djdma.cpp",
 		MAME_DIR .. "src/devices/bus/s100/djdma.h",
+		MAME_DIR .. "src/devices/bus/s100/mits2sio.cpp",
+		MAME_DIR .. "src/devices/bus/s100/mits2sio.h",
+		MAME_DIR .. "src/devices/bus/s100/mitsram.cpp",
+		MAME_DIR .. "src/devices/bus/s100/mitsram.h",
+		MAME_DIR .. "src/devices/bus/s100/mitssio.cpp",
+		MAME_DIR .. "src/devices/bus/s100/mitssio.h",
 		MAME_DIR .. "src/devices/bus/s100/mm65k16s.cpp",
 		MAME_DIR .. "src/devices/bus/s100/mm65k16s.h",
 		MAME_DIR .. "src/devices/bus/s100/nsmdsa.cpp",
