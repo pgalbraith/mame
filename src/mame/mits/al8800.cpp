@@ -790,6 +790,6 @@ ROM_END
 } // anonymous namespace
 
 
-//    YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT    CLASS         INIT        COMPANY  FULLNAME        FLAGS
-COMP( 1975, al8800,  0,      0,      al8800,  al8800,  al8800_state, empty_init, "MITS",  "Altair 8800",  MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
-COMP( 1976, al8800b, al8800, 0,      al8800b, al8800b, al8800_state, empty_init, "MITS",  "Altair 8800b", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
+//    YEAR  NAME     PARENT   COMPAT  MACHINE  INPUT    CLASS         INIT        COMPANY  FULLNAME        FLAGS
+COMP( 1976, al8800b, 0,       0,      al8800b, al8800b, al8800_state, empty_init, "MITS",  "Altair 8800b", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
+COMP( 1975, al8800,  al8800b, 0,      al8800,  al8800,  al8800_state, empty_init, "MITS",  "Altair 8800",  MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
