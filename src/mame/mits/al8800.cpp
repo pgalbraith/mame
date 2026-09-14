@@ -44,10 +44,13 @@
       way, so neither panel works with the other machine's CPU board.
     - SINGLE STEP's down position is SLOW. Hold it and the machine single
       steps every 786 ms until it is let go.
-    - Not working: apart from SLOW, al8800b has the original panel's switches
-      and behaviour. The 8800b panel's functions for depositing and
-      displaying the accumulator are not emulated, and apart from the SLOW
-      and EXT CLR labels the layout is the original panel's.
+    - The two AUX switches are its accumulator switches. DISPLAY shows the
+      accumulator on the data LEDs and LOAD sets it from A7-A0. INPUT and
+      OUTPUT move it from or to the I/O channel set on A15-A8.
+    - Not working: EXAMINE, DEPOSIT and the data LEDs behave as they do on
+      the original panel, not through the 8800b's PROM and its interface
+      card's data latch. The layout is the original's with the 8800b's
+      switch names taken from its manual, not checked against a real panel.
 
     References
     - Altair 8800 Theory of Operation, pages 3-8 cover the CPU board and the
@@ -59,9 +62,10 @@
       [https://altairclone.com/downloads/manuals/BASIC%20Manual%2077.pdf]
     - Altair 8800c Front Panel Manual, pages 1-2, for how the 8800b panel and
       CPU board differ [https://deramp.com/downloads/altair/hardware/altair_8800c/Front%20Panel%20Manual.pdf]
-    - MITS Altair 8800b documentation, April 1977, section 3-32 on page 3-72
-      for SLOW and section 3-33 on page 3-73 for the RESET/EXT CLR switch
-      [https://www.manualslib.com/manual/1574204/Mits-Altair-8800b.html?page=149]
+    - MITS Altair 8800b documentation, April 1977: Table 2-1 for the
+      switches, section 3-32 on page 3-72 for SLOW, section 3-33 on page
+      3-73 for RESET/EXT CLR, and Table 3-2 on pages 3-76 to 3-78 for the
+      panel PROM's programs [https://www.manualslib.com/manual/1574204/Mits-Altair-8800b.html]
 
 ***************************************************************************/
 
@@ -98,6 +102,7 @@ public:
 	void al8800b(machine_config &config) ATTR_COLD;
 
 	DECLARE_INPUT_CHANGED_MEMBER(control_changed);
+	DECLARE_INPUT_CHANGED_MEMBER(accumulator_changed);
 
 	// Bits of the CONTROLS port. The eight control switches take two bits
 	// each, up position then down, so a bit number divided by two is the
@@ -120,7 +125,13 @@ public:
 		CTRL_AUX1_UP,
 		CTRL_AUX1_DOWN,
 		CTRL_AUX2_UP,
-		CTRL_AUX2_DOWN
+		CTRL_AUX2_DOWN,
+
+		// on the 8800b the two AUX switches are its accumulator switches
+		CTRL_ACC_DISPLAY = CTRL_AUX1_UP,
+		CTRL_ACC_LOAD = CTRL_AUX1_DOWN,
+		CTRL_ACC_INPUT = CTRL_AUX2_UP,
+		CTRL_ACC_OUTPUT = CTRL_AUX2_DOWN
 	};
 
 protected:
@@ -169,6 +180,7 @@ private:
 	TIMER_CALLBACK_MEMBER(slow_cb) { single_step(); }
 
 	void show_bus(offs_t address, u8 data) { m_rows[ROW_ADDRESS] = address; m_rows[ROW_DATA] = data; }
+	void show_lever(u8 bit, bool pressed) { m_levers[bit / 2] = pressed ? (BIT(bit, 0) ? 2 : 1) : 0; }
 	void show_prot(bool state);
 	void show_other();
 	void show_stopped();
@@ -417,7 +429,7 @@ TIMER_CALLBACK_MEMBER(al8800_state::update_leds)
 
 INPUT_CHANGED_MEMBER(al8800_state::control_changed)
 {
-	m_levers[param / 2] = newval ? (BIT(param, 0) ? 2 : 1) : 0;
+	show_lever(param, newval);
 
 	switch (param)
 	{
@@ -536,6 +548,52 @@ INPUT_CHANGED_MEMBER(al8800_state::control_changed)
 	}
 }
 
+// The 8800b's accumulator switches, which only work while it is stopped. For
+// each one the panel PROM feeds the CPU an IN or an OUT and then a jump back
+// to where it stopped, so the bus sees a real I/O cycle and the program
+// counter ends up where it was. INPUT and OUTPUT take their I/O channel from
+// switches A15-A8.
+INPUT_CHANGED_MEMBER(al8800_state::accumulator_changed)
+{
+	show_lever(param, newval);
+	if (!newval || !stopped())
+		return;
+
+	u8 const a = m_maincpu->state_int(i8080_cpu_device::I8085_A);
+	u8 const channel = m_switches->read() >> 8;
+	m_halted = false;
+
+	switch (param)
+	{
+	// OUT 377, which the 8800b's interface card latches onto the data LEDs
+	case CTRL_ACC_DISPLAY:
+		m_bus->sout_w(0xff, a);
+		show_stopped();
+		m_rows[ROW_DATA] = a;
+		break;
+
+	// IN 376, which the panel answers with switches A7-A0 in place of the bus
+	case CTRL_ACC_LOAD:
+		m_bus->sinp_r(0xfe);
+		m_maincpu->set_state_int(i8080_cpu_device::I8085_A, m_switches->read() & 0xff);
+		show_stopped();
+		break;
+
+	// channel 377 reads the sense switches, as it does for a program
+	case CTRL_ACC_INPUT:
+		m_maincpu->set_state_int(i8080_cpu_device::I8085_A, (channel == 0xff) ? u8(m_switches->read() >> 8) : m_bus->sinp_r(channel));
+		show_stopped();
+		break;
+
+	case CTRL_ACC_OUTPUT:
+		m_bus->sout_w(channel, a);
+		show_stopped();
+		if (channel == 0xff)
+			m_rows[ROW_DATA] = a;
+		break;
+	}
+}
+
 
 QUICKLOAD_LOAD_MEMBER(al8800_state::quickload_cb)
 {
@@ -603,12 +661,20 @@ static INPUT_PORTS_START( al8800 )
 	CONTROL_SWITCH(CTRL_AUX2_DOWN,    "AUX 2 down")
 INPUT_PORTS_END
 
+#define ACCUMULATOR_SWITCH(bit, name) \
+	PORT_BIT(1U << al8800_state::bit, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME(name) \
+	PORT_CHANGED_MEMBER(DEVICE_SELF, FUNC(al8800_state::accumulator_changed), al8800_state::bit)
+
 static INPUT_PORTS_START( al8800b )
 	PORT_INCLUDE( al8800 )
 
 	PORT_MODIFY("CONTROLS")
 	CONTROL_SWITCH(CTRL_SLOW,         "SLOW")
 	CONTROL_SWITCH(CTRL_CLR,          "EXT CLR")
+	ACCUMULATOR_SWITCH(CTRL_ACC_DISPLAY, "ACCUMULATOR DISPLAY")
+	ACCUMULATOR_SWITCH(CTRL_ACC_LOAD,    "ACCUMULATOR LOAD")
+	ACCUMULATOR_SWITCH(CTRL_ACC_INPUT,   "ACCUMULATOR INPUT")
+	ACCUMULATOR_SWITCH(CTRL_ACC_OUTPUT,  "ACCUMULATOR OUTPUT")
 INPUT_PORTS_END
 
 
