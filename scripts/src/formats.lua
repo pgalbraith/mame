@@ -1457,6 +1457,18 @@ end
 
 --------------------------------------------------
 --
+--@src/lib/formats/mits_dsk.h,FORMATS["MITS_DSK"] = true
+--------------------------------------------------
+
+if opt_tool(FORMATS, "MITS_DSK") then
+	files {
+		MAME_DIR.. "src/lib/formats/mits_dsk.cpp",
+		MAME_DIR.. "src/lib/formats/mits_dsk.h",
+	}
+end
+
+--------------------------------------------------
+--
 --@src/lib/formats/mm_dsk.h,FORMATS["MM_DSK"] = true
 --------------------------------------------------
 
