@@ -137,11 +137,16 @@ public:
 	// device type constructor
 	vt50_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 
+	auto ctrl_key_callback() { return m_ctrl_key_callback.bind(); }
+
 protected:
 	// device_disasm_interface overrides
 	virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
 
 	virtual void execute_tg(u8 inst) override;
+
+private:
+	devcb_read_line m_ctrl_key_callback;
 };
 
 class vt52_cpu_device : public vt5x_cpu_device

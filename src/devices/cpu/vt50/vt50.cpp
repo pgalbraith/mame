@@ -124,6 +124,7 @@ vt5x_cpu_device::vt5x_cpu_device(const machine_config &mconfig, device_type type
 
 vt50_cpu_device::vt50_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
 	: vt5x_cpu_device(mconfig, VT50_CPU, tag, owner, clock, 4, 4)
+	, m_ctrl_key_callback(*this, 1)
 {
 }
 
@@ -497,8 +498,8 @@ void vt50_cpu_device::execute_tg(u8 inst)
 		break;
 
 	default:
-		// LD (TODO: B/C masking in mode 0 is determined by optional jumpers)
-		m_ram_do = inst & (!m_mode_ff && m_cursor_ff ? 0037 : 0177);
+		// LD (B/C masking in mode 0 is jumpered: W2 on the basic VT50 takes it from CTRL KEY L, W3 on the VT50H from the cursor flip-flop)
+		m_ram_do = inst & (!m_mode_ff && !m_ctrl_key_callback() ? 0037 : 0177);
 		break;
 	}
 
