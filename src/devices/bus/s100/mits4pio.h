@@ -14,5 +14,6 @@
 #include "s100.h"
 
 DECLARE_DEVICE_TYPE(S100_MITS_4PIO, device_s100_card_interface)
+DECLARE_DEVICE_TYPE(S100_MITS_HDSK, device_s100_card_interface)
 
 #endif // MAME_BUS_S100_MITS4PIO_H

@@ -35,6 +35,12 @@
     Altair DOS stops with INSUFFICIENT MEMORY when RAM fills all of the rest;
     three 88-16MCS set to 000000, 040000 and 100000 suit it.
 
+    The 88-HDSK hard disk is the hdsk card, an 88-4PIO at 240 octal with the
+    Datakeeper controller and a Pertec D3422 behind it: hard1 is the
+    removable cartridge and hard2 the fixed platter. Its HD-TBL boot loader
+    is also on the pmc card: set the address switches to 176000, EXAMINE,
+    put the switches down, then RUN.
+
     Where this differs from the real panel
     - SINGLE STEP runs one instruction, not one machine cycle, because the
       8080 core cannot pause partway through an instruction.
@@ -747,6 +753,7 @@ static void al8800_s100_cards(device_slot_interface &device)
 	device.option_add("acr", S100_MITS_ACR);
 	device.option_add("2sio", S100_MITS_2SIO);
 	device.option_add("4pio", S100_MITS_4PIO);
+	device.option_add("hdsk", S100_MITS_HDSK);
 	device.option_add("pio", S100_MITS_PIO);
 	device.option_add("dcdd", S100_MITS_DCDD);
 	device.option_add("vi", S100_MITS_VI);

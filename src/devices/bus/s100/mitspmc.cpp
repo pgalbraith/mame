@@ -17,6 +17,12 @@
     177400, EXAMINE, then RUN. DBL copies itself into RAM at 026000 and runs
     there, because the PROM is too slow to run from.
 
+    For the 88-HDSK hard disk, MITS's turnkey hard disk boot loader, HD-TBL,
+    takes ICs E and F, at 176000 and 176400: the first loads the operating
+    system from the hard disk, the second is a small monitor whose L command
+    does the same. To boot, set the address switches to 176000, EXAMINE,
+    then RUN.
+
     Not emulated
     - the 0 to 3 wait states, patched with J6 and J7, that slow PROMs need
     - the VGG switching that powers only the pair of PROMs being read
@@ -26,6 +32,8 @@
       [https://deramp.com/downloads/altair/hardware/2K%20PROM%20Board%20(88-PMC).pdf]
     - DBL 4.1, disassembled by Martin Eberhard from an EPROM labelled
       'DBL 4.1' [https://deramp.com/downloads/altair/software/roms/orginal_roms/]
+    - HD-TBL, disassembled by Martin Eberhard from two 1702A PROMs
+      [https://deramp.com/downloads/altair/software/roms/orginal_roms/]
 
 **********************************************************************/
 
@@ -95,6 +103,10 @@ ioport_constructor s100_mits_pmc_device::device_input_ports() const
 
 ROM_START( mits_pmc )
 	ROM_REGION( 0x800, "proms", ROMREGION_ERASEFF )
+	// ICs E and F, at 176000 and 176400 with the board at 174000. Rebuilt by
+	// assembling the disassembly; the unused end of the first is taken as 000.
+	ROM_LOAD( "hd-tbl 1.bin", 0x400, 0x100, BAD_DUMP CRC(4ba65964) SHA1(1a187ae903b8cc567472950377261fe9d9d6d6f5) )
+	ROM_LOAD( "hd-tbl 2.bin", 0x500, 0x100, BAD_DUMP CRC(0a592968) SHA1(03cbd448d007656193949fff9e5605a3b8d95d1c) )
 	// IC H, at 177400 with the board at 174000
 	ROM_LOAD( "dbl 4.1.bin", 0x700, 0x100, CRC(8e658905) SHA1(def83ce7bbf16960a87228d6ce94b192a2012c97) )
 ROM_END
