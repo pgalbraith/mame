@@ -1,5 +1,5 @@
 // license:BSD-3-Clause
-// copyright-holders:Paul Galbraith
+// copyright-holders:Paul Galbraith, AJR
 /***************************************************************************
 
     MITS Altair 8800
@@ -36,6 +36,19 @@
       the operator has to raise STOP and RESET before doing anything. Here
       the machine powers on already stopped at 000000.
 
+    Altair 8800b
+    - The 1976 redesign, on the same S-100 bus. Its CPU board adds an 8224
+      clock generator, and its front panel is run by microcode in a 1702A
+      PROM that the 8080 cannot see.
+    - The 8800b panel stops the CPU and puts data onto it in a different
+      way, so neither panel works with the other machine's CPU board.
+    - SINGLE STEP's down position is SLOW. Hold it and the machine single
+      steps every 786 ms until it is let go.
+    - Not working: apart from SLOW, al8800b has the original panel's switches
+      and behaviour. The 8800b panel's functions for depositing and
+      displaying the accumulator are not emulated, and apart from the SLOW
+      and EXT CLR labels the layout is the original panel's.
+
     References
     - Altair 8800 Theory of Operation, pages 3-8 cover the CPU board and the
       panel [https://altairclone.com/downloads/manuals/Altair%208800%20Theory%20of%20Operation.pdf]
@@ -44,6 +57,11 @@
     - Altair 8800 Operator's Manual [https://altairclone.com/downloads/manuals/Altair%208800%20Operator's%20Manual.pdf]
     - Altair BASIC manual, January 1977, appendix B for the sense switches
       [https://altairclone.com/downloads/manuals/BASIC%20Manual%2077.pdf]
+    - Altair 8800c Front Panel Manual, pages 1-2, for how the 8800b panel and
+      CPU board differ [https://deramp.com/downloads/altair/hardware/altair_8800c/Front%20Panel%20Manual.pdf]
+    - MITS Altair 8800b documentation, April 1977, section 3-32 on page 3-72
+      for SLOW and section 3-33 on page 3-73 for the RESET/EXT CLR switch
+      [https://www.manualslib.com/manual/1574204/Mits-Altair-8800b.html?page=149]
 
 ***************************************************************************/
 
@@ -69,24 +87,28 @@ public:
 		, m_maincpu(*this, "maincpu")
 		, m_bus(*this, "s100")
 		, m_switches(*this, "SWITCHES")
+		, m_controls(*this, "CONTROLS")
 		, m_leds(*this, "%u.%u", 0U, 0U)
 		, m_levers(*this, "lever%u", 0U)
+		, m_panel_8800b(*this, "panel_8800b")
 	{
 	}
 
 	void al8800(machine_config &config) ATTR_COLD;
+	void al8800b(machine_config &config) ATTR_COLD;
 
 	DECLARE_INPUT_CHANGED_MEMBER(control_changed);
 
 	// Bits of the CONTROLS port. The eight control switches take two bits
 	// each, up position then down, so a bit number divided by two is the
-	// switch it belongs to. SINGLE STEP has no down position.
+	// switch it belongs to. SINGLE STEP's down position is SLOW on the
+	// 8800b and does nothing on the original 8800.
 	enum : u8
 	{
 		CTRL_STOP = 0,
 		CTRL_RUN,
 		CTRL_SINGLE_STEP,
-		CTRL_UNUSED,
+		CTRL_SLOW,
 		CTRL_EXAMINE,
 		CTRL_EXAMINE_NEXT,
 		CTRL_DEPOSIT,
@@ -128,6 +150,7 @@ private:
 		LED_HLDA
 	};
 
+	void common(machine_config &config) ATTR_COLD;
 	void mem_map(address_map &map) ATTR_COLD;
 	void io_map(address_map &map) ATTR_COLD;
 
@@ -141,7 +164,9 @@ private:
 
 	bool stopped() const { return !m_run && !m_stepping; }
 	void stop_now();
+	void single_step();
 	TIMER_CALLBACK_MEMBER(show_stopped_cb) { show_stopped(); }
+	TIMER_CALLBACK_MEMBER(slow_cb) { single_step(); }
 
 	void show_bus(offs_t address, u8 data) { m_rows[ROW_ADDRESS] = address; m_rows[ROW_DATA] = data; }
 	void show_prot(bool state);
@@ -155,11 +180,14 @@ private:
 	required_device<i8080_cpu_device> m_maincpu;
 	required_device<s100_bus_device> m_bus;
 	required_ioport m_switches;
+	required_ioport m_controls;
 	output_finder<4, 16> m_leds;    // brightness level 0-4
 	output_finder<8> m_levers;      // control switch positions for the layout: 0 centre, 1 up, 2 down
+	output_finder<> m_panel_8800b;  // 1 gives the layout the 8800b's switch labels
 
 	emu_timer *m_show_stopped_timer = nullptr;
 	emu_timer *m_led_timer = nullptr;
+	emu_timer *m_slow_timer = nullptr;
 
 	u8 m_status = 0;            // copy of the 8080's status latch
 	bool m_inte = false;
@@ -290,6 +318,16 @@ void al8800_state::stop_now()
 	m_show_stopped_timer->adjust(attotime::zero);
 }
 
+void al8800_state::single_step()
+{
+	if (stopped())
+	{
+		m_stepping = true;
+		show_other();
+		m_maincpu->resume(SUSPEND_REASON_HALT);
+	}
+}
+
 
 void al8800_state::show_prot(bool state)
 {
@@ -397,12 +435,19 @@ INPUT_CHANGED_MEMBER(al8800_state::control_changed)
 		break;
 
 	case CTRL_SINGLE_STEP:
-		if (newval && stopped())
-		{
-			m_stepping = true;
-			show_other();
-			m_maincpu->resume(SUSPEND_REASON_HALT);
-		}
+		if (newval)
+			single_step();
+		break;
+
+	// Only the 8800b has SLOW: while it is held, the panel single steps every
+	// 786 ms. It gates those steps from a counter that is always running, so
+	// the first step can come any time within 786 ms of pressing the switch;
+	// here it always comes 786 ms after.
+	case CTRL_SLOW:
+		if (newval)
+			m_slow_timer->adjust(attotime::from_msec(786), 0, attotime::from_msec(786));
+		else
+			m_slow_timer->adjust(attotime::never);
 		break;
 
 	case CTRL_EXAMINE:
@@ -558,12 +603,24 @@ static INPUT_PORTS_START( al8800 )
 	CONTROL_SWITCH(CTRL_AUX2_DOWN,    "AUX 2 down")
 INPUT_PORTS_END
 
+static INPUT_PORTS_START( al8800b )
+	PORT_INCLUDE( al8800 )
+
+	PORT_MODIFY("CONTROLS")
+	CONTROL_SWITCH(CTRL_SLOW,         "SLOW")
+	CONTROL_SWITCH(CTRL_CLR,          "EXT CLR")
+INPUT_PORTS_END
+
 
 void al8800_state::machine_start()
 {
 	m_show_stopped_timer = timer_alloc(FUNC(al8800_state::show_stopped_cb), this);
 	m_led_timer = timer_alloc(FUNC(al8800_state::update_leds), this);
+	m_slow_timer = timer_alloc(FUNC(al8800_state::slow_cb), this);
 	m_led_timer->adjust(attotime::from_hz(60), 0, attotime::from_hz(60));
+
+	// the 8800b's panel is the one with SLOW, and it labels two switches differently
+	m_panel_8800b = m_controls->field(1U << CTRL_SLOW) ? 1 : 0;
 
 	save_item(NAME(m_status));
 	save_item(NAME(m_inte));
@@ -599,6 +656,18 @@ void al8800_state::al8800(machine_config &config)
 	// The CPU board clock is a 2.000 MHz crystal oscillator with one-shots
 	// shaping the two phases; there is no 8224.
 	I8080(config, m_maincpu, 2_MHz_XTAL);
+	common(config);
+}
+
+void al8800_state::al8800b(machine_config &config)
+{
+	// the 8800b CPU board has an 8224 clock generator
+	I8080A(config, m_maincpu, 18_MHz_XTAL / 9);
+	common(config);
+}
+
+void al8800_state::common(machine_config &config)
+{
 	m_maincpu->set_addrmap(AS_PROGRAM, &al8800_state::mem_map);
 	m_maincpu->set_addrmap(AS_IO, &al8800_state::io_map);
 	m_maincpu->out_status_func().set(FUNC(al8800_state::status_w));
@@ -622,8 +691,15 @@ void al8800_state::al8800(machine_config &config)
 ROM_START( al8800 )
 ROM_END
 
+ROM_START( al8800b )
+	ROM_REGION( 0x100, "panel", 0 )
+	// This 1702A EPROM is not mapped into the 8080 memory space. It contains custom microcode implementing front panel functions.
+	ROM_LOAD( "8800b front panel.bin", 0x000, 0x100, CRC(8b462c1b) SHA1(3c13b1cc941225b16580655c15a61b8e8418b052) )
+ROM_END
+
 } // anonymous namespace
 
 
-//    YEAR  NAME    PARENT  COMPAT  MACHINE  INPUT   CLASS         INIT        COMPANY  FULLNAME       FLAGS
-COMP( 1975, al8800, 0,      0,      al8800,  al8800, al8800_state, empty_init, "MITS",  "Altair 8800", MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
+//    YEAR  NAME     PARENT  COMPAT  MACHINE  INPUT    CLASS         INIT        COMPANY  FULLNAME        FLAGS
+COMP( 1975, al8800,  0,      0,      al8800,  al8800,  al8800_state, empty_init, "MITS",  "Altair 8800",  MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
+COMP( 1976, al8800b, al8800, 0,      al8800b, al8800b, al8800_state, empty_init, "MITS",  "Altair 8800b", MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )

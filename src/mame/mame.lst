@@ -33786,8 +33786,6 @@ tx0_8kw
 
 @source:mits/al8800.cpp
 al8800
-
-@source:mits/al8800b.cpp
 al8800b
 
 @source:mits/altair.cpp
