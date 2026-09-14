@@ -1457,6 +1457,18 @@ end
 
 --------------------------------------------------
 --
+--@src/lib/formats/mits_cas.h,FORMATS["MITS_CAS"] = true
+--------------------------------------------------
+
+if opt_tool(FORMATS, "MITS_CAS") then
+	files {
+		MAME_DIR.. "src/lib/formats/mits_cas.cpp",
+		MAME_DIR.. "src/lib/formats/mits_cas.h",
+	}
+end
+
+--------------------------------------------------
+--
 --@src/lib/formats/mits_dsk.h,FORMATS["MITS_DSK"] = true
 --------------------------------------------------
 

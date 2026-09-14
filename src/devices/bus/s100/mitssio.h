@@ -2,7 +2,7 @@
 // copyright-holders:Paul Galbraith
 /**********************************************************************
 
-    MITS 88-SIO serial interface
+    MITS 88-SIO serial interface and 88-ACR audio cassette interface
 
 **********************************************************************/
 
@@ -14,5 +14,6 @@
 #include "s100.h"
 
 DECLARE_DEVICE_TYPE(S100_MITS_SIO, device_s100_card_interface)
+DECLARE_DEVICE_TYPE(S100_MITS_ACR, device_s100_card_interface)
 
 #endif // MAME_BUS_S100_MITSSIO_H
