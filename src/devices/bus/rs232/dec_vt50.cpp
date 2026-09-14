@@ -53,6 +53,12 @@ void serial_dec_vt50_device::device_add_mconfig(machine_config &config)
 {
 	DEC_VT50(config, m_vt50);
 	m_vt50->serial_data_callback().set(FUNC(serial_dec_vt50_device::output_rxd));
+
+	// The VT50 clocks its UART from the CPU's timing chain, so it sends and samples every bit at wherever its CPU
+	// has got to. With another CPU-clocked UART on the other end, such as a VT52, and nothing timer-driven in
+	// between, the scheduler can let one CPU run a whole frame ahead and every character comes through garbled.
+	// A quarter of a bit at 9600 baud keeps the two close enough to sample mid-bit.
+	config.set_maximum_quantum(attotime::from_hz(4 * 9600));
 }
 
 } // anonymous namespace
