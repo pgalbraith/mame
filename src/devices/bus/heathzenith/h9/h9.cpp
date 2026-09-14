@@ -42,6 +42,8 @@
 
 #include "machine/keyboard.ipp"
 
+#include "heath_h9.lh"
+
 
 namespace {
 
@@ -834,6 +836,8 @@ void heath_h9_device::device_reset()
 
 void heath_h9_device::device_add_mconfig(machine_config &config)
 {
+	config.set_default_layout(layout_heath_h9);
+
 	SCREEN(config, m_screen);
 	m_screen->set_raw(H9_DOT_CLOCK,
 			H9_CHARS_PER_LINE * H9_DOTS_PER_CHAR, 0, H9_VISIBLE_WIDTH,

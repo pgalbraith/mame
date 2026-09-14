@@ -1,0 +1,424 @@
+<?xml version="1.0"?>
+<!--
+license:CC0-1.0
+authors:Paul Galbraith
+-->
+<mamelayout version="2">
+
+	<!--
+	The H9 seen from the chair: the black hood with the tube in it, and the
+	keyboard below.  Every key's position and legend comes from Pictorial 6-11
+	of the H9 assembly manual (595-1996-05, page 99), and the colours from the
+	photographs in the Fall 1977 Heathkit catalog (number 817, cover and page
+	9).  Units are hundredths of an inch, with the keys on Heath's 3/4 inch
+	pitch and the cabinet 15.4 inches wide; the size of the glass and of the
+	picture on it are judged from the photographs, not measured.
+
+	The seven latching keys (BAUD RATE, FULL DUPLEX, OFF LINE, PLOT, AUTO
+	CARRY, SCROLL, SHORT FORM) are machine configuration settings in the
+	device.  Clicking one moves it to its other setting and it stays there,
+	which is how the real push-push switches behave, and a key that is
+	pushed in is drawn darker and lower.
+	-->
+
+	<element name="cabinet"><rect><color red="0.05" green="0.05" blue="0.05" /></rect></element>
+	<element name="deck"><rect><color red="0.90" green="0.90" blue="0.86" /></rect></element>
+	<element name="deck_back"><rect><color red="0.80" green="0.79" blue="0.76" /></rect></element>
+	<element name="deck_front"><rect><color red="0.69" green="0.69" blue="0.65" /></rect></element>
+
+	<!-- the tube face, lighter than the hood and a little lighter again towards the middle -->
+	<element name="glass">
+		<image><data><![CDATA[
+			<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1060" height="800" viewBox="0 0 1060 800">
+				<rect x="0" y="0" width="1060" height="800" rx="110" ry="110" fill="#1a1b1a" />
+				<rect x="30" y="24" width="1000" height="752" rx="96" ry="96" fill="#1e1f1e" />
+				<rect x="70" y="56" width="920" height="688" rx="80" ry="80" fill="#222322" />
+				<rect x="120" y="96" width="820" height="608" rx="60" ry="60" fill="#252625" />
+			</svg>
+		]]></data></image>
+	</element>
+
+	<!-- nameplate: silver HEATHKIT on black, the model on an orange insert -->
+	<element name="plate_frame"><rect><color red="0.42" green="0.42" blue="0.42" /></rect></element>
+	<element name="plate"><rect><color red="0.12" green="0.12" blue="0.12" /></rect></element>
+	<element name="plate_insert"><rect><color red="0.74" green="0.34" blue="0.24" /></rect></element>
+	<element name="t_heathkit"><text string="H E A T H K I T"><color red="0.80" green="0.80" blue="0.79" /></text></element>
+	<element name="t_h9"><text string="H9"><color red="0.08" green="0.08" blue="0.08" /></text></element>
+
+	<!-- a key top; a pressed key lightens so a click can be seen -->
+	<element name="cap" defstate="0">
+		<rect><color red="0.05" green="0.05" blue="0.05" /></rect>
+		<rect state="0"><bounds x="0.06" y="0.04" width="0.88" height="0.82" /><color red="0.17" green="0.17" blue="0.17" /></rect>
+		<rect state="1"><bounds x="0.06" y="0.04" width="0.88" height="0.82" /><color red="0.33" green="0.33" blue="0.33" /></rect>
+	</element>
+
+	<element name="latchcap" defstate="0">
+		<rect><color red="0.05" green="0.05" blue="0.05" /></rect>
+		<rect state="0"><bounds x="0.06" y="0.04" width="0.88" height="0.82" /><color red="0.17" green="0.17" blue="0.17" /></rect>
+		<rect state="1"><bounds x="0.06" y="0.12" width="0.88" height="0.82" /><color red="0.08" green="0.08" blue="0.08" /></rect>
+	</element>
+
+	<element name="spacebar" defstate="0">
+		<rect><color red="0.05" green="0.05" blue="0.05" /></rect>
+		<rect state="0"><bounds x="0.007" y="0.04" width="0.986" height="0.82" /><color red="0.17" green="0.17" blue="0.17" /></rect>
+		<rect state="1"><bounds x="0.007" y="0.04" width="0.986" height="0.82" /><color red="0.33" green="0.33" blue="0.33" /></rect>
+	</element>
+
+	<element name="l_0"><text string="Ø"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_1"><text string="1"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_2"><text string="2"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_3"><text string="3"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_4"><text string="4"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_5"><text string="5"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_6"><text string="6"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_7"><text string="7"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_8"><text string="8"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_9"><text string="9"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_A"><text string="A"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_B"><text string="B"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_C"><text string="C"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_D"><text string="D"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_E"><text string="E"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_F"><text string="F"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_G"><text string="G"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_H"><text string="H"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_I"><text string="I"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_J"><text string="J"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_K"><text string="K"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_L"><text string="L"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_M"><text string="M"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_N"><text string="N"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_O"><text string="O"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_P"><text string="P"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_Q"><text string="Q"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_R"><text string="R"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_S"><text string="S"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_T"><text string="T"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_U"><text string="U"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_V"><text string="V"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_W"><text string="W"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_X"><text string="X"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_Y"><text string="Y"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_Z"><text string="Z"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+
+	<element name="l_excl"><text string="!"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_quot"><text string="&quot;"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_hash"><text string="#"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_dollar"><text string="$"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_percent"><text string="%"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_amp"><text string="&amp;"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_apos"><text string="'"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_lparen"><text string="("><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_rparen"><text string=")"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_star"><text string="*"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_colon"><text string=":"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_equals"><text string="="><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_minus"><text string="-"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_plus"><text string="+"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_semi"><text string=";"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_less"><text string="&lt;"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_greater"><text string="&gt;"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_comma"><text string=","><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_period"><text string="."><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_question"><text string="?"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_slash"><text string="/"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_at"><text string="@"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_lbracket"><text string="["><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_backslash"><text string="\"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_rbracket"><text string="]"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="l_underscore"><text string="_"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+
+	<element name="w_AUTO"><text string="AUTO"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_BAUD"><text string="BAUD"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_BREAK"><text string="BREAK"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_CARRY"><text string="CARRY"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_CTRL"><text string="CTRL"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_DUPLEX"><text string="DUPLEX"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_EOL"><text string="EOL"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_ERASE"><text string="ERASE"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_ESC"><text string="ESC"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_FEED"><text string="FEED"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_FORM"><text string="FORM"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_FULL"><text string="FULL"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_HOME"><text string="HOME"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_LINE"><text string="LINE"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_OFF"><text string="OFF"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_OUT"><text string="OUT"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_PAGE"><text string="PAGE"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_PLOT"><text string="PLOT"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_RATE"><text string="RATE"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_REPT"><text string="REPT"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_RETURN"><text string="RETURN"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_RUB"><text string="RUB"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_SCROLL"><text string="SCROLL"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_SHIFT"><text string="SHIFT"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_SHORT"><text string="SHORT"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+	<element name="w_XMIT"><text string="XMIT"><color red="0.93" green="0.93" blue="0.93" /></text></element>
+
+	<!-- the cursor keys are marked with arrows, and so is the N key, shifted -->
+	<element name="a_up"><image><data><![CDATA[
+		<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="30" height="30" viewBox="0 0 30 30">
+			<path d="M15,2 L26,14 L19,14 L19,28 L11,28 L11,14 L4,14 Z" fill="#ededed" />
+		</svg>
+	]]></data></image></element>
+	<element name="a_down"><image><data><![CDATA[
+		<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="30" height="30" viewBox="0 0 30 30">
+			<path d="M15,28 L26,16 L19,16 L19,2 L11,2 L11,16 L4,16 Z" fill="#ededed" />
+		</svg>
+	]]></data></image></element>
+	<element name="a_left"><image><data><![CDATA[
+		<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="30" height="30" viewBox="0 0 30 30">
+			<path d="M2,15 L14,4 L14,11 L28,11 L28,19 L14,19 L14,26 Z" fill="#ededed" />
+		</svg>
+	]]></data></image></element>
+	<element name="a_right"><image><data><![CDATA[
+		<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="30" height="30" viewBox="0 0 30 30">
+			<path d="M28,15 L16,4 L16,11 L2,11 L2,19 L16,19 L16,26 Z" fill="#ededed" />
+		</svg>
+	]]></data></image></element>
+
+
+	<!--
+	Key groups, one per way of lettering a key.  Each takes the parameters
+	set just before it: port and mask for the key's input, a for the main
+	legend, b for a second line, s for the shifted symbol.
+	-->
+	<group name="key">
+		<bounds x="0" y="0" width="71" height="71" />
+		<element ref="cap" inputtag="~port~" inputmask="~mask~"><bounds x="0" y="0" width="71" height="71" /></element>
+		<element ref="~a~"><bounds x="20" y="16" width="31" height="30" /></element>
+	</group>
+
+	<group name="key_shifted">
+		<bounds x="0" y="0" width="71" height="71" />
+		<element ref="cap" inputtag="~port~" inputmask="~mask~"><bounds x="0" y="0" width="71" height="71" /></element>
+		<element ref="~s~"><bounds x="8" y="7" width="20" height="20" /></element>
+		<element ref="~a~"><bounds x="24" y="24" width="30" height="28" /></element>
+	</group>
+
+	<!-- the P key has its @ in the top right corner -->
+	<group name="key_shifted_right">
+		<bounds x="0" y="0" width="71" height="71" />
+		<element ref="cap" inputtag="~port~" inputmask="~mask~"><bounds x="0" y="0" width="71" height="71" /></element>
+		<element ref="~s~"><bounds x="43" y="7" width="20" height="20" /></element>
+		<element ref="~a~"><bounds x="17" y="24" width="30" height="28" /></element>
+	</group>
+
+	<group name="key_word">
+		<bounds x="0" y="0" width="71" height="71" />
+		<element ref="cap" inputtag="~port~" inputmask="~mask~"><bounds x="0" y="0" width="71" height="71" /></element>
+		<element ref="~a~"><bounds x="8" y="26" width="55" height="14" /></element>
+	</group>
+
+	<group name="key_words">
+		<bounds x="0" y="0" width="71" height="71" />
+		<element ref="cap" inputtag="~port~" inputmask="~mask~"><bounds x="0" y="0" width="71" height="71" /></element>
+		<element ref="~a~"><bounds x="8" y="17" width="55" height="14" /></element>
+		<element ref="~b~"><bounds x="8" y="35" width="55" height="14" /></element>
+	</group>
+
+	<!--
+	The latching keys take the MODES bit in mask.  inputraw draws them from
+	the setting itself, so pushed in means on; without it a key is drawn from
+	whether the setting differs from its default, and SCROLL, AUTO CARRY,
+	FULL DUPLEX and BAUD RATE, which default to on, would show backwards.
+	-->
+	<group name="latch_word">
+		<bounds x="0" y="0" width="71" height="71" />
+		<element ref="latchcap" inputtag="MODES" inputmask="~mask~" inputraw="yes"><bounds x="0" y="0" width="71" height="71" /></element>
+		<element ref="~a~"><bounds x="8" y="26" width="55" height="14" /></element>
+	</group>
+
+	<group name="latch_words">
+		<bounds x="0" y="0" width="71" height="71" />
+		<element ref="latchcap" inputtag="MODES" inputmask="~mask~" inputraw="yes"><bounds x="0" y="0" width="71" height="71" /></element>
+		<element ref="~a~"><bounds x="8" y="17" width="55" height="14" /></element>
+		<element ref="~b~"><bounds x="8" y="35" width="55" height="14" /></element>
+	</group>
+
+
+	<group name="hood">
+		<element ref="cabinet"><bounds x="0" y="0" width="1540" height="1000" /></element>
+		<element ref="glass"><bounds x="240" y="90" width="1060" height="800" /></element>
+		<screen tag="screen" blend="add"><bounds x="350" y="175" width="840" height="630" /></screen>
+	</group>
+
+	<group name="keyboard">
+		<!-- the row of function keys, to the right of the nameplate -->
+		<param name="mask" value="0x40" /><param name="a" value="w_BAUD" /><param name="b" value="w_RATE" />
+		<group ref="latch_words"><bounds x="639" y="1080" width="71" height="71" /></group>
+		<param name="mask" value="0x10" /><param name="a" value="w_FULL" /><param name="b" value="w_DUPLEX" />
+		<group ref="latch_words"><bounds x="714" y="1080" width="71" height="71" /></group>
+		<param name="mask" value="0x20" /><param name="a" value="w_OFF" /><param name="b" value="w_LINE" />
+		<group ref="latch_words"><bounds x="789" y="1080" width="71" height="71" /></group>
+		<param name="port" value="X4" /><param name="mask" value="0x80" /><param name="a" value="w_XMIT" /><param name="b" value="w_PAGE" />
+		<group ref="key_words"><bounds x="864" y="1080" width="71" height="71" /></group>
+		<param name="mask" value="0x08" /><param name="a" value="w_PLOT" />
+		<group ref="latch_word"><bounds x="939" y="1080" width="71" height="71" /></group>
+		<param name="mask" value="0x02" /><param name="a" value="w_AUTO" /><param name="b" value="w_CARRY" />
+		<group ref="latch_words"><bounds x="1014" y="1080" width="71" height="71" /></group>
+		<param name="port" value="MODIFIERS" /><param name="mask" value="0x10" /><param name="a" value="w_BREAK" />
+		<group ref="key_word"><bounds x="1089" y="1080" width="71" height="71" /></group>
+		<param name="port" value="X4" /><param name="mask" value="0x40" /><param name="a" value="w_ERASE" /><param name="b" value="w_PAGE" />
+		<group ref="key_words"><bounds x="1164" y="1080" width="71" height="71" /></group>
+		<param name="port" value="X4" /><param name="mask" value="0x20" /><param name="a" value="w_ERASE" /><param name="b" value="w_EOL" />
+		<group ref="key_words"><bounds x="1239" y="1080" width="71" height="71" /></group>
+
+		<!-- 1 to - and SCROLL -->
+		<param name="port" value="X0" />
+		<param name="mask" value="0x0001" /><param name="a" value="l_1" /><param name="s" value="l_excl" />
+		<group ref="key_shifted"><bounds x="226.5" y="1230" width="71" height="71" /></group>
+		<param name="mask" value="0x0002" /><param name="a" value="l_2" /><param name="s" value="l_quot" />
+		<group ref="key_shifted"><bounds x="301.5" y="1230" width="71" height="71" /></group>
+		<param name="mask" value="0x0004" /><param name="a" value="l_3" /><param name="s" value="l_hash" />
+		<group ref="key_shifted"><bounds x="376.5" y="1230" width="71" height="71" /></group>
+		<param name="mask" value="0x0008" /><param name="a" value="l_4" /><param name="s" value="l_dollar" />
+		<group ref="key_shifted"><bounds x="451.5" y="1230" width="71" height="71" /></group>
+		<param name="mask" value="0x0010" /><param name="a" value="l_5" /><param name="s" value="l_percent" />
+		<group ref="key_shifted"><bounds x="526.5" y="1230" width="71" height="71" /></group>
+		<param name="mask" value="0x0020" /><param name="a" value="l_6" /><param name="s" value="l_amp" />
+		<group ref="key_shifted"><bounds x="601.5" y="1230" width="71" height="71" /></group>
+		<param name="mask" value="0x0040" /><param name="a" value="l_7" /><param name="s" value="l_apos" />
+		<group ref="key_shifted"><bounds x="676.5" y="1230" width="71" height="71" /></group>
+		<param name="mask" value="0x0080" /><param name="a" value="l_8" /><param name="s" value="l_lparen" />
+		<group ref="key_shifted"><bounds x="751.5" y="1230" width="71" height="71" /></group>
+		<param name="mask" value="0x0100" /><param name="a" value="l_9" /><param name="s" value="l_rparen" />
+		<group ref="key_shifted"><bounds x="826.5" y="1230" width="71" height="71" /></group>
+		<param name="mask" value="0x0200" /><param name="a" value="l_0" />
+		<group ref="key"><bounds x="901.5" y="1230" width="71" height="71" /></group>
+		<param name="mask" value="0x0400" /><param name="a" value="l_colon" /><param name="s" value="l_star" />
+		<group ref="key_shifted"><bounds x="976.5" y="1230" width="71" height="71" /></group>
+		<param name="mask" value="0x1000" /><param name="a" value="l_minus" /><param name="s" value="l_equals" />
+		<group ref="key_shifted"><bounds x="1051.5" y="1230" width="71" height="71" /></group>
+		<param name="mask" value="0x04" /><param name="a" value="w_SCROLL" />
+		<group ref="latch_word"><bounds x="1126.5" y="1230" width="71" height="71" /></group>
+
+		<!-- ESC to up cursor -->
+		<param name="port" value="X2" /><param name="mask" value="0x0800" /><param name="a" value="w_ESC" />
+		<group ref="key_word"><bounds x="189" y="1305" width="71" height="71" /></group>
+		<param name="port" value="X1" />
+		<param name="mask" value="0x0001" /><param name="a" value="l_Q" />
+		<group ref="key"><bounds x="264" y="1305" width="71" height="71" /></group>
+		<param name="mask" value="0x0002" /><param name="a" value="l_W" />
+		<group ref="key"><bounds x="339" y="1305" width="71" height="71" /></group>
+		<param name="mask" value="0x0004" /><param name="a" value="l_E" />
+		<group ref="key"><bounds x="414" y="1305" width="71" height="71" /></group>
+		<param name="mask" value="0x0008" /><param name="a" value="l_R" />
+		<group ref="key"><bounds x="489" y="1305" width="71" height="71" /></group>
+		<param name="mask" value="0x0010" /><param name="a" value="l_T" />
+		<group ref="key"><bounds x="564" y="1305" width="71" height="71" /></group>
+		<param name="mask" value="0x0020" /><param name="a" value="l_Y" />
+		<group ref="key"><bounds x="639" y="1305" width="71" height="71" /></group>
+		<param name="mask" value="0x0040" /><param name="a" value="l_U" />
+		<group ref="key"><bounds x="714" y="1305" width="71" height="71" /></group>
+		<param name="mask" value="0x0080" /><param name="a" value="l_I" />
+		<group ref="key"><bounds x="789" y="1305" width="71" height="71" /></group>
+		<param name="mask" value="0x0100" /><param name="a" value="l_O" /><param name="s" value="l_underscore" />
+		<group ref="key_shifted"><bounds x="864" y="1305" width="71" height="71" /></group>
+		<param name="mask" value="0x0200" /><param name="a" value="l_P" /><param name="s" value="l_at" />
+		<group ref="key_shifted_right"><bounds x="939" y="1305" width="71" height="71" /></group>
+		<param name="port" value="X3" /><param name="mask" value="0x0800" /><param name="a" value="w_LINE" /><param name="b" value="w_FEED" />
+		<group ref="key_words"><bounds x="1014" y="1305" width="71" height="71" /></group>
+		<param name="port" value="X2" /><param name="mask" value="0x1000" /><param name="a" value="w_RETURN" />
+		<group ref="key_word"><bounds x="1089" y="1305" width="71" height="71" /></group>
+		<param name="mask" value="0x01" /><param name="a" value="w_SHORT" /><param name="b" value="w_FORM" />
+		<group ref="latch_words"><bounds x="1164" y="1305" width="71" height="71" /></group>
+		<param name="port" value="X4" /><param name="mask" value="0x02" /><param name="a" value="a_up" />
+		<group ref="key"><bounds x="1239" y="1305" width="71" height="71" /></group>
+
+		<!-- CTRL to right cursor -->
+		<param name="port" value="MODIFIERS" /><param name="mask" value="0x04" /><param name="a" value="w_CTRL" />
+		<group ref="key_word"><bounds x="226.5" y="1380" width="71" height="71" /></group>
+		<param name="port" value="X2" />
+		<param name="mask" value="0x0001" /><param name="a" value="l_A" />
+		<group ref="key"><bounds x="301.5" y="1380" width="71" height="71" /></group>
+		<param name="mask" value="0x0002" /><param name="a" value="l_S" />
+		<group ref="key"><bounds x="376.5" y="1380" width="71" height="71" /></group>
+		<param name="mask" value="0x0004" /><param name="a" value="l_D" />
+		<group ref="key"><bounds x="451.5" y="1380" width="71" height="71" /></group>
+		<param name="mask" value="0x0008" /><param name="a" value="l_F" />
+		<group ref="key"><bounds x="526.5" y="1380" width="71" height="71" /></group>
+		<param name="mask" value="0x0010" /><param name="a" value="l_G" />
+		<group ref="key"><bounds x="601.5" y="1380" width="71" height="71" /></group>
+		<param name="mask" value="0x0020" /><param name="a" value="l_H" />
+		<group ref="key"><bounds x="676.5" y="1380" width="71" height="71" /></group>
+		<param name="mask" value="0x0040" /><param name="a" value="l_J" />
+		<group ref="key"><bounds x="751.5" y="1380" width="71" height="71" /></group>
+		<param name="mask" value="0x0080" /><param name="a" value="l_K" /><param name="s" value="l_lbracket" />
+		<group ref="key_shifted"><bounds x="826.5" y="1380" width="71" height="71" /></group>
+		<param name="mask" value="0x0100" /><param name="a" value="l_L" /><param name="s" value="l_backslash" />
+		<group ref="key_shifted"><bounds x="901.5" y="1380" width="71" height="71" /></group>
+		<param name="port" value="X0" /><param name="mask" value="0x0800" /><param name="a" value="l_semi" /><param name="s" value="l_plus" />
+		<group ref="key_shifted"><bounds x="976.5" y="1380" width="71" height="71" /></group>
+		<param name="port" value="X3" /><param name="mask" value="0x1000" /><param name="a" value="w_RUB" /><param name="b" value="w_OUT" />
+		<group ref="key_words"><bounds x="1051.5" y="1380" width="71" height="71" /></group>
+		<param name="port" value="MODIFIERS" /><param name="mask" value="0x08" /><param name="a" value="w_REPT" />
+		<group ref="key_word"><bounds x="1126.5" y="1380" width="71" height="71" /></group>
+		<param name="port" value="X4" /><param name="mask" value="0x08" /><param name="a" value="a_left" />
+		<group ref="key"><bounds x="1201.5" y="1380" width="71" height="71" /></group>
+		<param name="port" value="X4" /><param name="mask" value="0x10" /><param name="a" value="a_right" />
+		<group ref="key"><bounds x="1276.5" y="1380" width="71" height="71" /></group>
+
+		<!-- SHIFT to down cursor -->
+		<param name="port" value="MODIFIERS" /><param name="mask" value="0x01" /><param name="a" value="w_SHIFT" />
+		<group ref="key_word"><bounds x="264" y="1455" width="71" height="71" /></group>
+		<param name="port" value="X3" />
+		<param name="mask" value="0x0001" /><param name="a" value="l_Z" />
+		<group ref="key"><bounds x="339" y="1455" width="71" height="71" /></group>
+		<param name="mask" value="0x0002" /><param name="a" value="l_X" />
+		<group ref="key"><bounds x="414" y="1455" width="71" height="71" /></group>
+		<param name="mask" value="0x0004" /><param name="a" value="l_C" />
+		<group ref="key"><bounds x="489" y="1455" width="71" height="71" /></group>
+		<param name="mask" value="0x0008" /><param name="a" value="l_V" />
+		<group ref="key"><bounds x="564" y="1455" width="71" height="71" /></group>
+		<param name="mask" value="0x0010" /><param name="a" value="l_B" />
+		<group ref="key"><bounds x="639" y="1455" width="71" height="71" /></group>
+		<param name="mask" value="0x0020" /><param name="a" value="l_N" /><param name="s" value="a_up" />
+		<group ref="key_shifted"><bounds x="714" y="1455" width="71" height="71" /></group>
+		<param name="mask" value="0x0040" /><param name="a" value="l_M" /><param name="s" value="l_rbracket" />
+		<group ref="key_shifted"><bounds x="789" y="1455" width="71" height="71" /></group>
+		<param name="mask" value="0x0080" /><param name="a" value="l_comma" /><param name="s" value="l_less" />
+		<group ref="key_shifted"><bounds x="864" y="1455" width="71" height="71" /></group>
+		<param name="mask" value="0x0100" /><param name="a" value="l_period" /><param name="s" value="l_greater" />
+		<group ref="key_shifted"><bounds x="939" y="1455" width="71" height="71" /></group>
+		<param name="mask" value="0x0200" /><param name="a" value="l_slash" /><param name="s" value="l_question" />
+		<group ref="key_shifted"><bounds x="1014" y="1455" width="71" height="71" /></group>
+		<param name="port" value="MODIFIERS" /><param name="mask" value="0x02" /><param name="a" value="w_SHIFT" />
+		<group ref="key_word"><bounds x="1089" y="1455" width="71" height="71" /></group>
+		<param name="port" value="X4" /><param name="mask" value="0x01" /><param name="a" value="w_HOME" />
+		<group ref="key_word"><bounds x="1164" y="1455" width="71" height="71" /></group>
+		<param name="port" value="X4" /><param name="mask" value="0x04" /><param name="a" value="a_down" />
+		<group ref="key"><bounds x="1239" y="1455" width="71" height="71" /></group>
+
+		<element ref="spacebar" inputtag="X3" inputmask="0x0400"><bounds x="489" y="1530" width="596" height="71" /></element>
+	</group>
+
+	<group name="terminal">
+		<group ref="hood"><bounds x="0" y="0" width="1540" height="1000" /></group>
+
+		<!-- the keyboard deck, between the two black side panels -->
+		<element ref="cabinet"><bounds x="0" y="1000" width="40" height="730" /></element>
+		<element ref="cabinet"><bounds x="1500" y="1000" width="40" height="730" /></element>
+		<element ref="deck_back"><bounds x="40" y="1000" width="1460" height="36" /></element>
+		<element ref="deck"><bounds x="40" y="1036" width="1460" height="664" /></element>
+		<element ref="deck_front"><bounds x="40" y="1700" width="1460" height="30" /></element>
+
+		<element ref="plate_frame"><bounds x="219" y="1086" width="400" height="60" /></element>
+		<element ref="plate"><bounds x="222" y="1089" width="394" height="54" /></element>
+		<element ref="t_heathkit"><bounds x="234" y="1102" width="230" height="26" /></element>
+		<element ref="plate_insert"><bounds x="478" y="1091" width="136" height="50" /></element>
+		<element ref="t_h9"><bounds x="516" y="1099" width="60" height="34" /></element>
+
+		<group ref="keyboard" />
+	</group>
+
+
+	<view name="Terminal">
+		<group ref="terminal"><bounds x="0" y="0" width="1540" height="1730" /></group>
+	</view>
+
+	<view name="Screen">
+		<group ref="hood"><bounds x="0" y="0" width="1540" height="1000" /></group>
+	</view>
+
+</mamelayout>
