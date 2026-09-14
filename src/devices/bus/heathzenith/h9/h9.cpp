@@ -597,15 +597,22 @@ void heath_h9_device::key_make(u8 row, u8 column)
 {
 	// Rows 0 to 3 are the ASCII keys, laid out unshifted/shifted; rows 4 and
 	// up are the local function keys, which send nothing.
+	//
+	// SHIFT sends "the character printed on the upper portion of that key"
+	// (H9 Operations, page 7), and Pictorial 6-11 of the assembly manual
+	// shows what is printed there: the keyboard is bit-paired, like a
+	// Teletype's, so @ [ \ ] ^ _ are SHIFT on P K L M N O and have no keys of
+	// their own.  Nothing is printed above 0, and what SHIFT 0 sends is not
+	// documented, so it sends 0.
 	static const char ASCII[4][16][2] =
 	{
 		{ {'1','!'}, {'2','"'}, {'3','#'}, {'4','$'}, {'5','%'}, {'6','&'}, {'7','\''}, {'8','('},
-		  {'9',')'}, {'0','_'}, {':','*'}, {';','+'}, {'-','='}, {0,0}, {0,0}, {0,0} },
+		  {'9',')'}, {'0','0'}, {':','*'}, {';','+'}, {'-','='}, {0,0}, {0,0}, {0,0} },
 		{ {'Q','Q'}, {'W','W'}, {'E','E'}, {'R','R'}, {'T','T'}, {'Y','Y'}, {'U','U'}, {'I','I'},
-		  {'O','O'}, {'P','P'}, {'@','@'}, {'[','['}, {'\\','\\'}, {0,0}, {0,0}, {0,0} },
-		{ {'A','A'}, {'S','S'}, {'D','D'}, {'F','F'}, {'G','G'}, {'H','H'}, {'J','J'}, {'K','K'},
-		  {'L','L'}, {']',']'}, {'^','^'}, {0x1b,0x1b}, {0x0d,0x0d}, {0,0}, {0,0}, {0,0} },
-		{ {'Z','Z'}, {'X','X'}, {'C','C'}, {'V','V'}, {'B','B'}, {'N','N'}, {'M','M'}, {',','<'},
+		  {'O','_'}, {'P','@'}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0}, {0,0} },
+		{ {'A','A'}, {'S','S'}, {'D','D'}, {'F','F'}, {'G','G'}, {'H','H'}, {'J','J'}, {'K','['},
+		  {'L','\\'}, {0,0}, {0,0}, {0x1b,0x1b}, {0x0d,0x0d}, {0,0}, {0,0}, {0,0} },
+		{ {'Z','Z'}, {'X','X'}, {'C','C'}, {'V','V'}, {'B','B'}, {'N','^'}, {'M',']'}, {',','<'},
 		  {'.','>'}, {'/','?'}, {' ',' '}, {0x0a,0x0a}, {0x7f,0x7f}, {0,0}, {0,0}, {0,0} },
 	};
 
@@ -621,8 +628,9 @@ void heath_h9_device::key_make(u8 row, u8 column)
 		if (!ch)
 			return;
 
-		// CTRL clears bits 6 and 7.  CTRL/SHIFT P is documented as producing
-		// a null; so does CTRL with the @ key, which is the same code.
+		// CTRL clears bits 6 and 7.  With the bit pairing that reaches all
+		// 32 control characters the manual promises, CTRL/SHIFT P giving the
+		// null it documents (H9 Operations, pages 7 and 8).
 		if (ctrl)
 			ch &= 0x1f;
 
@@ -872,7 +880,7 @@ static INPUT_PORTS_START( h9 )
 	PORT_BIT(0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_7) PORT_CHAR('7') PORT_CHAR('\'')
 	PORT_BIT(0x0080, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_8) PORT_CHAR('8') PORT_CHAR('(')
 	PORT_BIT(0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_9) PORT_CHAR('9') PORT_CHAR(')')
-	PORT_BIT(0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_0) PORT_CHAR('0') PORT_CHAR('_')
+	PORT_BIT(0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_0) PORT_CHAR('0')
 	PORT_BIT(0x0400, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_QUOTE) PORT_CHAR(':') PORT_CHAR('*')
 	PORT_BIT(0x0800, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_COLON) PORT_CHAR(';') PORT_CHAR('+')
 	PORT_BIT(0x1000, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_MINUS) PORT_CHAR('-') PORT_CHAR('=')
@@ -886,11 +894,8 @@ static INPUT_PORTS_START( h9 )
 	PORT_BIT(0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_Y) PORT_CHAR('Y')
 	PORT_BIT(0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_U) PORT_CHAR('U')
 	PORT_BIT(0x0080, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_I) PORT_CHAR('I')
-	PORT_BIT(0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_O) PORT_CHAR('O')
-	PORT_BIT(0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_P) PORT_CHAR('P')
-	PORT_BIT(0x0400, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_TILDE) PORT_CHAR('@')
-	PORT_BIT(0x0800, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_OPENBRACE) PORT_CHAR('[')
-	PORT_BIT(0x1000, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_BACKSLASH) PORT_CHAR('\\')
+	PORT_BIT(0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_O) PORT_CHAR('O') PORT_CHAR('_')
+	PORT_BIT(0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_P) PORT_CHAR('P') PORT_CHAR('@')
 
 	PORT_START("X2")
 	PORT_BIT(0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_A) PORT_CHAR('A')
@@ -900,10 +905,8 @@ static INPUT_PORTS_START( h9 )
 	PORT_BIT(0x0010, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_G) PORT_CHAR('G')
 	PORT_BIT(0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_H) PORT_CHAR('H')
 	PORT_BIT(0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_J) PORT_CHAR('J')
-	PORT_BIT(0x0080, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_K) PORT_CHAR('K')
-	PORT_BIT(0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_L) PORT_CHAR('L')
-	PORT_BIT(0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_CLOSEBRACE) PORT_CHAR(']')
-	PORT_BIT(0x0400, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_EQUALS) PORT_CHAR('^')
+	PORT_BIT(0x0080, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_K) PORT_CHAR('K') PORT_CHAR('[')
+	PORT_BIT(0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_L) PORT_CHAR('L') PORT_CHAR('\\')
 	PORT_BIT(0x0800, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_ESC) PORT_NAME("ESC") PORT_CHAR(UCHAR_MAMEKEY(ESC))
 	PORT_BIT(0x1000, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_ENTER) PORT_NAME("RETURN") PORT_CHAR(13)
 
@@ -913,8 +916,8 @@ static INPUT_PORTS_START( h9 )
 	PORT_BIT(0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_C) PORT_CHAR('C')
 	PORT_BIT(0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_V) PORT_CHAR('V')
 	PORT_BIT(0x0010, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_B) PORT_CHAR('B')
-	PORT_BIT(0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_N) PORT_CHAR('N')
-	PORT_BIT(0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_M) PORT_CHAR('M')
+	PORT_BIT(0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_N) PORT_CHAR('N') PORT_CHAR('^')
+	PORT_BIT(0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_M) PORT_CHAR('M') PORT_CHAR(']')
 	PORT_BIT(0x0080, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_COMMA) PORT_CHAR(',') PORT_CHAR('<')
 	PORT_BIT(0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_STOP) PORT_CHAR('.') PORT_CHAR('>')
 	PORT_BIT(0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_CODE(KEYCODE_SLASH) PORT_CHAR('/') PORT_CHAR('?')
