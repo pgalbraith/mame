@@ -15,6 +15,7 @@
 
 DECLARE_DEVICE_TYPE(S100_MITS_1MCS, device_s100_card_interface)
 DECLARE_DEVICE_TYPE(S100_MITS_4MCS, device_s100_card_interface)
+DECLARE_DEVICE_TYPE(S100_MITS_S4K, device_s100_card_interface)
 DECLARE_DEVICE_TYPE(S100_MITS_16MCS, device_s100_card_interface)
 DECLARE_DEVICE_TYPE(S100_MITS_16MCD, device_s100_card_interface)
 

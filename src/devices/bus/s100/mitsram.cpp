@@ -17,6 +17,16 @@
     2102 RAMs, 4K, or 2K when sold as the 88-2MCS. A four position DIP
     switch sets A12-A15. Its protect latch is cleared at power-on.
 
+    88-S4K (1976)
+    Eight 4K-bit dynamic RAMs, 4K, run wholly from the CPU's clocks so that
+    it needs no wait states. It refreshes one row of the RAMs every 32 us,
+    during T4 of an instruction fetch while running and on its own while
+    stopped or halted. Four switches set A12-A15, and its protect latch,
+    cleared at power-on, works as the 88-4MCS's does. RAM never fades here,
+    so refresh is not emulated. A November 1976 addendum modifies the board
+    to work beside boards that ask for wait states, such as the 88-PMC and
+    88-1MCS; those wait states are not emulated, so nothing here needs it.
+
     88-16MCS (1976)
     4200 RAMs, 16K. Four switches, one per 16K block; closing exactly one
     is intended, and closing two makes the board answer in both. No
@@ -42,6 +52,7 @@
       [https://altairclone.com/downloads/manuals/Altair%208800%20Theory%20of%20Operation.pdf]
     - 88-1MCS schematic 880-107 [https://deramp.com/downloads/altair/hardware/altair_8800_computer/Altair%20Schematics.pdf]
     - 88-4MCS manual [https://deramp.com/downloads/altair/hardware/MITS%2088-4MCS%204K%20Static%20RAM.pdf]
+    - 88-S4K documentation, 1976, with its November 1976 addendum
     - 88-16MCS documentation, April 1977 [http://www.bitsavers.org/pdf/mits/8800/Altair_88-16K_SRAM_Documentation_197704.pdf]
     - 88-16MCD documentation, July 1977
 
@@ -158,7 +169,7 @@ ioport_constructor s100_mits_1mcs_device::device_input_ports() const
 
 
 //**************************************************************************
-//  88-4MCS
+//  88-4MCS and 88-S4K
 //**************************************************************************
 
 class s100_mits_4mcs_device : public device_t, public device_s100_card_interface
@@ -167,6 +178,8 @@ public:
 	s100_mits_4mcs_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 
 protected:
+	s100_mits_4mcs_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock);
+
 	// device_t implementation
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_reset() override ATTR_COLD;
@@ -182,21 +195,26 @@ protected:
 private:
 	// A12-A15 select the board; A10 and A11 pick one of four rows of RAM, two on a 2K board
 	bool board_selected(offs_t offset) { return (offset >> 12) == m_switches->read(); }
-	bool ram_selected(offs_t offset) { return board_selected(offset) && ((offset >> 10) & 3) <= m_size->read(); }
+	bool ram_selected(offs_t offset) { return board_selected(offset) && ((offset >> 10) & 3) <= m_size.read_safe(3); }
 
 	required_ioport m_switches;
-	required_ioport m_size;
+	optional_ioport m_size;         // 88-4MCS only
 	u8 m_ram[0x1000];
 	bool m_protected;
 };
 
-s100_mits_4mcs_device::s100_mits_4mcs_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
-	: device_t(mconfig, S100_MITS_4MCS, tag, owner, clock)
+s100_mits_4mcs_device::s100_mits_4mcs_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock)
+	: device_t(mconfig, type, tag, owner, clock)
 	, device_s100_card_interface(mconfig, *this)
 	, m_switches(*this, "S1")
 	, m_size(*this, "SIZE")
 	, m_ram{ }
 	, m_protected(false)
+{
+}
+
+s100_mits_4mcs_device::s100_mits_4mcs_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
+	: s100_mits_4mcs_device(mconfig, S100_MITS_4MCS, tag, owner, clock)
 {
 }
 
@@ -243,7 +261,7 @@ int s100_mits_4mcs_device::s100_ps_r(offs_t offset)
 	return (ram_selected(offset) && m_protected) ? 0 : 1;
 }
 
-static INPUT_PORTS_START( mits_4mcs )
+static INPUT_PORTS_START( mits_4k_address )
 	// a switch that is on selects a 1 in that address bit
 	PORT_START("S1")
 	PORT_DIPNAME(0x08, 0x00, "Address A15")
@@ -258,6 +276,10 @@ static INPUT_PORTS_START( mits_4mcs )
 	PORT_DIPNAME(0x01, 0x00, "Address A12")
 	PORT_DIPSETTING(0x00, DEF_STR(Off))
 	PORT_DIPSETTING(0x01, DEF_STR(On))
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( mits_4mcs )
+	PORT_INCLUDE(mits_4k_address)
 
 	PORT_START("SIZE")
 	PORT_CONFNAME(0x03, 0x03, "RAM fitted")
@@ -269,6 +291,20 @@ ioport_constructor s100_mits_4mcs_device::device_input_ports() const
 {
 	return INPUT_PORTS_NAME(mits_4mcs);
 }
+
+// the synchronous board is addressed and protected the same way, and is
+// always 4K
+class s100_mits_s4k_device : public s100_mits_4mcs_device
+{
+public:
+	s100_mits_s4k_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
+		: s100_mits_4mcs_device(mconfig, S100_MITS_S4K, tag, owner, clock)
+	{
+	}
+
+protected:
+	virtual ioport_constructor device_input_ports() const override ATTR_COLD { return INPUT_PORTS_NAME(mits_4k_address); }
+};
 
 
 //**************************************************************************
@@ -364,5 +400,6 @@ ioport_constructor s100_mits_16mcs_device::device_input_ports() const
 
 DEFINE_DEVICE_TYPE_PRIVATE(S100_MITS_1MCS, device_s100_card_interface, s100_mits_1mcs_device, "s100_mits_1mcs", "MITS 88-1MCS 1K Static RAM")
 DEFINE_DEVICE_TYPE_PRIVATE(S100_MITS_4MCS, device_s100_card_interface, s100_mits_4mcs_device, "s100_mits_4mcs", "MITS 88-4MCS 4K Static RAM")
+DEFINE_DEVICE_TYPE_PRIVATE(S100_MITS_S4K, device_s100_card_interface, s100_mits_s4k_device, "s100_mits_s4k", "MITS 88-S4K 4K Synchronous RAM")
 DEFINE_DEVICE_TYPE_PRIVATE(S100_MITS_16MCS, device_s100_card_interface, s100_mits_16mcs_device, "s100_mits_16mcs", "MITS 88-16MCS 16K Static RAM")
 DEFINE_DEVICE_TYPE_PRIVATE(S100_MITS_16MCD, device_s100_card_interface, s100_mits_16mcd_device, "s100_mits_16mcd", "MITS 88-16MCD 16K Dynamic RAM")

@@ -738,6 +738,7 @@ static void al8800_s100_cards(device_slot_interface &device)
 {
 	device.option_add("1mcs", S100_MITS_1MCS);
 	device.option_add("4mcs", S100_MITS_4MCS);
+	device.option_add("s4k", S100_MITS_S4K);
 	device.option_add("16mcs", S100_MITS_16MCS);
 	device.option_add("16mcd", S100_MITS_16MCD);
 	device.option_add("pmc", S100_MITS_PMC);
