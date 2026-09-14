@@ -1227,18 +1227,14 @@ void ioport_field::frame_update(ioport_value &result)
 		return;
 	}
 
-	// while a menu or startup screen is displayed, or the key that opens the
-	// menu is down, ignore digital inputs; lock each one out until it's
-	// released, so the key that opened or dismissed it isn't passed on to the
-	// emulated system when it goes away
-	if (machine().ui().is_capturing_input())
+	// while the UI is taking input, ignore digital inputs, and lock the field
+	// out until it's released afterwards, so the key that opens or dismisses a
+	// menu isn't passed on to the emulated system when the menu goes away
+	if (manager().ui_capturing_input())
 	{
-		m_live->lockout = true;
-		m_live->last = false;
+		m_live->ui_lockout = true;
 		return;
 	}
-	if (m_live->lockout && !machine().input().seq_pressed(seq()))
-		m_live->lockout = false;
 
 	// if user input is locked out here, bail
 	if (m_live->lockout)
@@ -1249,8 +1245,14 @@ void ioport_field::frame_update(ioport_value &result)
 		return;
 	}
 
+	// get the current state, ignoring a key still held from the UI
+	bool curstate = m_digital_value;
+	if (m_live->ui_lockout)
+		m_live->ui_lockout = machine().input().seq_pressed(seq());
+	else if (!curstate)
+		curstate = machine().input().seq_pressed(seq());
+
 	// if the state changed, look for switch down/switch up
-	bool curstate = m_digital_value || machine().input().seq_pressed(seq());
 	bool changed = false;
 	if (curstate != m_live->last)
 	{
@@ -1481,7 +1483,8 @@ ioport_field_live::ioport_field_live(ioport_field &field, analog_field *analog) 
 	last(0),
 	toggle(field.toggle()),
 	joydir(digital_joystick::JOYDIR_COUNT),
-	lockout(false)
+	lockout(false),
+	ui_lockout(false)
 {
 	// fill in the basic values
 	for (input_seq_type seqtype = SEQ_TYPE_STANDARD; seqtype < SEQ_TYPE_TOTAL; ++seqtype)
@@ -1792,6 +1795,7 @@ ioport_port_live::ioport_port_live(ioport_port &port) :
 ioport_manager::ioport_manager(running_machine &machine) :
 	m_machine(machine),
 	m_safe_to_read(false),
+	m_ui_capturing(false),
 	m_last_frame_time(attotime::zero),
 	m_last_delta_nsec(0),
 	m_playback_accumulated_speed(0),
@@ -2156,27 +2160,17 @@ digital_joystick &ioport_manager::digjoystick(int player, int number)
 
 void ioport_manager::frame_update_callback()
 {
+	// note when the UI is taking input; startup screens are shown before the
+	// machine is running, so this has to be checked while paused as well, and
+	// carried over to the first update after
+	if (machine().ui().is_capturing_input())
+		m_ui_capturing = true;
+
 	// if we're paused, don't update the ports
 	if (!machine().paused())
 	{
 		frame_update();
-	}
-	else if (machine().ui().is_capturing_input())
-	{
-		// startup screens are shown before the machine is running, so the ports
-		// aren't updated while they're up; lock digital inputs out here too, so the
-		// key that dismisses one is still ignored once emulation starts
-		for (auto &port : m_portlist)
-		{
-			for (ioport_field &field : port.second->fields())
-			{
-				if (!field.live().analog)
-				{
-					field.live().lockout = true;
-					field.live().last = false;
-				}
-			}
-		}
+		m_ui_capturing = false;
 	}
 }
 
