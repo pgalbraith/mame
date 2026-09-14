@@ -707,9 +707,13 @@ void vt5x_cpu_device::clock_video_counters()
 			}
 			else
 				m_current_line++;
-			m_baud_9600_callback(0);
 		}
-		else if (m_horiz_count == 4)
+
+		// The 16x clock for 9600 baud is QC of the 74161 that counts characters within each ten (E23 on the VT50's ROM
+		// UART and Timing board), so it is high for counts 4 to 7 of every ten characters, not once per scan line.
+		if ((m_horiz_count & 15) == 8)
+			m_baud_9600_callback(0);
+		else if ((m_horiz_count & 15) == 4)
 			m_baud_9600_callback(1);
 	}
 }

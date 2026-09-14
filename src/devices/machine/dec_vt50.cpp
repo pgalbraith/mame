@@ -104,9 +104,8 @@ u8 dec_vt50_device::key_r(offs_t offset)
 void dec_vt50_device::vert_count_w(u8 data)
 {
 	// The CPU's vertical counter steps once every ten characters, 153.6 kHz, which is the 1402's 16x clock for 9600 baud.
-	// Do not use baud_9600_callback instead: it fires once per scan line, 15.36 kHz, and every speed comes out 10x slow
-	// (measured from the 1402's receive pulse count). Two 74197s ripple-divide 9600 baud down to 75 baud, and a 74161
-	// reloaded with 5 divides the 1200 baud output by 11 for 110 baud.
+	// Two 74197s ripple-divide 9600 baud down to 75 baud, and a 74161 reloaded with 5 divides the 1200 baud output by 11
+	// for 110 baud.
 	const u8 old = m_baud_divider;
 	m_baud_divider = (m_baud_divider + 1) & 0177;
 	if (!BIT(old, 2) && BIT(m_baud_divider, 2))
