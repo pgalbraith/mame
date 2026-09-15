@@ -734,7 +734,6 @@ struct ioport_field_live
 	bool                    toggle;             // current toggle setting
 	digital_joystick::direction_t joydir;       // digital joystick direction index
 	bool                    lockout;            // user lockout
-	bool                    ui_lockout;         // locked out until released, after the UI took input
 	std::string             name;               // overridden name
 	std::string             cfg[SEQ_TYPE_TOTAL];// configuration strings
 };
@@ -947,7 +946,6 @@ public:
 	running_machine &machine() const noexcept { return m_machine; }
 	const ioport_list &ports() const noexcept { return m_portlist; }
 	bool safe_to_read() const noexcept { return m_safe_to_read; }
-	bool ui_capturing_input() const noexcept { return m_ui_capturing; }
 
 	// type helpers
 	const std::vector<input_type_entry> &types() const noexcept { return m_typelist; }
@@ -1006,7 +1004,6 @@ private:
 	// internal state
 	running_machine &       m_machine;              // reference to owning machine
 	bool                    m_safe_to_read;         // clear at start; set after state is loaded
-	bool                    m_ui_capturing;         // has the UI taken input since the last update?
 	ioport_list             m_portlist;             // list of input port configurations
 
 	// types
