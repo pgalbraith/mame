@@ -155,9 +155,7 @@ device_rs232_port_interface::~device_rs232_port_interface()
 
 
 #include "adsp2181ekl.h"
-#include "asr33.h"
 #include "auto3a.h"
-#include "dec_vt50.h"
 #include "ie15.h"
 #include "heath_h19.h"
 #include "heath_h9.h"
@@ -184,7 +182,6 @@ template class device_finder<device_rs232_port_interface, true>;
 void default_rs232_devices(device_slot_interface &device)
 {
 	device.option_add("adsp2181ekl",   ADSP2181EKL);
-	device.option_add("asr33",         SERIAL_TERMINAL_ASR33);
 	device.option_add("auto3a",        SERIAL_TERMINAL_AUTO3A);
 	device.option_add("dec_loopback",  DEC_RS232_LOOPBACK);
 	device.option_add("h19",           SERIAL_TERMINAL_H19);
@@ -207,5 +204,4 @@ void default_rs232_devices(device_slot_interface &device)
 	device.option_add("swtpc8212",     SERIAL_TERMINAL_SWTPC8212);
 	device.option_add("terminal",      SERIAL_TERMINAL);
 	device.option_add("votraxtnt",     SERIAL_VOTRAXTNT);
-	device.option_add("vt50",          SERIAL_TERMINAL_VT50);
 }

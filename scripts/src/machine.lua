@@ -1187,18 +1187,6 @@ end
 
 ---------------------------------------------------
 --
---@src/devices/machine/dec_vt50.h,MACHINES["DEC_VT50"] = true
----------------------------------------------------
-
-if MACHINES["DEC_VT50"] then
-	files {
-		MAME_DIR .. "src/devices/machine/dec_vt50.cpp",
-		MAME_DIR .. "src/devices/machine/dec_vt50.h",
-	}
-end
-
----------------------------------------------------
---
 --@src/devices/machine/dimm_spd.h,MACHINES["DIMM_SPD"] = true
 ---------------------------------------------------
 

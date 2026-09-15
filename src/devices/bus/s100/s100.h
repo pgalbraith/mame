@@ -57,11 +57,6 @@
                 CLOCK (B)   49      99      POC* (B)
                 0 V         50      100     0 V
 
-    The original MITS Altair bus, which IEEE-696 grew out of, used some
-    of the pins the standard later grounded or reserved. The ones
-    emulated here are the memory protect lines: UNPROT on pin 20, PS* on
-    pin 69 and PROT on pin 70.
-
 **********************************************************************/
 
 #ifndef MAME_BUS_S100_S100_H
@@ -122,14 +117,6 @@ public:
 	virtual void s100_reset_w(int state) { }
 	virtual void s100_slave_clr_w(int state) { }
 
-	// Altair bus memory protect. The front panel raises PROT or UNPROT with
-	// an address on the bus, and the memory board that address belongs to
-	// protects or unprotects itself. A protected board ignores writes and
-	// pulls PS* low while it is addressed.
-	virtual void s100_prot_w(offs_t offset) { }
-	virtual void s100_unprot_w(offs_t offset) { }
-	virtual int s100_ps_r(offs_t offset) { return 1; }
-
 protected:
 	// construction/destruction
 	device_s100_card_interface(const machine_config &mconfig, device_t &device);
@@ -176,24 +163,16 @@ public:
 	uint8_t sinp_r(offs_t offset);
 	void sout_w(offs_t offset, uint8_t data);
 
-	void slave_clr_w(int state);
-
-	void prot_w(offs_t offset);
-	void unprot_w(offs_t offset);
-	int ps_r(offs_t offset);
-
-	uint8_t sinta_r(offs_t offset);
-
 	void irq_w(int state) { m_write_irq(state); }
 	void nmi_w(int state) { m_write_nmi(state); }
-	void vi0_w(int state);
-	void vi1_w(int state);
-	void vi2_w(int state);
-	void vi3_w(int state);
-	void vi4_w(int state);
-	void vi5_w(int state);
-	void vi6_w(int state);
-	void vi7_w(int state);
+	void vi0_w(int state) { m_write_vi0(state); }
+	void vi1_w(int state) { m_write_vi1(state); }
+	void vi2_w(int state) { m_write_vi2(state); }
+	void vi3_w(int state) { m_write_vi3(state); }
+	void vi4_w(int state) { m_write_vi4(state); }
+	void vi5_w(int state) { m_write_vi5(state); }
+	void vi6_w(int state) { m_write_vi6(state); }
+	void vi7_w(int state) { m_write_vi7(state); }
 	void dma0_w(int state) { m_write_dma0(state); }
 	void dma1_w(int state) { m_write_dma1(state); }
 	void dma2_w(int state) { m_write_dma2(state); }

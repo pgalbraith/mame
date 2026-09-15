@@ -18251,7 +18251,6 @@ vax785
 vk100
 
 @source:dec/vt52.cpp
-vt50
 vt52
 
 @source:dec/vt62.cpp
@@ -33786,7 +33785,6 @@ tx0_8kwo
 tx0_8kw
 
 @source:mits/al8800b.cpp
-al8800
 al8800b
 
 @source:mits/altair.cpp

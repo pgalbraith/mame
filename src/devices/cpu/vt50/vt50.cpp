@@ -124,7 +124,6 @@ vt5x_cpu_device::vt5x_cpu_device(const machine_config &mconfig, device_type type
 
 vt50_cpu_device::vt50_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock)
 	: vt5x_cpu_device(mconfig, VT50_CPU, tag, owner, clock, 4, 4)
-	, m_ctrl_key_callback(*this, 1)
 {
 }
 
@@ -498,8 +497,8 @@ void vt50_cpu_device::execute_tg(u8 inst)
 		break;
 
 	default:
-		// LD (B/C masking in mode 0 is jumpered: W2 on the basic VT50 takes it from CTRL KEY L, W3 on the VT50H from the cursor flip-flop)
-		m_ram_do = inst & (!m_mode_ff && !m_ctrl_key_callback() ? 0037 : 0177);
+		// LD (TODO: B/C masking in mode 0 is determined by optional jumpers)
+		m_ram_do = inst & (!m_mode_ff && m_cursor_ff ? 0037 : 0177);
 		break;
 	}
 
@@ -707,13 +706,9 @@ void vt5x_cpu_device::clock_video_counters()
 			}
 			else
 				m_current_line++;
-		}
-
-		// The 16x clock for 9600 baud is QC of the 74161 that counts characters within each ten (E23 on the VT50's ROM
-		// UART and Timing board), so it is high for counts 4 to 7 of every ten characters, not once per scan line.
-		if ((m_horiz_count & 15) == 8)
 			m_baud_9600_callback(0);
-		else if ((m_horiz_count & 15) == 4)
+		}
+		else if (m_horiz_count == 4)
 			m_baud_9600_callback(1);
 	}
 }

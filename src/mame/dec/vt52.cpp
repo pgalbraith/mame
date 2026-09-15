@@ -23,7 +23,6 @@
 #include "bus/rs232/rs232.h"
 #include "cpu/vt50/vt50.h"
 #include "machine/ay31015.h"
-#include "machine/dec_vt50.h"
 #include "sound/spkrdev.h"
 #include "screen.h"
 #include "speaker.h"
@@ -442,56 +441,7 @@ ROM_START(vt52)
 	// K1 or L1 version may use either 23-001B4 or 23-002B4
 ROM_END
 
-
-/****************************************************************************
-
-    DEC VT50 DECscope
-
-    The whole terminal is the DEC_VT50 device, so that it can also sit on
-    any RS-232 port; this driver only gives it an EIA port.
-
-****************************************************************************/
-
-class vt50_state : public driver_device
-{
-public:
-	vt50_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag)
-		, m_vt50(*this, "vt50")
-		, m_eia(*this, "eia")
-	{
-	}
-
-	void vt50(machine_config &config);
-
-protected:
-	virtual void machine_reset() override ATTR_COLD;
-
-private:
-	required_device<dec_vt50_device> m_vt50;
-	required_device<rs232_port_device> m_eia;
-};
-
-void vt50_state::machine_reset()
-{
-	m_eia->write_dtr(0);
-	m_eia->write_rts(0);
-}
-
-void vt50_state::vt50(machine_config &config)
-{
-	DEC_VT50(config, m_vt50);
-	m_vt50->serial_data_callback().set(m_eia, FUNC(rs232_port_device::write_txd));
-
-	RS232_PORT(config, m_eia, default_rs232_devices, nullptr);
-	m_eia->rxd_handler().set(m_vt50, FUNC(dec_vt50_device::serial_in_w));
-}
-
-ROM_START(vt50)
-ROM_END
-
 } // anonymous namespace
 
 
-COMP(1974, vt50, 0, 0, vt50, 0,    vt50_state, empty_init, "Digital Equipment Corporation", "VT50 DECscope", MACHINE_NOT_WORKING | MACHINE_IMPERFECT_SOUND)
 COMP(1975, vt52, 0, 0, vt52, vt52, vt52_state, empty_init, "Digital Equipment Corporation", "VT52 Video Display Terminal (M4)", MACHINE_SUPPORTS_SAVE | MACHINE_IMPERFECT_SOUND | MACHINE_NODEVICE_PRINTER)
