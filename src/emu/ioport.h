@@ -935,6 +935,7 @@ class ioport_manager
 	DISABLE_COPYING(ioport_manager);
 	friend class device_t;
 	friend class ioport_configurer;
+	friend class ioport_field;
 
 public:
 	// construction/destruction
@@ -971,6 +972,7 @@ private:
 
 	void frame_update_callback();
 	void frame_update();
+	bool ui_menu_active() const noexcept { return m_ui_menu_active; } // as sampled by the current frame_update()
 
 	ioport_port *port(const std::string &tag) const { auto search = m_portlist.find(tag); if (search != m_portlist.end()) return search->second.get(); else return nullptr; }
 	void exit();
@@ -1004,6 +1006,7 @@ private:
 	// internal state
 	running_machine &       m_machine;              // reference to owning machine
 	bool                    m_safe_to_read;         // clear at start; set after state is loaded
+	bool                    m_ui_menu_active;       // was a menu displayed when the ports were last updated?
 	ioport_list             m_portlist;             // list of input port configurations
 
 	// types
