@@ -378,11 +378,17 @@ void mame_ui_manager::frame_update()
 	if (ui_callback_type::GENERAL == m_handler_callback_type)
 	{
 		process_ui_events();
+		post_natkbd_keys();
 		for (auto *target = machine().render().first_target(); target; target = target->next())
 		{
 			if (!target->hidden())
 				target->update_pointer_fields();
 		}
+	}
+	else
+	{
+		// a menu or startup screen has the keyboard
+		m_natkbd_chars.clear();
 	}
 
 	m_last_frame_update = osd_ticks();
@@ -679,8 +685,15 @@ void mame_ui_manager::display_startup_screens(bool first_time)
 	std::string warning_text;
 	rgb_t warning_color;
 	bool config_menu = false;
+	auto claim_presses =
+		[this, &poller] (input_code code)
+		{
+			// the key that dismisses a screen is the UI's until released (MAME Testers 07751)
+			for ( ; INPUT_CODE_INVALID != code; code = poller.poll())
+				machine().input().claim_for_ui(code);
+		};
 	auto handler_messagebox_anykey =
-		[this, &poller, &warning_text, &warning_color, &config_menu, &target = machine().render().ui_target()] () -> uint32_t
+		[this, &poller, &claim_presses, &warning_text, &warning_color, &config_menu, &target = machine().render().ui_target()] () -> uint32_t
 		{
 			// draw a standard message window
 			draw_text_box(target, warning_text, ui::text_layout::text_justify::LEFT, 0.5F, 0.5F, warning_color);
@@ -697,10 +710,15 @@ void mame_ui_manager::display_startup_screens(bool first_time)
 				config_menu = true;
 				return HANDLER_CANCEL;
 			}
-			else if (poller.poll() != INPUT_CODE_INVALID)
+			else
 			{
-				// if any key is pressed, just exit
-				return HANDLER_CANCEL;
+				input_code const code = poller.poll();
+				if (INPUT_CODE_INVALID != code)
+				{
+					// if any key is pressed, just exit
+					claim_presses(code);
+					return HANDLER_CANCEL;
+				}
 			}
 
 			ui_event event;
@@ -1490,41 +1508,64 @@ void mame_ui_manager::process_ui_events()
 			break;
 
 		case ui_event::type::IME_CHAR:
+			// posted by post_natkbd_keys after the UI handler has run
 			if (use_natkbd)
-				machine().natkeyboard().post_char(event.ch);
+				m_natkbd_chars.emplace_back(event.ch);
 			break;
 		}
 	}
+}
+
+
+//-------------------------------------------------
+//  post_natkbd_keys - post the keys the UI hasn't
+//  taken to the natural keyboard
+//-------------------------------------------------
+
+void mame_ui_manager::post_natkbd_keys()
+{
+	natural_keyboard &natkbd = machine().natkeyboard();
+	if (!natkbd.in_use() || (machine().phase() != machine_phase::RUNNING))
+	{
+		m_natkbd_chars.clear();
+		return;
+	}
+
+	// characters can't be traced to keys, so none are posted while the UI holds a key
+	input_manager &input = machine().input();
+	if (!input.any_claimed_for_ui(DEVICE_CLASS_KEYBOARD))
+	{
+		for (char32_t ch : m_natkbd_chars)
+			natkbd.post_char(ch);
+	}
+	m_natkbd_chars.clear();
 
 	// process natural keyboard keys that don't get IME text input events
-	if (use_natkbd)
+	for (int i = 0; i < std::size(non_char_keys); i++)
 	{
-		for (int i = 0; i < std::size(non_char_keys); i++)
+		// identify this keycode
+		input_item_id itemid = non_char_keys[i];
+		input_code code = input.code_from_itemid(itemid);
+
+		// ...and determine if it is pressed
+		bool pressed = input.code_pressed_unclaimed(code);
+
+		// figure out whey we are in the key_down map
+		uint8_t *key_down_ptr = &m_non_char_keys_down[i / 8];
+		uint8_t key_down_mask = 1 << (i % 8);
+
+		if (pressed && !(*key_down_ptr & key_down_mask))
 		{
-			// identify this keycode
-			input_item_id itemid = non_char_keys[i];
-			input_code code = machine().input().code_from_itemid(itemid);
+			// this key is now down
+			*key_down_ptr |= key_down_mask;
 
-			// ...and determine if it is pressed
-			bool pressed = machine().input().code_pressed(code);
-
-			// figure out whey we are in the key_down map
-			uint8_t *key_down_ptr = &m_non_char_keys_down[i / 8];
-			uint8_t key_down_mask = 1 << (i % 8);
-
-			if (pressed && !(*key_down_ptr & key_down_mask))
-			{
-				// this key is now down
-				*key_down_ptr |= key_down_mask;
-
-				// post the key
-				machine().natkeyboard().post_char(UCHAR_MAMEKEY_BEGIN + code.item_id());
-			}
-			else if (!pressed && (*key_down_ptr & key_down_mask))
-			{
-				// this key is now up
-				*key_down_ptr &= ~key_down_mask;
-			}
+			// post the key
+			natkbd.post_char(UCHAR_MAMEKEY_BEGIN + code.item_id());
+		}
+		else if (!pressed && (*key_down_ptr & key_down_mask))
+		{
+			// this key is now up
+			*key_down_ptr &= ~key_down_mask;
 		}
 	}
 }
@@ -1885,7 +1926,7 @@ uint32_t mame_ui_manager::handler_ingame()
 		machine().video().set_throttled(!machine().video().throttled());
 
 	// check for fast forward
-	if (machine().ioport().type_pressed(IPT_UI_FAST_FORWARD))
+	if (inp.held(IPT_UI_FAST_FORWARD))
 	{
 		machine().video().set_fastforward(true);
 		show_fps_temp(0.5);
