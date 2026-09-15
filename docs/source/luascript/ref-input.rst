@@ -788,6 +788,14 @@ uiinput:pressed_repeat(type, speed)
     pressed or auto-repeat has been triggered at the specified speed.  The input
     type is an enumerated value; the speed is an interval in sixtieths of a
     second.
+uiinput:held(type)
+    Returns a Boolean indicating whether the specified UI input is currently
+    held down.  Unlike ``pressed``, this reports the input every time it is
+    called while it is held.  The input type is an enumerated value.
+
+    Note that the host inputs behind a UI input the caller is told is pressed or
+    held are taken to be the UI's until they are released, and are not seen by
+    the emulated system.
 
 Properties
 ~~~~~~~~~~
