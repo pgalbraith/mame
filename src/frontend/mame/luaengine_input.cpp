@@ -669,6 +669,7 @@ void lua_engine::initialize_input(sol::table &emu)
 	uiinput_type.set_function("reset", &ui_input_manager::reset);
 	uiinput_type.set_function("pressed", &ui_input_manager::pressed);
 	uiinput_type.set_function("pressed_repeat", &ui_input_manager::pressed_repeat);
+	uiinput_type.set_function("held", &ui_input_manager::held);
 	uiinput_type["presses_enabled"] = sol::property(&ui_input_manager::presses_enabled, &ui_input_manager::set_presses_enabled);
 
 }

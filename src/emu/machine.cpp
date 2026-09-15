@@ -177,6 +177,9 @@ void running_machine::start()
 	m_ui_input = std::make_unique<ui_input_manager_impl>(*this);
 	m_input = std::make_unique<input_manager>(*this);
 	m_output = std::make_unique<output_manager>(*this);
+
+	// settle the UI's input claims after the input classes update, before the UI and I/O ports run
+	add_notifier(MACHINE_NOTIFY_FRAME, machine_notify_delegate(&ui_input_manager::update_claims, &m_ui_input->input_manager()));
 	m_render = std::make_unique<render_manager>(*this, m_ui_input->event_sink());
 	m_bookkeeping = std::make_unique<bookkeeping_manager>(*this);
 

@@ -10,6 +10,8 @@
 
 #include "emu.h"
 #include "uiinput.h"
+
+#include "input.h"
 #include "render.h"
 
 
@@ -201,6 +203,7 @@ bool ui_input_manager::pressed_repeat(int code, int speed)
 
 	/* get the status of this key (assumed to be only in the defaults) */
 	assert(code > IPT_UI_FIRST && code < IPT_UI_LAST);
+	m_tested.set(code);
 	pressed = (m_seqpressed[code] == SEQ_PRESSED_TRUE);
 
 	/* if down, handle it specially */
@@ -232,7 +235,63 @@ bool ui_input_manager::pressed_repeat(int code, int speed)
 	else
 		m_next_repeat[code] = 0;
 
+	/* the host inputs behind a reported press are the UI's until released */
+	if (pressed)
+		claim(code, false);
+
 	return pressed;
+}
+
+
+/*-------------------------------------------------
+    held - return true while the given user
+    interface sequence is held down
+-------------------------------------------------*/
+
+bool ui_input_manager::held(int code)
+{
+	assert(code > IPT_UI_FIRST && code < IPT_UI_LAST);
+	m_tested.set(code);
+	if (m_seqpressed[code] != SEQ_PRESSED_TRUE)
+		return false;
+
+	claim(code, false);
+	return true;
+}
+
+
+/*-------------------------------------------------
+    claim - take the host inputs behind a user
+    interface sequence for the UI
+-------------------------------------------------*/
+
+void ui_input_manager::claim(int code, bool provisional)
+{
+	machine().input().claim_for_ui(machine().ioport().type_seq(ioport_type(code)), provisional);
+}
+
+
+/*-------------------------------------------------
+    update_claims - settle the host inputs the UI
+    has taken, once per frame
+-------------------------------------------------*/
+
+void ui_input_manager::update_claims()
+{
+	machine().input().update_ui_claims();
+
+	// the host is polled again after the UI handler runs: hold back what it tested for that's
+	// pressed now but not acted on yet
+	if (m_presses_enabled)
+	{
+		for (int code = IPT_UI_FIRST + 1; code < IPT_UI_LAST; code++)
+		{
+			if (m_tested.test(code) && (m_seqpressed[code] != SEQ_PRESSED_RESET) && (m_next_repeat[code] == 0) && machine().ioport().type_pressed(ioport_type(code)))
+				claim(code, true);
+		}
+	}
+
+	m_tested.reset();
 }
 
 

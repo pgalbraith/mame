@@ -15,6 +15,8 @@
 
 #include "interface/uievents.h"
 
+#include <bitset>
+
 
 /***************************************************************************
     TYPE DEFINITIONS
@@ -83,6 +85,12 @@ public:
 	// return true if a key down for the given user interface sequence is detected, or if autorepeat at the given speed is triggered
 	bool pressed_repeat(int code, int speed);
 
+	// return true while the given user interface sequence is held down
+	bool held(int code);
+
+	// settle the host inputs the UI has taken; once per frame, before the emulated system reads them
+	void update_claims();
+
 	// get current or most recently focused render target
 	render_target *focused_target() const { return m_focused_target; }
 	render_target *last_focused_target() const { return m_last_focused_target; }
@@ -104,6 +112,9 @@ private:
 	// getters
 	running_machine &machine() const { return m_machine; }
 
+	// take the host inputs behind a user interface sequence
+	void claim(int code, bool provisional);
+
 	// internal state
 	running_machine &   m_machine;
 
@@ -115,6 +126,7 @@ private:
 	bool                m_presses_enabled;
 	osd_ticks_t         m_next_repeat[IPT_COUNT];
 	u8                  m_seqpressed[IPT_COUNT];
+	std::bitset<IPT_COUNT> m_tested;       // asked about since the last update_claims()
 
 	// ring buffer of ui_events
 	ui_event            m_events[EVENT_QUEUE_SIZE];
