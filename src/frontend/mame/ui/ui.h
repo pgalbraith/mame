@@ -257,6 +257,7 @@ public:
 
 	// other
 	void process_ui_events();
+	void post_natkbd_keys();
 	ui::text_layout create_layout(render_target &target, float width = 1.0, ui::text_layout::text_justify justify = ui::text_layout::text_justify::LEFT, ui::text_layout::word_wrapping wrap = ui::text_layout::word_wrapping::WORD);
 	void set_image_display_enabled(bool image_display_enabled) { m_image_display_enabled = image_display_enabled; }
 	bool image_display_enabled() const { return m_image_display_enabled; }
@@ -307,6 +308,7 @@ private:
 	osd_ticks_t             m_popup_text_end;
 	osd_ticks_t             m_last_frame_update;
 	std::unique_ptr<uint8_t []> m_non_char_keys_down;
+	std::vector<char32_t>   m_natkbd_chars;
 
 	pointer_options_vector  m_pointer_options;
 	active_pointer_vector   m_active_pointers;
