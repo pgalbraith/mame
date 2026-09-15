@@ -720,6 +720,130 @@ bool input_manager::code_pressed_once(input_code code)
 
 
 //-------------------------------------------------
+//  claim_for_ui - take a switch for the UI until
+//  it's released
+//-------------------------------------------------
+
+void input_manager::claim_for_ui(input_code code, bool provisional)
+{
+	// sequences name a class that isn't multi as index 0
+	input_device_class const devclass = code.device_class();
+	if ((devclass < DEVICE_CLASS_FIRST_VALID) || (devclass > DEVICE_CLASS_LAST_VALID) || (code.item_class() != ITEM_CLASS_SWITCH))
+		return;
+	if (!m_class[devclass]->multi())
+		code.set_device_index(0);
+
+	auto const found = std::find_if(m_ui_claims.begin(), m_ui_claims.end(), [code] (ui_claim const &claim) { return claim.code == code; });
+	if (m_ui_claims.end() == found)
+	{
+		m_ui_claims.emplace_back(ui_claim{ code, provisional, false });
+	}
+	else
+	{
+		if (!provisional)
+			found->provisional = false;
+		found->released = false;
+	}
+}
+
+
+//-------------------------------------------------
+//  claim_for_ui - take every switch of each
+//  satisfied group of a sequence for the UI
+//-------------------------------------------------
+
+void input_manager::claim_for_ui(const input_seq &seq, bool provisional)
+{
+	int groupstart = 0;
+	bool result = false;
+	bool invert = false;
+	bool first = true;
+	for (int codenum = 0; ; codenum++)
+	{
+		input_code const code = seq[codenum];
+		if (code == input_seq::not_code)
+		{
+			// handle NOT
+			invert = true;
+		}
+		else if (code == input_seq::or_code || code == input_seq::end_code)
+		{
+			// handle OR and END - claim the group just evaluated if it's satisfied
+			if (result)
+			{
+				for (int i = groupstart; i < codenum; i++)
+				{
+					if (seq[i] == input_seq::not_code)
+						i++; // negated, so released
+					else
+						claim_for_ui(seq[i], provisional);
+				}
+			}
+			if (code == input_seq::end_code)
+				break;
+
+			// every group is evaluated, unlike seq_pressed
+			groupstart = codenum + 1;
+			result = false;
+			invert = false;
+			first = true;
+		}
+		else
+		{
+			// handle everything else as a series of ANDs
+			if (first)
+				result = code_pressed(code) ^ invert;
+			else if (result)
+				result &= code_pressed(code) ^ invert;
+			first = invert = false;
+		}
+	}
+}
+
+
+//-------------------------------------------------
+//  update_ui_claims - drop unconfirmed claims and
+//  released switches
+//-------------------------------------------------
+
+void input_manager::update_ui_claims()
+{
+	// a released switch keeps its claim for one more update, for the natural keyboard's sake
+	m_ui_claims.erase(
+			std::remove_if(
+				m_ui_claims.begin(),
+				m_ui_claims.end(),
+				[] (ui_claim const &claim) { return claim.provisional || claim.released; }),
+			m_ui_claims.end());
+	for (ui_claim &claim : m_ui_claims)
+		claim.released = !code_pressed(claim.code);
+}
+
+
+//-------------------------------------------------
+//  claimed_for_ui - has the UI taken this switch?
+//-------------------------------------------------
+
+bool input_manager::claimed_for_ui(input_code code) const noexcept
+{
+	if (m_ui_claims.empty())
+		return false;
+	return std::find_if(m_ui_claims.begin(), m_ui_claims.end(), [code] (ui_claim const &claim) { return claim.code == code; }) != m_ui_claims.end();
+}
+
+
+//-------------------------------------------------
+//  any_claimed_for_ui - has the UI taken any
+//  switch of the given device class?
+//-------------------------------------------------
+
+bool input_manager::any_claimed_for_ui(input_device_class devclass) const noexcept
+{
+	return std::any_of(m_ui_claims.begin(), m_ui_claims.end(), [devclass] (ui_claim const &claim) { return claim.code.device_class() == devclass; });
+}
+
+
+//-------------------------------------------------
 //  device_from_code - given an input_code return
 //  a pointer to the associated device
 //-------------------------------------------------
@@ -1002,11 +1126,45 @@ const char *input_manager::standard_token(input_item_id itemid) noexcept
 
 
 //-------------------------------------------------
+//  switch_pressed - read a switch in a sequence,
+//  masking one the UI has taken if asked to
+//-------------------------------------------------
+
+inline bool input_manager::switch_pressed(input_code code, bool invert, bool unclaimed)
+{
+	bool const pressed = code_pressed(code) && !(unclaimed && claimed_for_ui(code));
+	return pressed ^ invert;
+}
+
+
+//-------------------------------------------------
 //  seq_pressed - return true if the given sequence
 //  of switch inputs is "pressed"
 //-------------------------------------------------
 
 bool input_manager::seq_pressed(const input_seq &seq)
+{
+	return seq_pressed_internal(seq, false);
+}
+
+
+//-------------------------------------------------
+//  seq_pressed_unclaimed - seq_pressed with the
+//  switches the UI has taken masked
+//-------------------------------------------------
+
+bool input_manager::seq_pressed_unclaimed(const input_seq &seq)
+{
+	return seq_pressed_internal(seq, true);
+}
+
+
+//-------------------------------------------------
+//  seq_pressed_internal - seq_pressed, optionally
+//  masking the switches the UI has taken
+//-------------------------------------------------
+
+bool input_manager::seq_pressed_internal(const input_seq &seq, bool unclaimed)
 {
 	// iterate over all of the codes
 	bool result = false;
@@ -1039,11 +1197,11 @@ bool input_manager::seq_pressed(const input_seq &seq)
 
 			// if this is the first in the sequence, result is set equal
 			if (first)
-				result = code_pressed(code) ^ invert;
+				result = switch_pressed(code, invert, unclaimed);
 
 			// further values are ANDed
 			else if (result)
-				result &= code_pressed(code) ^ invert;
+				result &= switch_pressed(code, invert, unclaimed);
 
 			// no longer first, and clear the invert flag
 			first = invert = false;
@@ -1061,6 +1219,28 @@ bool input_manager::seq_pressed(const input_seq &seq)
 //-------------------------------------------------
 
 s32 input_manager::seq_axis_value(const input_seq &seq, input_item_class &itemclass)
+{
+	return seq_axis_value_internal(seq, itemclass, false);
+}
+
+
+//-------------------------------------------------
+//  seq_axis_value_unclaimed - seq_axis_value with
+//  the switches the UI has taken masked
+//-------------------------------------------------
+
+s32 input_manager::seq_axis_value_unclaimed(const input_seq &seq, input_item_class &itemclass)
+{
+	return seq_axis_value_internal(seq, itemclass, true);
+}
+
+
+//-------------------------------------------------
+//  seq_axis_value_internal - seq_axis_value,
+//  optionally masking the switches the UI has taken
+//-------------------------------------------------
+
+s32 input_manager::seq_axis_value_internal(const input_seq &seq, input_item_class &itemclass, bool unclaimed)
 {
 	// start with zero result and no valid classes
 	s32 result = 0;
@@ -1112,7 +1292,7 @@ s32 input_manager::seq_axis_value(const input_seq &seq, input_item_class &itemcl
 				// AND against previous digital codes
 				if (enable)
 				{
-					enable = code_pressed(code) ^ invert;
+					enable = switch_pressed(code, invert, unclaimed);
 					if (!enable)
 					{
 						// clear current group if enable became false - only way out is an OR code

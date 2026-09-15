@@ -27,6 +27,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 
 //**************************************************************************
@@ -58,6 +59,7 @@ public:
 	// input code readers
 	s32 code_value(input_code code);
 	bool code_pressed(input_code code) { return code_value(code) != 0; }
+	bool code_pressed_unclaimed(input_code code) { return code_pressed(code) && !claimed_for_ui(code); }
 	bool code_pressed_once(input_code code);
 
 	// input code helpers
@@ -70,7 +72,16 @@ public:
 
 	// input sequence readers
 	bool seq_pressed(const input_seq &seq);
+	bool seq_pressed_unclaimed(const input_seq &seq);
 	s32 seq_axis_value(const input_seq &seq, input_item_class &itemclass);
+	s32 seq_axis_value_unclaimed(const input_seq &seq, input_item_class &itemclass);
+
+	// switches the UI has taken read as released through the *_unclaimed readers
+	void claim_for_ui(input_code code, bool provisional = false);
+	void claim_for_ui(const input_seq &seq, bool provisional = false);
+	void update_ui_claims();
+	bool claimed_for_ui(input_code code) const noexcept;
+	bool any_claimed_for_ui(input_device_class devclass) const noexcept;
 
 	// input sequence helpers
 	input_seq seq_clean(const input_seq &seq) const;
@@ -84,8 +95,19 @@ public:
 	static const char *standard_token(input_item_id itemid) noexcept;
 
 private:
+	// a switch the UI has taken
+	struct ui_claim
+	{
+		input_code  code;
+		bool        provisional;    // dropped at the next update unless the UI acts on it
+		bool        released;       // dropped at the next update
+	};
+
 	// internal helpers
 	void reset_memory();
+	bool switch_pressed(input_code code, bool invert, bool unclaimed);
+	bool seq_pressed_internal(const input_seq &seq, bool unclaimed);
+	s32 seq_axis_value_internal(const input_seq &seq, input_item_class &itemclass, bool unclaimed);
 
 	running_machine &   m_machine;
 
@@ -94,6 +116,7 @@ private:
 
 	// internal state
 	input_code m_switch_memory[64];
+	std::vector<ui_claim> m_ui_claims;
 };
 
 #endif  // MAME_EMU_INPUT_H
