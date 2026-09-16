@@ -12,9 +12,18 @@
 
     Z-2 (1977)
     The chassis, the motherboard and the ZPU. Memory, I/O and firmware are
-    all extra. The manual's minimum system is a ROM card at E000 holding
-    the Z-80 Monitor, a RAM card and either a TU-ART or a 4FDC for the
-    console, with the power-on jump set to E000.
+    all extra. Fitted here is what the manual calls the minimum system: a
+    16KPR holding the Z-80 Monitor at E000, a 16KZ for RAM, and a TU-ART
+    for the console, with the power-on jump set to E000. The manual asks
+    for the monitor in an 8K Bytesaver, which lands E000 in its first
+    socket; the 16KPR reaches the same address from its block at C000.
+
+    Getting to the monitor
+    Press RETURN a few times. The monitor walks a table of baud rates,
+    writing each to the TU-ART and waiting for two carriage returns, and
+    9600 is the second entry, so the sign-on takes about four presses. It
+    then searches down from FFE9 for the highest page of RAM and puts its
+    stack there, which is why the machine needs a RAM card as well.
 
     Z-2D (1977)
     A Z-2 with a 4FDC and one or two 5 inch drives. The 4FDC carries RDOS
@@ -54,8 +63,10 @@
 #include "emu.h"
 
 #include "bus/s100/s100.h"
+#include "bus/s100/cromemco16kpr.h"
 #include "bus/s100/cromemco4fdc.h"
 #include "bus/s100/cromemcoram.h"
+#include "bus/s100/cromemcotuart.h"
 #include "cpu/z80/z80.h"
 
 
@@ -199,8 +210,10 @@ void z2_state::io_map(address_map &map)
 static void cromemco_s100_cards(device_slot_interface &device)
 {
 	device.option_add("4fdc", S100_CROMEMCO_4FDC);
+	device.option_add("16kpr", S100_CROMEMCO_16KPR);
 	device.option_add("16kz", S100_CROMEMCO_16KZ);
 	device.option_add("64kz", S100_CROMEMCO_64KZ);
+	device.option_add("tuart", S100_CROMEMCO_TUART);
 }
 
 void z2_state::common(machine_config &config, unsigned slots)
@@ -221,9 +234,16 @@ void z2_state::common(machine_config &config, unsigned slots)
 
 void z2_state::z2(machine_config &config)
 {
-	// a bare Z-2 is the chassis, the motherboard and the ZPU; the buyer adds
-	// memory, a console and firmware
+	// A bare Z-2 is the chassis, the motherboard and the ZPU; the buyer adds
+	// memory, a console and firmware. Fitted here is what the Z-2 manual
+	// calls the minimum system: a ROM card holding the Z-80 Monitor, a RAM
+	// card, and a TU-ART for the console. The power-on jump goes to E000 to
+	// match, so the machine signs on with nothing on the command line.
 	common(config, 21);
+
+	S100_SLOT(config.replace(), "s100:1", cromemco_s100_cards, "tuart");
+	S100_SLOT(config.replace(), "s100:2", cromemco_s100_cards, "16kz");
+	S100_SLOT(config.replace(), "s100:3", cromemco_s100_cards, "16kpr");
 }
 
 void z2_state::z2d(machine_config &config)
@@ -249,25 +269,14 @@ void z2_state::z2h(machine_config &config)
 //  switches
 //**************************************************************************
 
-static INPUT_PORTS_START( z2 )
+// the sixteen addresses the ZPU's four position switch can select
+#define JUMP_ADDRESSES 	PORT_CONFSETTING(0x00, "0000") 	PORT_CONFSETTING(0x01, "1000") 	PORT_CONFSETTING(0x02, "2000") 	PORT_CONFSETTING(0x03, "3000") 	PORT_CONFSETTING(0x04, "4000") 	PORT_CONFSETTING(0x05, "5000") 	PORT_CONFSETTING(0x06, "6000") 	PORT_CONFSETTING(0x07, "7000") 	PORT_CONFSETTING(0x08, "8000") 	PORT_CONFSETTING(0x09, "9000") 	PORT_CONFSETTING(0x0a, "A000") 	PORT_CONFSETTING(0x0b, "B000") 	PORT_CONFSETTING(0x0c, "C000") 	PORT_CONFSETTING(0x0d, "D000") 	PORT_CONFSETTING(0x0e, "E000") 	PORT_CONFSETTING(0x0f, "F000")
+
+static INPUT_PORTS_START( z2d )
 	PORT_START("JUMP")
+	// C000 is the 4FDC's RDOS
 	PORT_CONFNAME(0x0f, 0x0c, "Power-on jump address")
-	PORT_CONFSETTING(0x00, "0000")
-	PORT_CONFSETTING(0x01, "1000")
-	PORT_CONFSETTING(0x02, "2000")
-	PORT_CONFSETTING(0x03, "3000")
-	PORT_CONFSETTING(0x04, "4000")
-	PORT_CONFSETTING(0x05, "5000")
-	PORT_CONFSETTING(0x06, "6000")
-	PORT_CONFSETTING(0x07, "7000")
-	PORT_CONFSETTING(0x08, "8000")
-	PORT_CONFSETTING(0x09, "9000")
-	PORT_CONFSETTING(0x0a, "A000")
-	PORT_CONFSETTING(0x0b, "B000")
-	PORT_CONFSETTING(0x0c, "C000")
-	PORT_CONFSETTING(0x0d, "D000")
-	PORT_CONFSETTING(0x0e, "E000")
-	PORT_CONFSETTING(0x0f, "F000")
+	JUMP_ADDRESSES
 	PORT_CONFNAME(0x10, 0x10, "Power-on jump")
 	PORT_CONFSETTING(0x00, DEF_STR(Off))
 	PORT_CONFSETTING(0x10, DEF_STR(On))
@@ -276,6 +285,15 @@ static INPUT_PORTS_START( z2 )
 	PORT_CONFNAME(0x01, 0x01, "Clock")
 	PORT_CONFSETTING(0x00, "2 MHz")
 	PORT_CONFSETTING(0x01, "4 MHz")
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( z2 )
+	PORT_INCLUDE( z2d )
+
+	// E000 is the Z-80 Monitor in the 16KPR
+	PORT_MODIFY("JUMP")
+	PORT_CONFNAME(0x0f, 0x0e, "Power-on jump address")
+	JUMP_ADDRESSES
 INPUT_PORTS_END
 
 
@@ -289,6 +307,6 @@ ROM_END
 
 
 //    YEAR  NAME  PARENT  COMPAT  MACHINE  INPUT  CLASS     INIT        COMPANY      FULLNAME  FLAGS
-COMP( 1977, z2d,  0,      0,      z2d,     z2,    z2_state, empty_init, "Cromemco",  "Z-2D",   MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
+COMP( 1977, z2d,  0,      0,      z2d,     z2d,   z2_state, empty_init, "Cromemco",  "Z-2D",   MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
 COMP( 1977, z2,   z2d,    0,      z2,      z2,    z2_state, empty_init, "Cromemco",  "Z-2",    MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
-COMP( 1979, z2h,  z2d,    0,      z2h,     z2,    z2_state, empty_init, "Cromemco",  "Z-2H",   MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
+COMP( 1979, z2h,  z2d,    0,      z2h,     z2d,   z2_state, empty_init, "Cromemco",  "Z-2H",   MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
