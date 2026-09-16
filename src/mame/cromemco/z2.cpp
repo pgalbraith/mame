@@ -10,7 +10,7 @@
     of sixteen addresses chosen with a four position switch, so the first
     instruction comes from a ROM on some other card.
 
-    Z-2 (1976)
+    Z-2 (1977)
     The chassis, the motherboard and the ZPU. Memory, I/O and firmware are
     all extra. The manual's minimum system is a ROM card at E000 holding
     the Z-80 Monitor, a RAM card and either a TU-ART or a 4FDC for the
@@ -290,5 +290,5 @@ ROM_END
 
 //    YEAR  NAME  PARENT  COMPAT  MACHINE  INPUT  CLASS     INIT        COMPANY      FULLNAME  FLAGS
 COMP( 1977, z2d,  0,      0,      z2d,     z2,    z2_state, empty_init, "Cromemco",  "Z-2D",   MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
-COMP( 1976, z2,   z2d,    0,      z2,      z2,    z2_state, empty_init, "Cromemco",  "Z-2",    MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
+COMP( 1977, z2,   z2d,    0,      z2,      z2,    z2_state, empty_init, "Cromemco",  "Z-2",    MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
 COMP( 1979, z2h,  z2d,    0,      z2h,     z2,    z2_state, empty_init, "Cromemco",  "Z-2H",   MACHINE_NOT_WORKING | MACHINE_NO_SOUND_HW | MACHINE_SUPPORTS_SAVE )
