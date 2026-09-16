@@ -5056,6 +5056,8 @@ end
 
 if BUSES["RS232"] then
 	files {
+		MAME_DIR .. "src/devices/bus/rs232/adm3a.cpp",
+		MAME_DIR .. "src/devices/bus/rs232/adm3a.h",
 		MAME_DIR .. "src/devices/bus/rs232/adsp2181ekl.cpp",
 		MAME_DIR .. "src/devices/bus/rs232/adsp2181ekl.h",
 		MAME_DIR .. "src/devices/bus/rs232/asr33.cpp",

@@ -26930,6 +26930,9 @@ leapexpr
 @source:learsiegler/adm11.cpp
 adm12
 
+@source:learsiegler/adm3a.cpp
+adm3a
+
 @source:learsiegler/adm23.cpp
 adm23
 

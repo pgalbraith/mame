@@ -154,6 +154,7 @@ device_rs232_port_interface::~device_rs232_port_interface()
 }
 
 
+#include "adm3a.h"
 #include "adsp2181ekl.h"
 #include "asr33.h"
 #include "auto3a.h"
@@ -183,6 +184,7 @@ template class device_finder<device_rs232_port_interface, true>;
 
 void default_rs232_devices(device_slot_interface &device)
 {
+	device.option_add("adm3a",         SERIAL_TERMINAL_ADM3A);
 	device.option_add("adsp2181ekl",   ADSP2181EKL);
 	device.option_add("asr33",         SERIAL_TERMINAL_ASR33);
 	device.option_add("auto3a",        SERIAL_TERMINAL_AUTO3A);

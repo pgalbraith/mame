@@ -729,6 +729,18 @@ end
 
 ---------------------------------------------------
 --
+--@src/devices/machine/adm3a.h,MACHINES["ADM3A"] = true
+---------------------------------------------------
+
+if MACHINES["ADM3A"] then
+	files {
+		MAME_DIR .. "src/devices/machine/adm3a.cpp",
+		MAME_DIR .. "src/devices/machine/adm3a.h",
+	}
+end
+
+---------------------------------------------------
+--
 --@src/devices/machine/adc0804.h,MACHINES["ADC0804"] = true
 ---------------------------------------------------
 
