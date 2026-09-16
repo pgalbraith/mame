@@ -436,7 +436,25 @@ void s100_cromemco_4fdc_device::device_add_mconfig(machine_config &config)
 	m_uart->xmt_callback().set("rs232", FUNC(rs232_port_device::write_txd));
 	m_uart->int_callback().set([this] (int state) { m_bus->irq_w(state); });
 
-	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "terminal"));
+	// J4 takes an RS-232 terminal on pins 2, 3 and 7, or a Teletype on the
+	// 20 mA current loop. Cromemco sold no terminal in 1977 and told buyers
+	// to bring their own: the Z-2D advertisement offers "an RS-232 serial
+	// interface for interfacing your CRT terminal or teletype".
+	//
+	// adm3a is the default. Nothing has to be set for it: the terminal comes
+	// up at its own factory 9600, which is in RDOS's rate table, and RDOS
+	// finds the rate from the carriage returns the operator presses for the
+	// prompt anyway.
+	//
+	// asr33 is the terminal Cromemco actually documented, with a 20 mA
+	// wiring table in the 4FDC, TU-ART and SCC manuals, but it cannot reach
+	// the RDOS prompt. RDOS reads a character at C0E4 as IN 01 / AND 7F /
+	// RET, so a received 00 leaves Z set and its caller at C0EC cannot tell
+	// it from an empty receiver. The Teletype runs at 110 baud while the
+	// first table entry selects 2400, every character arrives as 00, and
+	// RDOS never counts the two characters it needs to step to the next
+	// rate. It never reaches the 110 baud entry that would have matched.
+	rs232_port_device &rs232(RS232_PORT(config, "rs232", default_rs232_devices, "adm3a"));
 	rs232.rxd_handler().set(m_uart, FUNC(tms5501_device::rcv_w));
 
 	FD1771(config, m_fdc, 2_MHz_XTAL);
