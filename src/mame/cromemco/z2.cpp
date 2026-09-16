@@ -33,7 +33,11 @@
     Z-2H (1979)
     A 12 slot machine with a hard disk: ZPU, 4FDC, 64KZ, PRI and WDI, and
     an 11 megabyte drive. The floppy side is the same as a Z-2D, and the
-    same RDOS boots it.
+    same RDOS boots it, and it gets the Cromemco 3102 terminal it shipped
+    with rather than the ADM-3A the other two sets use. That 3102 is not the
+    real terminal: it is a rebadged Beehive Micro Bee 2 and none of its six
+    mask ROMs has been dumped, so what is here acts on the escape sequences
+    the manual documents without running the 8085 that really does it.
 
     Getting to CDOS
     Set the 4FDC's switch 3 on to boot straight from disk, or leave it off
@@ -45,6 +49,8 @@
 
     Not emulated
     - The PRI printer interface and the WDI hard disk on a Z-2H.
+    - The 3102's own 8085 and firmware, for want of a dump. See
+      bus/rs232/cromemco3102.cpp for what is modelled instead.
     - The ZPU's wait state jumpers, which only relax memory access times.
     - The 4 MHz indicator on bus pin 98, which the 16KPR and 4FDC read to
       decide their own wait states.
@@ -62,6 +68,7 @@
 
 #include "emu.h"
 
+#include "bus/rs232/rs232.h"
 #include "bus/s100/s100.h"
 #include "bus/s100/cromemco16kpr.h"
 #include "bus/s100/cromemco4fdc.h"
@@ -87,6 +94,8 @@ public:
 	void z2(machine_config &config) ATTR_COLD;
 	void z2d(machine_config &config) ATTR_COLD;
 	void z2h(machine_config &config) ATTR_COLD;
+
+	static void z2h_console(device_t *device) ATTR_COLD;
 
 protected:
 	virtual void machine_start() override ATTR_COLD;
@@ -260,8 +269,18 @@ void z2_state::z2h(machine_config &config)
 	// with it are not emulated yet
 	common(config, 12);
 
-	S100_SLOT(config.replace(), "s100:1", cromemco_s100_cards, "4fdc");
+	s100_slot_device &fdc(S100_SLOT(config.replace(), "s100:1", cromemco_s100_cards, "4fdc"));
+	fdc.set_option_machine_config("4fdc", z2h_console);
+
 	S100_SLOT(config.replace(), "s100:2", cromemco_s100_cards, "64kz");
+}
+
+// A Z-2 or Z-2D buyer brought their own terminal. The Z-2H was sold as a
+// complete system and came with Cromemco's, so its 4FDC drives a 3102 rather
+// than the ADM-3A the card carries by default.
+void z2_state::z2h_console(device_t *device)
+{
+	device->subdevice<rs232_port_device>("rs232")->set_default_option("c3102");
 }
 
 

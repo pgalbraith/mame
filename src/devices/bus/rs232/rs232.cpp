@@ -158,6 +158,7 @@ device_rs232_port_interface::~device_rs232_port_interface()
 #include "adsp2181ekl.h"
 #include "asr33.h"
 #include "auto3a.h"
+#include "cromemco3102.h"
 #include "dec_vt52.h"
 #include "ie15.h"
 #include "heath_h19.h"
@@ -188,6 +189,7 @@ void default_rs232_devices(device_slot_interface &device)
 	device.option_add("adsp2181ekl",   ADSP2181EKL);
 	device.option_add("asr33",         SERIAL_TERMINAL_ASR33);
 	device.option_add("auto3a",        SERIAL_TERMINAL_AUTO3A);
+	device.option_add("c3102",         SERIAL_TERMINAL_C3102);
 	device.option_add("dec_loopback",  DEC_RS232_LOOPBACK);
 	device.option_add("h19",           SERIAL_TERMINAL_H19);
 	device.option_add("h9",            SERIAL_TERMINAL_H9);
