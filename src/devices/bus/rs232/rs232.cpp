@@ -157,7 +157,7 @@ device_rs232_port_interface::~device_rs232_port_interface()
 #include "adsp2181ekl.h"
 #include "asr33.h"
 #include "auto3a.h"
-#include "dec_vt50.h"
+#include "dec_vt52.h"
 #include "ie15.h"
 #include "heath_h19.h"
 #include "heath_h9.h"
@@ -207,5 +207,5 @@ void default_rs232_devices(device_slot_interface &device)
 	device.option_add("swtpc8212",     SERIAL_TERMINAL_SWTPC8212);
 	device.option_add("terminal",      SERIAL_TERMINAL);
 	device.option_add("votraxtnt",     SERIAL_VOTRAXTNT);
-	device.option_add("vt50",          SERIAL_TERMINAL_VT50);
+	device.option_add("vt52",          SERIAL_TERMINAL_VT52);
 }

@@ -1187,13 +1187,13 @@ end
 
 ---------------------------------------------------
 --
---@src/devices/machine/dec_vt50.h,MACHINES["DEC_VT50"] = true
+--@src/devices/machine/dec_vt52.h,MACHINES["DEC_VT52"] = true
 ---------------------------------------------------
 
-if MACHINES["DEC_VT50"] then
+if MACHINES["DEC_VT52"] then
 	files {
-		MAME_DIR .. "src/devices/machine/dec_vt50.cpp",
-		MAME_DIR .. "src/devices/machine/dec_vt50.h",
+		MAME_DIR .. "src/devices/machine/dec_vt52.cpp",
+		MAME_DIR .. "src/devices/machine/dec_vt52.h",
 	}
 end
 
