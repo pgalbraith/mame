@@ -50,13 +50,13 @@
             alternative
     ESC L   insert a line, pushing the rest of the screen down
     ESC M   delete a line, pulling the rest of the screen up
-    ESC R   delete the character under the cursor
+    ESC P   delete the character under the cursor
     ESC Q   turn insert character mode on
     ESC @   turn insert character mode off
     ESC G   send the character under the cursor to the host
     ESC \   send the cursor position to the host, as ESC F <line> <column>
-    ESC 3   sound the alarm, which the real terminal holds on until ESC 4
-    ESC 4   stop it
+    ESC 8   sound the alarm, which the real terminal holds on until ESC 9
+    ESC 9   stop it
 
     Line and column are one based and go on the wire as the value plus 1FH,
     so line 1 is a space. The manual's own example addresses line 15 and
@@ -76,18 +76,27 @@
     stores characters and nothing else; the rest need a second serial port
     or a host that drives them.
 
-    The manual contradicts itself over ESC N and ESC n. Table 3-2 says ESC N
-    goes on line and ESC n goes local; section 3.3.9 says the opposite.
-    Neither changes what is on the screen, so both are accepted and ignored.
+    The technical manual contradicts itself in two places, and Cromemco's
+    function code table (figure 3-1 of the user manual) settles both:
+
+    - Delete character. The DCHAR entry in table 3-2 gives ESC R for the key
+      but ESC P as the code transmitted, and section 3.3.10 gives ESC R to
+      graphics mode. Figure 3-1 has P as delete character and R as graphics
+      mode on, so ESC P is what this acts on and ESC R is ignored with the
+      rest of graphics mode.
+    - ESC N and ESC n. Table 3-2 says ESC N goes on line and ESC n goes
+      local; section 3.3.9 says the opposite, and figure 3-1 agrees with
+      3.3.9. Neither changes what is on the screen, so both are ignored.
 
     References
     - Cromemco 3102 Terminal Technical Manual, part 023-6001, March 1980,
       which is Beehive's Micro Bee 2 manual. Key functions in table 3-2,
       edit functions in 3.3.5, cursor movement in 3.3.6, screen erasure in
-      3.3.7, cursor addressing and cursor sense on printed page 3-24, and
-      the cursor address codes in table 3-8.
-    - Cromemco 3102 Terminal User Manual, for the same sequences written for
-      the operator.
+      3.3.7, cursor addressing and cursor sense on printed page 3-24, the
+      cursor address codes in table 3-8, and the continuous alarm in 3.3.18.
+    - Cromemco 3102 Terminal User Manual, part 023-6004, March 1980. Its
+      figure 3-1 lists every code that can follow ESC, and every code this
+      implements was checked against it.
 
 ***************************************************************************/
 
@@ -329,7 +338,7 @@ void cromemco_3102_device::escape(uint8_t data)
 	case 'M':
 		delete_line();
 		break;
-	case 'R':
+	case 'P':
 		delete_character();
 		break;
 
@@ -365,12 +374,14 @@ void cromemco_3102_device::escape(uint8_t data)
 		}
 		break;
 
-	case '3':
-	case '4':
-		// ESC 3 starts a continuous alarm and ESC 4 stops it. The base class
-		// owns the beeper and only knows how to sound it briefly, so this
-		// sounds it once and leaves the stop with nothing to do.
-		if (data == '3')
+	case '8':
+	case '9':
+		// ESC 8 starts a continuous alarm and ESC 9 stops it. The overview
+		// in section 3.2.7 says ESC 3, but section 3.3.18 and Cromemco's own
+		// code table both give 8 and 9. The base class owns the beeper and
+		// only knows how to sound it briefly, so this sounds it once and
+		// leaves the stop with nothing to do.
+		if (data == '8')
 			generic_terminal_device::term_write(0x07);
 		break;
 
