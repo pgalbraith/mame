@@ -60,40 +60,40 @@ license:CC0-1.0
 		</part>
 	</software>
 
-	<!-- https://sebhc.github.io/sebhc/software/CPM/CPM_2_2_04_Update.zip -->
+	<!-- https://heathkit.garlanger.com/software/library/Heath/CPM/ -->
 	<software name="cpm2204">
 		<description>CP/M (Heath) 2.2.04</description>
 		<year>1982</year>
 		<publisher>Heath Company</publisher>
-		<notes>The H-17 build, signing on "FOR H17 DISKS" and dated 09/15/82; the H-37 build of the same version is on the h37_flop list. Disk 2 adds BSYSGEN over 2.2.03 and carries the MOVCPM relocators, disk 3 the BIOS source. The setup disk boots on its own into the Zenith Setup 2.0 front end.</notes>
+		<notes>The H-17 build, signing on "FOR H17 DISKS" and dated 09/15/82; the H-37 build of the same version is on the h37_flop list. Disk 2 adds BSYSGEN over 2.2.03 and carries the MOVCPM relocators, disk 3 the BIOS source. The setup disk boots on its own into the Zenith Setup 2.0 front end. These are the h17disk version 2 images from Mark Garlanger's library, read on an Applesauce, so they carry the sector headers and the per-sector read status as well as the data.</notes>
 		<info name="alt_title" value="Digital Research Inc. CP/M"/>
 		<info name="version" value="2.2.04"/>
 
 		<part name="flop1" interface="floppy_5_25">
 			<feature name="part_id" value="Disk 1 - System"/>
-			<dataarea name="flop" size="102400">
-				<rom name="cpm_2_2_04_disk_1.h8d" size="102400" crc="540c39c5" sha1="f3f76212b741eb83702d8f715969185b95f29b3d"/>
+			<dataarea name="flop" size="109064">
+				<rom name="cpm_2_2_04_disk_1.h17" size="109064" crc="0ce194ab" sha1="606892e5bfd49c2b18ac6aaa91cf9f4a33e59774"/>
 			</dataarea>
 		</part>
 
 		<part name="flop2" interface="floppy_5_25">
 			<feature name="part_id" value="Disk 2 - BSYSGEN and MOVCPM"/>
-			<dataarea name="flop" size="102400">
-				<rom name="cpm_2_2_04_disk_2.h8d" size="102400" crc="5127500d" sha1="299188f3edcb06ff158f8c456549ba3603d62daf"/>
+			<dataarea name="flop" size="109064">
+				<rom name="cpm_2_2_04_disk_2.h17" size="109064" crc="4b983b4b" sha1="602df853a3bca4ece8d921af703debd32f2b15b8"/>
 			</dataarea>
 		</part>
 
 		<part name="flop3" interface="floppy_5_25">
 			<feature name="part_id" value="Disk 3 - BIOS source and MAKEBIOS"/>
-			<dataarea name="flop" size="102400">
-				<rom name="cpm_2_2_04_disk_3.h8d" size="102400" crc="842f3cea" sha1="9264bacc0fd544279256535bb517d68f0adbc511"/>
+			<dataarea name="flop" size="109064">
+				<rom name="cpm_2_2_04_disk_3.h17" size="109064" crc="d658b559" sha1="1e0b03a932ebac6667b518a13e192f7ef16f4fd2"/>
 			</dataarea>
 		</part>
 
 		<part name="flop4" interface="floppy_5_25">
 			<feature name="part_id" value="Setup disk - Zenith Setup 2.0"/>
-			<dataarea name="flop" size="102400">
-				<rom name="cpm_2_2_04_setup.h8d" size="102400" crc="2391285c" sha1="383b694f88f9e2f9352667f6a205bdb0d0d070c5"/>
+			<dataarea name="flop" size="109064">
+				<rom name="cpm_2_2_04_setup.h17" size="109064" crc="14aa3675" sha1="c815f90a381f77811b6f80e5d4f2d05868aa8951"/>
 			</dataarea>
 		</part>
 	</software>
