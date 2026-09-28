@@ -120,16 +120,6 @@ device_t *driver_device::find_boot_device(machine_config &config, emu_options co
 
 
 //-------------------------------------------------
-//  driver_start - default implementation which
-//  does nothing
-//-------------------------------------------------
-
-void driver_device::driver_start()
-{
-}
-
-
-//-------------------------------------------------
 //  machine_start - default implementation which
 //  calls to the legacy machine_start function
 //-------------------------------------------------
@@ -155,16 +145,6 @@ void driver_device::sound_start()
 //-------------------------------------------------
 
 void driver_device::video_start()
-{
-}
-
-
-//-------------------------------------------------
-//  driver_reset - default implementation which
-//  does nothing
-//-------------------------------------------------
-
-void driver_device::driver_reset()
 {
 }
 
@@ -250,8 +230,6 @@ void driver_device::device_start()
 	machine().image().postdevice_init();
 
 	// start the various pieces
-	driver_start();
-
 	if (!m_callbacks[CB_MACHINE_START].isnull())
 		m_callbacks[CB_MACHINE_START]();
 	else
@@ -279,8 +257,6 @@ void driver_device::device_start()
 void driver_device::device_reset_after_children()
 {
 	// reset each piece
-	driver_reset();
-
 	if (!m_callbacks[CB_MACHINE_RESET].isnull())
 		m_callbacks[CB_MACHINE_RESET]();
 	else

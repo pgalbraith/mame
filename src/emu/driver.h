@@ -175,13 +175,11 @@ protected:
 	virtual device_t *boot_device(ioport_settings const &settings) const;
 
 	// helpers called at startup
-	virtual void driver_start();
 	virtual void machine_start();
 	virtual void sound_start();
 	virtual void video_start();
 
 	// helpers called at reset
-	virtual void driver_reset();
 	virtual void machine_reset();
 	virtual void sound_reset();
 	virtual void video_reset();
