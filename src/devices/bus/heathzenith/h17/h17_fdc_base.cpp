@@ -182,6 +182,136 @@ void heath_h17_fdc_base_device::set_motor(bool motor_on)
 	start_tx_write();
 }
 
+// Receive data separator.
+//
+// The board has no PLL and cannot track the media's rate at all: U810 has every
+// control pin strapped to +5V, so it free-runs off the crystal-derived
+// reference, and U805 counts that same reference.  The cell rate is therefore
+// fixed and only the phase moves, re-anchored by the pulse U808 makes from each
+// flux transition.  That is what is modelled here, rather than the adaptive
+// fdc_pll_t used before - a PLL that retunes its period is the wrong shape for
+// this circuit, however well it decodes.
+//
+// So a cell is assembled like this.  Until it has a clock it is hunting, and
+// the first pulse to arrive is taken for that clock and anchors the cell,
+// standing in for the pulse clearing the counter.  Once anchored, a pulse in a
+// narrow window around the middle of the cell is a data 1, a pulse past that
+// window is the next cell's clock and ends this one, and a pulse before it is
+// noise in a cell whose counter has already been cleared, so it is dropped.  A
+// cell that runs out with no clock to end it rolls on to the next, which is how
+// the separator free-runs through a gap.
+//
+// The hunting case has to be tested before the data window, not after, and the
+// reason is worth keeping.  If a pulse in the window were taken for data even
+// when the cell had no clock, then a phase sitting half a cell out would eat
+// each real clock as data, time the cell out, and re-anchor on a free-running
+// boundary - self-sustaining, because the cell rate here is exactly the rate
+// the images are written at and nothing pulls the phase back.  Anchoring while
+// hunting is that restoring force, and recovers the phase in one cell.
+
+void heath_h17_fdc_base_device::schedule_rx_cell()
+{
+	if (!m_motor_on || !m_floppy || m_tx_write_active)
+	{
+		m_rx_timer->adjust(attotime::never);
+		return;
+	}
+
+	// Wake for whichever comes first, the next flux transition or the end of
+	// the cell being assembled.
+	attotime const cell_end = m_rx_cell_start + fm_bit_time();
+	attotime const edge     = m_floppy->get_next_transition(m_rx_scan);
+	attotime const next     = (!edge.is_never() && edge < cell_end) ? edge : cell_end;
+	attotime const now      = machine().time();
+
+	m_rx_timer->adjust(next > now ? next - now : attotime::zero);
+}
+
+void heath_h17_fdc_base_device::reset_rx_separator()
+{
+	m_rx_cell_start = machine().time();
+	m_rx_scan       = m_rx_cell_start;
+	m_rx_have_clock = false;
+	m_rx_data       = false;
+
+	schedule_rx_cell();
+}
+
+void heath_h17_fdc_base_device::rx_emit_cell()
+{
+	m_s2350->rx_w(m_rx_data ? 1 : 0);
+	m_s2350->rcp_w();
+
+	m_rx_have_clock = false;
+	m_rx_data       = false;
+}
+
+TIMER_CALLBACK_MEMBER(heath_h17_fdc_base_device::rx_timer_cb)
+{
+	if (!m_motor_on || !m_floppy || m_tx_write_active)
+	{
+		m_rx_timer->adjust(attotime::never);
+		return;
+	}
+
+	attotime const now       = machine().time();
+	attotime const half      = fm_cell_time();
+	attotime const win_open  = (half * 3) / 4;
+	attotime const win_close = (half * 5) / 4;
+
+	for (;;)
+	{
+		attotime const cell_end = m_rx_cell_start + fm_bit_time();
+		attotime const edge     = m_floppy->get_next_transition(m_rx_scan);
+
+		if (!edge.is_never() && edge < cell_end && edge <= now)
+		{
+			m_rx_scan = edge;
+
+			attotime const in_cell = edge - m_rx_cell_start;
+			if (!m_rx_have_clock)
+			{
+				// The cell has no clock yet, so whatever arrives first is it and
+				// anchors the cell, as the pulse clears the counter.  This has to
+				// come before the data window: a pulse there is only data once
+				// the phase is established, and taking it for data while hunting
+				// is what would leave the phase half a cell out with nothing to
+				// pull it back.
+				m_rx_cell_start = edge;
+				m_rx_have_clock = true;
+			}
+			else if (in_cell >= win_open && in_cell < win_close)
+			{
+				m_rx_data = true;
+			}
+			else if (in_cell >= win_close)
+			{
+				// The next cell's clock, arriving before this one timed out.
+				// It ends the cell in progress and anchors the next.
+				rx_emit_cell();
+
+				m_rx_cell_start = edge;
+				m_rx_have_clock = true;
+			}
+			// Anything else is a pulse too early to be this cell's data in a
+			// cell that already has its clock.  The counter is not cleared
+			// again, so it must not move the phase - drop it.
+		}
+		else if (cell_end <= now)
+		{
+			// Nothing came along to end the cell; roll on to the next.
+			rx_emit_cell();
+			m_rx_cell_start = cell_end;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	schedule_rx_cell();
+}
+
 void heath_h17_fdc_base_device::ctrl_w(u8 val)
 {
 	set_write_gate(bool(BIT(val, CTRL_WRITE_GATE)));
@@ -426,136 +556,6 @@ void heath_h17_fdc_base_device::tx_w(int state)
 		m_tx_pll.commit(m_floppy, m_tx_pll.ctime);
 		m_tx_last_commit = m_tx_pll.ctime;
 	}
-}
-
-// Receive data separator.
-//
-// The board has no PLL and cannot track the media's rate at all: U810 has every
-// control pin strapped to +5V, so it free-runs off the crystal-derived
-// reference, and U805 counts that same reference.  The cell rate is therefore
-// fixed and only the phase moves, re-anchored by the pulse U808 makes from each
-// flux transition.  That is what is modelled here, rather than the adaptive
-// fdc_pll_t used before - a PLL that retunes its period is the wrong shape for
-// this circuit, however well it decodes.
-//
-// So a cell is assembled like this.  Until it has a clock it is hunting, and
-// the first pulse to arrive is taken for that clock and anchors the cell,
-// standing in for the pulse clearing the counter.  Once anchored, a pulse in a
-// narrow window around the middle of the cell is a data 1, a pulse past that
-// window is the next cell's clock and ends this one, and a pulse before it is
-// noise in a cell whose counter has already been cleared, so it is dropped.  A
-// cell that runs out with no clock to end it rolls on to the next, which is how
-// the separator free-runs through a gap.
-//
-// The hunting case has to be tested before the data window, not after, and the
-// reason is worth keeping.  If a pulse in the window were taken for data even
-// when the cell had no clock, then a phase sitting half a cell out would eat
-// each real clock as data, time the cell out, and re-anchor on a free-running
-// boundary - self-sustaining, because the cell rate here is exactly the rate
-// the images are written at and nothing pulls the phase back.  Anchoring while
-// hunting is that restoring force, and recovers the phase in one cell.
-
-void heath_h17_fdc_base_device::schedule_rx_cell()
-{
-	if (!m_motor_on || !m_floppy || m_tx_write_active)
-	{
-		m_rx_timer->adjust(attotime::never);
-		return;
-	}
-
-	// Wake for whichever comes first, the next flux transition or the end of
-	// the cell being assembled.
-	attotime const cell_end = m_rx_cell_start + fm_bit_time();
-	attotime const edge     = m_floppy->get_next_transition(m_rx_scan);
-	attotime const next     = (!edge.is_never() && edge < cell_end) ? edge : cell_end;
-	attotime const now      = machine().time();
-
-	m_rx_timer->adjust(next > now ? next - now : attotime::zero);
-}
-
-void heath_h17_fdc_base_device::reset_rx_separator()
-{
-	m_rx_cell_start = machine().time();
-	m_rx_scan       = m_rx_cell_start;
-	m_rx_have_clock = false;
-	m_rx_data       = false;
-
-	schedule_rx_cell();
-}
-
-void heath_h17_fdc_base_device::rx_emit_cell()
-{
-	m_s2350->rx_w(m_rx_data ? 1 : 0);
-	m_s2350->rcp_w();
-
-	m_rx_have_clock = false;
-	m_rx_data       = false;
-}
-
-TIMER_CALLBACK_MEMBER(heath_h17_fdc_base_device::rx_timer_cb)
-{
-	if (!m_motor_on || !m_floppy || m_tx_write_active)
-	{
-		m_rx_timer->adjust(attotime::never);
-		return;
-	}
-
-	attotime const now       = machine().time();
-	attotime const half      = fm_cell_time();
-	attotime const win_open  = (half * 3) / 4;
-	attotime const win_close = (half * 5) / 4;
-
-	for (;;)
-	{
-		attotime const cell_end = m_rx_cell_start + fm_bit_time();
-		attotime const edge     = m_floppy->get_next_transition(m_rx_scan);
-
-		if (!edge.is_never() && edge < cell_end && edge <= now)
-		{
-			m_rx_scan = edge;
-
-			attotime const in_cell = edge - m_rx_cell_start;
-			if (!m_rx_have_clock)
-			{
-				// The cell has no clock yet, so whatever arrives first is it and
-				// anchors the cell, as the pulse clears the counter.  This has to
-				// come before the data window: a pulse there is only data once
-				// the phase is established, and taking it for data while hunting
-				// is what would leave the phase half a cell out with nothing to
-				// pull it back.
-				m_rx_cell_start = edge;
-				m_rx_have_clock = true;
-			}
-			else if (in_cell >= win_open && in_cell < win_close)
-			{
-				m_rx_data = true;
-			}
-			else if (in_cell >= win_close)
-			{
-				// The next cell's clock, arriving before this one timed out.
-				// It ends the cell in progress and anchors the next.
-				rx_emit_cell();
-
-				m_rx_cell_start = edge;
-				m_rx_have_clock = true;
-			}
-			// Anything else is a pulse too early to be this cell's data in a
-			// cell that already has its clock.  The counter is not cleared
-			// again, so it must not move the phase - drop it.
-		}
-		else if (cell_end <= now)
-		{
-			// Nothing came along to end the cell; roll on to the next.
-			rx_emit_cell();
-			m_rx_cell_start = cell_end;
-		}
-		else
-		{
-			break;
-		}
-	}
-
-	schedule_rx_cell();
 }
 
 void heath_h17_fdc_base_device::floppy_formats(format_registration &fr)
