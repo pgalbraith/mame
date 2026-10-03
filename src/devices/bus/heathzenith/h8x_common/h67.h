@@ -6,8 +6,8 @@
 
 ****************************************************************************/
 
-#ifndef MAME_BUS_HEATHZENITH_H67_H67_H
-#define MAME_BUS_HEATHZENITH_H67_H67_H
+#ifndef MAME_BUS_HEATHZENITH_H8X_COMMON_H67_H
+#define MAME_BUS_HEATHZENITH_H8X_COMMON_H67_H
 
 #pragma once
 
@@ -119,4 +119,4 @@ protected:
 	bool m_req;
 };
 
-#endif // MAME_BUS_HEATHZENITH_H67_H67_H
+#endif // MAME_BUS_HEATHZENITH_H8X_COMMON_H67_H

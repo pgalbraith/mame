@@ -6,8 +6,8 @@
 
 ****************************************************************************/
 
-#ifndef MAME_BUS_HEATHZENITH_H47_H47_H
-#define MAME_BUS_HEATHZENITH_H47_H47_H
+#ifndef MAME_BUS_HEATHZENITH_H8X_COMMON_H47_H
+#define MAME_BUS_HEATHZENITH_H8X_COMMON_H47_H
 
 #pragma once
 
@@ -215,4 +215,4 @@ private:
 
 DECLARE_DEVICE_TYPE(HEATH_H47, heath_h47_device)
 
-#endif // MAME_BUS_HEATHZENITH_H47_H47_H
+#endif // MAME_BUS_HEATHZENITH_H8X_COMMON_H47_H

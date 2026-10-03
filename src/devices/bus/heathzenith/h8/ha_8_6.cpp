@@ -115,6 +115,7 @@ public:
 	virtual void int6_w(int state) override;
 	virtual void int7_w(int state) override;
 	virtual void rom_disable_w(int state) override;
+	virtual heath_intr_socket *intr_socket() override { return m_intr_socket.target(); }
 
 	virtual void p201_reset_w(int state) override;
 	virtual void p201_int1_w(int state) override;
@@ -262,9 +263,14 @@ void ha_8_6_device::handle_int2()
 }
 
 
+// U38 is the board's 74LS148 priority encoder.  Fitting a WH-8-37 takes it
+// out and plugs a cable from the WH-8-37 into its socket instead (595-2859,
+// page 6), so the encoder then lives on that card along with the logic that
+// runs its floppy transfers.  Choose "h37" here when a WH-8-37 is fitted.
 static void intr_ctrl_options(device_slot_interface &device)
 {
 	device.option_add("original", HEATH_INTR_CNTRL);
+	device.option_add("h37",      HEATH_Z37_INTR_CNTRL);
 }
 
 u8 ha_8_6_device::sys_rom_r(offs_t offset)
@@ -332,8 +338,15 @@ void ha_8_6_device::map_io(address_space_installer & space)
 }
 
 // ROM definition
+//
+// U13 holds the monitor at 0000.  PAM-37 also needs XCON8 in the second
+// socket, U19: the WH-8-37 manual (595-2859, page 6) moves the 444-70 from
+// U13 to U19 when the 444-140 goes in, and PAM-37's own text says it
+// "Requires HA8-6 Z80 CPU and either a 444-70 or 444-124 ROM device".  The
+// upper half of XCON8 is byte for byte the H-17 ROM 444-19, and PAM-37 calls
+// into it at 198A and jumps to 1E3B, so it has to answer at 1800-1FFF.
 ROM_START( ha_8_6 )
-	ROM_REGION( 0x1000, "maincpu", ROMREGION_ERASEFF )
+	ROM_REGION( 0x2000, "maincpu", ROMREGION_ERASEFF )
 	ROM_DEFAULT_BIOS("xcon8")
 
 	ROM_SYSTEM_BIOS(0, "xcon8", "ROM supporting ORG0 for H17 and H47")
@@ -341,7 +354,11 @@ ROM_START( ha_8_6 )
 
 	ROM_SYSTEM_BIOS(1, "pam37", "ROM supporting H17, H37, H47, and H67")
 	ROMX_LOAD( "2732_444-140_pam37.rom", 0x0000, 0x1000, CRC(53a540db) SHA1(90082d02ffb1d27e8172b11fff465bd24343486e), ROM_BIOS(1) )
+	ROMX_LOAD( "2732_444-70_xcon8.rom",  0x1000, 0x1000, CRC(b04368f4) SHA1(965244277a3a8039a987e4c3593b52196e39b7e7), ROM_BIOS(1) )
 ROM_END
+
+// system_bios() counts from 1, so this is ROM_SYSTEM_BIOS(1) above
+static constexpr int BIOS_PAM37 = 2;
 
 static INPUT_PORTS_START( ha_8_6_jumpers )
 
@@ -499,6 +516,16 @@ void ha_8_6_device::device_reset()
 	h8bus().map_mem(m_mem_view[1]);
 	m_mem_view[0].install_read_handler(0x0000, 0x0fff, read8sm_delegate(*this, FUNC(ha_8_6_device::sys_rom_r)));
 
+	// Only the H-17 half of the ROM in U19 is mapped.  The rest of XCON8 is
+	// code built to run at 0000 and is no use at 1000, and leaving 1000-17FF
+	// to the bus keeps an H-17 card's RAM at 1400-17FF reachable.  The HA-8-6
+	// schematic was not to hand, so how much of 1000-1FFF the real board
+	// decodes for U19 is a guess.
+	if (system_bios() == BIOS_PAM37)
+	{
+		m_mem_view[0].install_rom(0x1800, 0x1fff, &m_sys_rom[0x1800]);
+	}
+
 	m_mem_view.select(0);
 	LOGORG0("%s: mem_view 0\n", FUNCNAME);
 
@@ -525,7 +552,6 @@ void ha_8_6_device::device_add_mconfig(machine_config &config)
 	HEATH_INTR_SOCKET(config, m_intr_socket, intr_ctrl_options, nullptr);
 	m_intr_socket->irq_line_cb().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
 	m_intr_socket->set_default_option("original");
-	m_intr_socket->set_fixed(true);
 }
 
 } // anonymous namespace

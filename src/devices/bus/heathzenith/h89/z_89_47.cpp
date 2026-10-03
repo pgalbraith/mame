@@ -11,8 +11,8 @@
     alongside the H-88-7 replacement ROM set the machine needs to boot from
     it.
 
-    The disk half is described in bus/heathzenith/h47/h47_intf.cpp, and the
-    cabinet it talks to in bus/heathzenith/h47/h47.cpp.  Everything the host
+    The disk half is described in bus/heathzenith/h8x_common/h47_intf.cpp, and the
+    cabinet it talks to in bus/heathzenith/h8x_common/h47.cpp.  Everything the host
     can see is the same as on the H8 - status port, data port, the same
     status word and the same command set - which is what makes one model do
     both machines, and is how MTR-90 drives either with one piece of code.
@@ -97,7 +97,7 @@
 
 #include "z_89_47.h"
 
-#include "bus/heathzenith/h47/h47_intf.h"
+#include "bus/heathzenith/h8x_common/h47_intf.h"
 
 #define LOG_SETUP (1U << 1)
 #define LOG_ERR   (1U << 2)

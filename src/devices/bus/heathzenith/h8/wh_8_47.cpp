@@ -13,8 +13,8 @@
     manual (595-2469, in
     [https://sebhc.github.io/sebhc/documentation/hardware/H8/H8-47_Op.zip]).
 
-    The disk half is described in bus/heathzenith/h47/h47_intf.cpp, and the
-    cabinet it talks to in bus/heathzenith/h47/h47.cpp.  What belongs to
+    The disk half is described in bus/heathzenith/h8x_common/h47_intf.cpp, and the
+    cabinet it talks to in bus/heathzenith/h8x_common/h47.cpp.  What belongs to
     this card is where it answers and where its interrupts go.
 
     THE DISK ADDRESS
@@ -91,7 +91,7 @@
 
 #include "wh_8_47.h"
 
-#include "bus/heathzenith/h47/h47_intf.h"
+#include "bus/heathzenith/h8x_common/h47_intf.h"
 #include "bus/rs232/rs232.h"
 #include "machine/ins8250.h"
 

@@ -6,8 +6,8 @@
 
 ****************************************************************************/
 
-#ifndef MAME_BUS_HEATHZENITH_H47_H47_INTF_H
-#define MAME_BUS_HEATHZENITH_H47_H47_INTF_H
+#ifndef MAME_BUS_HEATHZENITH_H8X_COMMON_H47_INTF_H
+#define MAME_BUS_HEATHZENITH_H8X_COMMON_H47_INTF_H
 
 #pragma once
 
@@ -68,4 +68,4 @@ protected:
 	bool m_u137b;         // status port D0
 };
 
-#endif // MAME_BUS_HEATHZENITH_H47_H47_INTF_H
+#endif // MAME_BUS_HEATHZENITH_H8X_COMMON_H47_INTF_H

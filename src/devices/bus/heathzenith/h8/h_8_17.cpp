@@ -111,7 +111,7 @@
 
 #include "h_8_17.h"
 
-#include "bus/heathzenith/h17/h17_fdc_base.h"
+#include "bus/heathzenith/h8x_common/h17_fdc_base.h"
 
 #include "softlist_dev.h"
 

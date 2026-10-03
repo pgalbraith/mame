@@ -2481,39 +2481,24 @@ end
 
 ---------------------------------------------------
 --
---@src/devices/bus/heathzenith/h17/h17_fdc_base.h,BUSES["HEATHZENITH_H17_FDC"] = true
+--@src/devices/bus/heathzenith/h8x_common/h17_fdc_base.h,BUSES["HEATHZENITH_H8X_COMMON"] = true
+--@src/devices/bus/heathzenith/h8x_common/h47_intf.h,BUSES["HEATHZENITH_H8X_COMMON"] = true
+--@src/devices/bus/heathzenith/h8x_common/h67.h,BUSES["HEATHZENITH_H8X_COMMON"] = true
+--@src/devices/bus/heathzenith/h8x_common/z37_fdc_base.h,BUSES["HEATHZENITH_H8X_COMMON"] = true
 ---------------------------------------------------
 
-if BUSES["HEATHZENITH_H17_FDC"] then
+if BUSES["HEATHZENITH_H8X_COMMON"] then
 	files {
-		MAME_DIR .. "src/devices/bus/heathzenith/h17/h17_fdc_base.cpp",
-		MAME_DIR .. "src/devices/bus/heathzenith/h17/h17_fdc_base.h",
-	}
-end
-
----------------------------------------------------
---
---@src/devices/bus/heathzenith/h47/h47_intf.h,BUSES["HEATHZENITH_H47"] = true
----------------------------------------------------
-
-if BUSES["HEATHZENITH_H47"] then
-	files {
-		MAME_DIR .. "src/devices/bus/heathzenith/h47/h47.cpp",
-		MAME_DIR .. "src/devices/bus/heathzenith/h47/h47.h",
-		MAME_DIR .. "src/devices/bus/heathzenith/h47/h47_intf.cpp",
-		MAME_DIR .. "src/devices/bus/heathzenith/h47/h47_intf.h",
-	}
-end
-
----------------------------------------------------
---
---@src/devices/bus/heathzenith/h67/h67.h,BUSES["HEATHZENITH_H67"] = true
----------------------------------------------------
-
-if BUSES["HEATHZENITH_H67"] then
-	files {
-		MAME_DIR .. "src/devices/bus/heathzenith/h67/h67.cpp",
-		MAME_DIR .. "src/devices/bus/heathzenith/h67/h67.h",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/h17_fdc_base.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/h17_fdc_base.h",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/h47.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/h47.h",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/h47_intf.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/h47_intf.h",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/h67.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/h67.h",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/z37_fdc_base.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/z37_fdc_base.h",
 	}
 end
 
@@ -2540,14 +2525,14 @@ if BUSES["HEATHZENITH_H8"] then
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/h_8_4.h",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/h_8_5.cpp",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/h_8_5.h",
-		MAME_DIR .. "src/devices/bus/heathzenith/h8/h_8_67.cpp",
-		MAME_DIR .. "src/devices/bus/heathzenith/h8/h_8_67.h",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/ha_8_6.cpp",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/ha_8_6.h",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/ha_8_8.cpp",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/ha_8_8.h",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_16.cpp",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_16.h",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_37.cpp",
+		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_37.h",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_47.cpp",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_47.h",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8/wh_8_64.cpp",

@@ -7,7 +7,7 @@
     The H-89 end of the Z-67, which is a Winchester and an 8" floppy in one
     cabinet behind a SASI controller.  The card itself is a host adapter and
     nothing else; what it reaches, and how, is in
-    bus/heathzenith/h67/h67.cpp.
+    bus/heathzenith/h8x_common/h67.cpp.
 
     WHERE IT ANSWERS
     ----------------
@@ -59,7 +59,7 @@
 
 #include "z_89_67.h"
 
-#include "bus/heathzenith/h67/h67.h"
+#include "bus/heathzenith/h8x_common/h67.h"
 
 #define LOG_SETUP (1U << 1)
 #define LOG_ERR   (1U << 2)

@@ -186,6 +186,21 @@ void h8bus_device::map_io(address_space_installer &space)
 	}
 }
 
+heath_intr_socket *h8bus_device::cpu_intr_socket()
+{
+	for (device_h8bus_card_interface &entry : m_device_list)
+	{
+		heath_intr_socket *socket = entry.intr_socket();
+
+		if (socket)
+		{
+			return socket;
+		}
+	}
+
+	return nullptr;
+}
+
 device_memory_interface::space_config_vector h8bus_device::memory_space_config() const
 {
 	return space_config_vector { std::make_pair(AS_PROGRAM, &m_mem_config), std::make_pair(AS_IO, &m_io_config) };

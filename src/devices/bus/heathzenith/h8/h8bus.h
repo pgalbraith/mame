@@ -146,6 +146,7 @@
 
 
 class h8bus_device;
+class heath_intr_socket;
 
 
 class device_h8bus_card_interface : public device_interface
@@ -168,6 +169,11 @@ public:
 	virtual void reset_w(int state) {}
 	virtual void hold_w(int state) {}
 	virtual void rom_disable_w(int state) {}
+
+	// The CPU card's interrupt priority encoder.  The WH-8-37 takes it over
+	// through a cable into the HA-8-6's U38 socket, so it has to be able to
+	// find it.  Only a CPU card has one.
+	virtual heath_intr_socket *intr_socket() { return nullptr; }
 
 	void set_h8bus_tag(h8bus_device *h8bus, const char *slottag) { m_h8bus = h8bus; m_h8bus_slottag = slottag; }
 	void set_index(u8 index) { m_index = index; }
@@ -285,6 +291,8 @@ public:
 
 	void map_mem(address_space_installer &space);
 	void map_io(address_space_installer &space);
+
+	heath_intr_socket *cpu_intr_socket();
 
 protected:
 	h8bus_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
