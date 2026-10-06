@@ -2459,6 +2459,7 @@ if BUSES["HEATHZENITH_H19"] then
 	}
 end
 
+
 ---------------------------------------------------
 --
 --@src/devices/bus/heathzenith/h9/h9.h,BUSES["HEATHZENITH_H9"] = true
@@ -2479,15 +2480,13 @@ if BUSES["HEATHZENITH_H9"] then
 	}
 end
 
+
 ---------------------------------------------------
 --
---@src/devices/bus/heathzenith/h8x_common/h17_fdc_base.h,BUSES["HEATHZENITH_H8X_COMMON"] = true
---@src/devices/bus/heathzenith/h8x_common/h47_intf.h,BUSES["HEATHZENITH_H8X_COMMON"] = true
---@src/devices/bus/heathzenith/h8x_common/h67.h,BUSES["HEATHZENITH_H8X_COMMON"] = true
---@src/devices/bus/heathzenith/h8x_common/z37_fdc_base.h,BUSES["HEATHZENITH_H8X_COMMON"] = true
+--
 ---------------------------------------------------
 
-if BUSES["HEATHZENITH_H8X_COMMON"] then
+if BUSES["HEATHZENITH_H8"] or BUSES["HEATHZENITH_H89"] then
 	files {
 		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/h17_fdc_base.cpp",
 		MAME_DIR .. "src/devices/bus/heathzenith/h8x_common/h17_fdc_base.h",
