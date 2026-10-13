@@ -25,19 +25,15 @@ Heath H17D disk image format (version 2.0.0)
 
 namespace {
 
-using heath_h17::BITCELL_SIZE;
 using heath_h17::H17_SYNC_BYTE;
 using heath_h17::SECTORS_PER_TRACK;
 using heath_h17::SECTOR_DATA_SIZE;
-using heath_h17::TRACK_SIZE;
-using heath_h17::fm_byte_from_bitstream;
 using heath_h17::format;
 using heath_h17::format_size;
 using heath_h17::formats;
-using heath_h17::h17_checksum;
 using heath_h17::is_compatible;
 using heath_h17::is_hdos;
-using heath_h17::reverse_byte;
+using heath_h17::sector_index;
 
 constexpr int SECTOR_METADATA_SIZE = 16;
 
@@ -270,28 +266,6 @@ format find_format(util::random_read &io, h17disk_info const &info, std::vector<
 	return {};
 }
 
-void generate_sector_metadata(uint8_t *metadata, format const &fmt, std::vector<uint8_t> const &img, int head, int track, int sector)
-{
-	uint8_t lab_ser = 0;
-	bool const hdos = is_hdos(img, lab_ser);
-	int const logical_track = (track * fmt.head_count) + head;
-	uint8_t const volume = (hdos && (logical_track > 0)) ? lab_ser : 0;
-
-	put_be32(metadata, uint32_t(((track * fmt.head_count + head) * SECTORS_PER_TRACK + sector) * SECTOR_DATA_SIZE));
-	metadata[4] = 0;
-	metadata[5] = H17_SYNC_BYTE;
-	metadata[6] = volume;
-	metadata[7] = uint8_t(logical_track);
-	metadata[8] = uint8_t(sector);
-	metadata[9] = h17_checksum(volume, uint8_t(logical_track), uint8_t(sector));
-	metadata[10] = H17_SYNC_BYTE;
-	metadata[11] = h17_checksum(&img[get_be32(metadata)], SECTOR_DATA_SIZE);
-	metadata[12] = 1;
-	metadata[13] = 0;
-	metadata[14] = 0;
-	metadata[15] = 0;
-}
-
 // Walk a version 1 data block.  Unlike version 2, which stores a bare image of
 // the user data, version 1 stores a dump of each physical sector, so the sector
 // headers can be taken from the disk rather than being manufactured.  Unpack
@@ -392,9 +366,9 @@ bool unpack_v1_sectors(std::vector<uint8_t> const &block, format const &fmt,
 				return false;
 			}
 
-			int const sector_index = ((track * fmt.head_count) + head) * SECTORS_PER_TRACK + sector;
-			uint32_t const img_offset = uint32_t(sector_index) * SECTOR_DATA_SIZE;
-			uint8_t *const metadata = &secm[size_t(sector_index) * SECTOR_METADATA_SIZE];
+			int const index = sector_index(fmt, head, track, sector);
+			uint32_t const img_offset = uint32_t(index) * SECTOR_DATA_SIZE;
+			uint8_t *const metadata = &secm[size_t(index) * SECTOR_METADATA_SIZE];
 
 			std::memcpy(&img[img_offset], &block[data + 1], SECTOR_DATA_SIZE);
 
@@ -589,7 +563,7 @@ bool write_block(util::random_read_write &io, uint64_t &offset, uint32_t block_n
 } // anonymous namespace
 
 
-heath_h17d_format::heath_h17d_format() : floppy_image_format_t()
+heath_h17d_format::heath_h17d_format() : heath_h17_format()
 {
 }
 
@@ -624,8 +598,8 @@ bool heath_h17d_format::load(util::random_read &io, uint32_t form_factor, const 
 	format fmt{};
 	std::vector<uint8_t> img;
 
-	// per-sector metadata laid out as a version 2 SecM block, left empty when
-	// the file does not carry any and it has to be manufactured instead
+	// per-sector metadata laid out as a version 2 SecM block; empty when the
+	// file has none, and make_sector() builds the sector headers instead
 	std::vector<uint8_t> secm;
 
 	if (version == h17_version::v1)
@@ -719,26 +693,10 @@ bool heath_h17d_format::load(util::random_read &io, uint32_t form_factor, const 
 		}
 	}
 
-	// The drive fixes how big the image is, and get_buffer() only asserts its
-	// bounds in a debug build, so a disk carrying more heads or tracks than the
-	// drive holds would otherwise be generated straight past the end of the
-	// track array.
-	int max_tracks, max_heads;
-	image.get_maximal_geometry(max_tracks, max_heads);
+	uint8_t lab_ser = 0;
+	bool const hdos = secm.empty() && is_hdos(img, lab_ser);
 
-	if ((fmt.head_count > max_heads) || (fmt.track_count > max_tracks))
-	{
-		LOG_FORMATS("%d head %d track image does not fit a %d head %d track drive\n", fmt.head_count, fmt.track_count, max_heads, max_tracks);
-
-		return false;
-	}
-
-	image.set_variant(fmt.variant);
-
-	std::vector<uint32_t> buf;
-
-	uint8_t sector_meta_data[SECTOR_METADATA_SIZE];
-	uint8_t sector_data[SECTOR_DATA_SIZE];
+	std::vector<heath_h17::sector_fields> sectors(format_size(fmt) / SECTOR_DATA_SIZE);
 
 	for (int head = 0; head < fmt.head_count; head++)
 	{
@@ -746,18 +704,18 @@ bool heath_h17d_format::load(util::random_read &io, uint32_t form_factor, const 
 		{
 			for (int sector = 0; sector < SECTORS_PER_TRACK; sector++)
 			{
-				int const sector_index = sector + (track * fmt.head_count + head) * SECTORS_PER_TRACK;
+				int const index = sector_index(fmt, head, track, sector);
+				heath_h17::sector_fields &fields = sectors[index];
 
-				if (!secm.empty())
+				if (secm.empty())
 				{
-					std::memcpy(sector_meta_data, &secm[size_t(sector_index) * SECTOR_METADATA_SIZE], SECTOR_METADATA_SIZE);
-				}
-				else
-				{
-					generate_sector_metadata(sector_meta_data, fmt, img, head, track, sector);
+					fields = heath_h17::make_sector(fmt, img, head, track, sector, hdos, lab_ser);
+
+					continue;
 				}
 
-				uint64_t const data_offset = get_be32(sector_meta_data);
+				uint8_t const *const metadata = &secm[size_t(index) * SECTOR_METADATA_SIZE];
+				uint64_t const data_offset = get_be32(metadata);
 
 				if ((data_offset + SECTOR_DATA_SIZE) > img.size())
 				{
@@ -766,51 +724,17 @@ bool heath_h17d_format::load(util::random_read &io, uint32_t form_factor, const 
 					return false;
 				}
 
-				std::memcpy(sector_data, &img[data_offset], SECTOR_DATA_SIZE);
-
-				// Initial 15 zero bytes
-				for (int i = 0; i < 15; i++)
-				{
-					fm_reverse_byte_w(buf, 0);
-				}
-
-				// header (sync byte, volume, track, sector, checksum)
-				for (int i = 0; i < 5; i++)
-				{
-					fm_reverse_byte_w(buf, sector_meta_data[5 + i]);
-				}
-
-				// 12 zero bytes
-				for (int i = 0; i < 12; i++)
-				{
-					fm_reverse_byte_w(buf, 0);
-				}
-
-				// data sync byte
-				fm_reverse_byte_w(buf, sector_meta_data[10]);
-
-				// sector data
-				for (int i = 0; i < 256; i++)
-				{
-					fm_reverse_byte_w(buf, sector_data[i]);
-				}
-
-				// sector data checksum
-				fm_reverse_byte_w(buf, sector_meta_data[11]);
-
-				// trailing zero's until the next sector hole usually ~ 30 characters.
-				while (buf.size() < TRACK_SIZE / SECTORS_PER_TRACK * (sector + 1))
-				{
-					fm_reverse_byte_w(buf, 0);
-				}
+				// SecM bytes 5-9 are the header (sync, volume, track, sector,
+				// checksum), byte 10 the data sync and byte 11 the data checksum
+				std::copy(&metadata[5], &metadata[10], fields.header.begin());
+				fields.data_sync     = metadata[10];
+				fields.data          = &img[data_offset];
+				fields.data_checksum = metadata[11];
 			}
-
-			generate_track_from_levels(track, head, buf, 0, image);
-			buf.clear();
 		}
 	}
 
-	return true;
+	return generate_tracks(image, fmt, sectors);
 }
 
 bool heath_h17d_format::save(util::random_read_write &io, const std::vector<uint32_t> &variants, const floppy_image &image) const
@@ -828,57 +752,36 @@ bool heath_h17d_format::save(util::random_read_write &io, const std::vector<uint
 	std::vector<uint8_t> h8db(sector_count * SECTOR_DATA_SIZE);
 	std::vector<uint8_t> secm(sector_count * SECTOR_METADATA_SIZE);
 
-	std::array<heath_h17::sector_read, SECTORS_PER_TRACK> sectors;
+	std::vector<heath_h17::sector_read> const sectors = read_sectors(image, fmt);
 
-	for (int head = 0; head < fmt.head_count; head++)
+	for (size_t index = 0; index < sector_count; index++)
 	{
-		for (int track = 0; track < fmt.track_count; track++)
+		heath_h17::sector_read const &found = sectors[index];
+		std::array<uint8_t, SECTOR_METADATA_SIZE> metadata;
+
+		metadata.fill(0);
+
+		uint32_t const data_offset = 256 + uint32_t(index * SECTOR_DATA_SIZE);
+		put_be32(metadata.data(), data_offset);
+
+		// A sector that would not decode is saved as zeros with an empty SecM
+		// entry, rather than failing the save.  The file is already truncated
+		// when save() runs, so a failed save would leave it empty.
+		if (found.found)
 		{
-			std::vector<bool> const bitstream = generate_bitstream_from_track(track, head, BITCELL_SIZE, image);
+			metadata[5]  = H17_SYNC_BYTE;
+			metadata[6]  = found.volume;
+			metadata[7]  = found.track;
+			metadata[8]  = found.sector;
+			metadata[9]  = found.header_checksum;
+			metadata[10] = H17_SYNC_BYTE;
+			metadata[11] = found.data_checksum;
+			metadata[12] = 1;
 
-			heath_h17::decode_track(bitstream, sectors);
-
-			for (int sector = 0; sector < SECTORS_PER_TRACK; sector++)
-			{
-				size_t const sector_index = sector + (track * fmt.head_count + head) * SECTORS_PER_TRACK;
-				heath_h17::sector_read const &found = sectors[sector];
-				std::array<uint8_t, SECTOR_METADATA_SIZE> metadata;
-
-				metadata.fill(0);
-
-				uint32_t const data_offset = 256 + uint32_t(sector_index * SECTOR_DATA_SIZE);
-				put_be32(metadata.data(), data_offset);
-
-				// A sector that will not decode must not cost the whole image:
-				// the file this is replacing has already been truncated by the
-				// time save() is called, so returning here would leave nothing
-				// at all. Record it as empty and carry on.
-				if (!found.found)
-				{
-					LOG_FORMATS("unable to decode H17D sector %d/%d/%d\n", head, track, sector);
-				}
-				else
-				{
-					if (!found.data_valid)
-					{
-						LOG_FORMATS("bad data checksum on H17D sector %d/%d/%d\n", head, track, sector);
-					}
-
-					metadata[5]  = H17_SYNC_BYTE;
-					metadata[6]  = found.volume;
-					metadata[7]  = found.track;
-					metadata[8]  = found.sector;
-					metadata[9]  = found.header_checksum;
-					metadata[10] = H17_SYNC_BYTE;
-					metadata[11] = found.data_checksum;
-					metadata[12] = 1;
-
-					std::copy(found.data.begin(), found.data.end(), h8db.begin() + (sector_index * SECTOR_DATA_SIZE));
-				}
-
-				std::copy(metadata.begin(), metadata.end(), secm.begin() + (sector_index * SECTOR_METADATA_SIZE));
-			}
+			std::copy(found.data.begin(), found.data.end(), h8db.begin() + (index * SECTOR_DATA_SIZE));
 		}
+
+		std::copy(metadata.begin(), metadata.end(), secm.begin() + (index * SECTOR_METADATA_SIZE));
 	}
 
 	uint8_t const header[8] = { 'H', '1', '7', 'D', '2', '0', '0', 0xff };
@@ -909,11 +812,6 @@ bool heath_h17d_format::save(util::random_read_write &io, const std::vector<uint
 	}
 
 	return write_block(io, offset, SecM, secm.data(), uint32_t(secm.size()));
-}
-
-void heath_h17d_format::fm_reverse_byte_w(std::vector<uint32_t> &buffer, uint8_t val) const
-{
-	fm_w(buffer, 8, reverse_byte(val), BITCELL_SIZE);
 }
 
 const heath_h17d_format FLOPPY_H17D_FORMAT;

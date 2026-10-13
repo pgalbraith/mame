@@ -14,9 +14,9 @@ See https://sebhc.github.io/sebhc/h8d.html for the raw sector layout.
 
 #pragma once
 
-#include "flopimg.h"
+#include "h17_common.h"
 
-class heath_h8d_format : public floppy_image_format_t
+class heath_h8d_format : public heath_h17_format
 {
 public:
 	heath_h8d_format();
@@ -29,9 +29,6 @@ public:
 	const char *description() const noexcept override { return "Heath H8D disk image"; }
 	const char *extensions() const noexcept override { return "h8d"; }
 	bool supports_save() const noexcept override { return true; }
-
-protected:
-	void fm_reverse_byte_w(std::vector<uint32_t> &buffer, uint8_t val) const;
 };
 
 extern const heath_h8d_format FLOPPY_H8D_FORMAT;
